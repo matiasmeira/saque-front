@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>saque - Confirmá tu reserva</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;700;800&amp;family=Public+Sans:wght@300;400;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary": "#00409d",
+                    "surface-tint": "#1157ca",
+                    "surface-bright": "#f7fafd",
+                    "on-primary-container": "#c9d6ff",
+                    "tinta": "#0A1F3D",
+                    "inverse-primary": "#b1c5ff",
+                    "error": "#DC2626",
+                    "on-secondary-fixed": "#001f2a",
+                    "surface-container-highest": "#e0e3e6",
+                    "secondary-container": "#68d0fd",
+                    "primary-fixed": "#dae2ff",
+                    "borde-ui": "#E2E8F0",
+                    "tertiary-fixed": "#d6e3ff",
+                    "surface-container-low": "#f1f4f7",
+                    "on-tertiary-container": "#c5d8ff",
+                    "on-secondary-fixed-variant": "#004d65",
+                    "surface-container": "#ebeef1",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#344666",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "on-secondary-container": "#005773",
+                    "on-primary-fixed-variant": "#00419f",
+                    "humo-fondo": "#F6F9FC",
+                    "outline": "#737785",
+                    "celeste-marca": "#5CC5F2",
+                    "on-background": "#181c1e",
+                    "primary-fixed-dim": "#b1c5ff",
+                    "secondary-fixed-dim": "#6dd2ff",
+                    "tertiary-fixed-dim": "#b4c7ed",
+                    "tertiary-container": "#4c5e7f",
+                    "on-tertiary": "#ffffff",
+                    "muted": "#94A3B8",
+                    "surface-container-high": "#e5e8eb",
+                    "surface-variant": "#e0e3e6",
+                    "on-primary-fixed": "#001947",
+                    "primary-container": "#0e56c9",
+                    "background": "#f7fafd",
+                    "on-surface": "#181c1e",
+                    "error-container": "#ffdad6",
+                    "inverse-surface": "#2d3133",
+                    "outline-variant": "#c3c6d6",
+                    "surface-dim": "#d7dadd",
+                    "success": "#16A34A",
+                    "inverse-on-surface": "#eef1f4",
+                    "on-tertiary-fixed-variant": "#354767",
+                    "surface": "#f7fafd",
+                    "secondary-fixed": "#bfe8ff",
+                    "secondary": "#006685",
+                    "on-surface-variant": "#424653",
+                    "on-tertiary-fixed": "#061b39",
+                    "azul-accion": "#0E56C9",
+                    "warning": "#F59E0B",
+                    "grafito-secundario": "#46586E",
+                    "on-error": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "16px",
+                    "stack-sm": "8px",
+                    "stack-md": "16px",
+                    "container-margin": "24px",
+                    "unit": "4px",
+                    "stack-lg": "32px"
+            },
+            "fontFamily": {
+                    "body-md": ["Public Sans", "sans-serif"],
+                    "number-data": ["Public Sans", "sans-serif"],
+                    "label-md": ["Public Sans", "sans-serif"],
+                    "headline-lg": ["Archivo Narrow", "sans-serif"],
+                    "headline-md": ["Archivo Narrow", "sans-serif"],
+                    "display": ["Archivo Narrow", "sans-serif"],
+                    "body-lg": ["Public Sans", "sans-serif"],
+                    "headline-lg-mobile": ["Archivo Narrow", "sans-serif"]
+            },
+            "fontSize": {
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "number-data": ["16px", {"lineHeight": "1", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "0.95", "letterSpacing": "-0.03em", "fontWeight": "800"}],
+                    "headline-md": ["24px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "display": ["48px", {"lineHeight": "0.95", "letterSpacing": "-0.03em", "fontWeight": "800"}],
+                    "body-lg": ["18px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "0.95", "letterSpacing": "-0.03em", "fontWeight": "800"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      body {
+        background-color: #F6F9FC; /* Humo Fondo */
+        color: #181C1E;
+        font-family: 'Public Sans', sans-serif;
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      /* Court markings background pattern for Tinta sections */
+      .court-pattern {
+        background-image: linear-gradient(rgba(92, 197, 242, 0.16) 1px, transparent 1px), 
+                          linear-gradient(90deg, rgba(92, 197, 242, 0.16) 1px, transparent 1px);
+        background-size: 100px 100px;
+      }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="bg-tinta w-full fixed top-0 z-50">
+<nav class="flex justify-between items-center w-full px-container-margin py-4 max-w-7xl mx-auto">
+<div class="font-display text-display text-on-primary lowercase tracking-tighter">saque</div>
+<div class="hidden md:flex items-center gap-stack-lg">
+<a class="text-on-primary font-bold border-b-2 border-celeste-marca pb-1 transition-all" href="#">Turnos</a>
+<a class="text-on-primary/70 font-body-md hover:text-on-primary transition-colors duration-200" href="#">Buscar canchas</a>
+<a class="text-on-primary/70 font-body-md hover:text-on-primary transition-colors duration-200" href="#">Perfiles</a>
+</div>
+<button class="bg-azul-accion text-on-primary font-label-md px-6 py-2 rounded-full scale-95 active:opacity-80 transition-all">
+                Ingresar
+            </button>
+</nav>
+</header>
+<main class="flex-grow pt-32 pb-stack-lg px-container-margin">
+<div class="max-w-3xl mx-auto">
+<!-- Section Header -->
+<div class="mb-stack-lg text-center md:text-left">
+<h1 class="font-headline-lg text-headline-lg text-tinta uppercase">Confirmá tu reserva</h1>
+<p class="text-grafito-secundario font-body-md mt-2">Revisá los detalles antes de realizar el pago de la seña.</p>
+</div>
+<!-- Main Checkout Card -->
+<div class="bg-white rounded-[16px] p-12 shadow-none flex flex-col gap-stack-lg">
+<!-- Summary Section -->
+<div class="flex flex-col gap-unit">
+<h2 class="font-headline-md text-headline-md text-tinta">La Bombonerita</h2>
+<div class="flex items-center gap-2 text-grafito-secundario">
+<span class="material-symbols-outlined text-[18px]">sports_soccer</span>
+<p class="font-body-md">Cancha 2 · Fútbol 5</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md mt-6">
+<div class="flex items-center gap-3 p-4 bg-humo-fondo rounded-xl">
+<span class="material-symbols-outlined text-azul-accion">calendar_today</span>
+<div>
+<p class="text-xs text-grafito-secundario uppercase font-bold">Fecha y hora</p>
+<p class="font-number-data text-tinta">Sábado 26 de julio, 20:30</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-4 bg-humo-fondo rounded-xl">
+<span class="material-symbols-outlined text-azul-accion">schedule</span>
+<div>
+<p class="text-xs text-grafito-secundario uppercase font-bold">Duración</p>
+<p class="font-number-data text-tinta">60 minutos</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Price Breakdown Section -->
+<div class="flex flex-col gap-stack-md pt-stack-lg">
+<div class="flex justify-between items-center text-grafito-secundario">
+<span class="font-body-md">Total de la cancha</span>
+<span class="font-number-data">$18.500</span>
+</div>
+<!-- Destacado: Seña -->
+<div class="flex justify-between items-center py-6 border-y border-borde-ui border-dashed">
+<div>
+<span class="font-headline-md text-azul-accion">Seña a pagar ahora</span>
+<p class="text-xs text-grafito-secundario">Asegurá tu lugar mediante pago online</p>
+</div>
+<span class="font-display text-[40px] text-azul-accion tracking-tighter">$5.000</span>
+</div>
+<div class="flex justify-between items-center text-grafito-secundario">
+<span class="font-body-md">Resto en el complejo</span>
+<span class="font-number-data text-tinta">$13.500</span>
+</div>
+</div>
+<!-- Action Section -->
+<div class="mt-stack-lg flex flex-col items-center gap-stack-md">
+<button class="w-full bg-azul-accion text-on-primary font-headline-md py-6 rounded-full hover:opacity-90 active:scale-[0.98] transition-all uppercase tracking-wide">
+                        Pagar seña $5.000
+                    </button>
+<!-- Countdown Banner -->
+<div class="w-full bg-tertiary-fixed/30 flex items-center justify-center gap-2 py-3 px-6 rounded-lg text-tertiary">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">timer</span>
+<span class="font-body-md">Te guardamos el turno por <strong class="font-bold" id="timer">09:47</strong></span>
+</div>
+<p class="text-grafito-secundario text-sm font-body-md text-center mt-2 italic">
+                        Cancelación gratis hasta 24hs antes
+                    </p>
+</div>
+</div>
+<!-- Trust Badges / Info -->
+<div class="mt-stack-lg grid grid-cols-1 md:grid-cols-3 gap-gutter text-center">
+<div class="flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-grafito-secundario">verified_user</span>
+<p class="text-xs text-grafito-secundario font-body-md">Pago 100% seguro</p>
+</div>
+<div class="flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-grafito-secundario">credit_card</span>
+<p class="text-xs text-grafito-secundario font-body-md">Aceptamos todas las tarjetas</p>
+</div>
+<div class="flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-grafito-secundario">support_agent</span>
+<p class="text-xs text-grafito-secundario font-body-md">Soporte por WhatsApp</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-tinta w-full mt-auto">
+<div class="w-full px-container-margin py-stack-lg flex flex-col md:flex-row justify-between items-center gap-gutter max-w-7xl mx-auto">
+<div class="font-display text-headline-md text-on-primary lowercase">saque</div>
+<div class="flex flex-wrap justify-center gap-stack-md">
+<a class="text-on-primary/60 font-body-md hover:text-celeste-marca transition-colors" href="#">Privacidad</a>
+<a class="text-on-primary/60 font-body-md hover:text-celeste-marca transition-colors" href="#">Términos y condiciones</a>
+<a class="text-on-primary/60 font-body-md hover:text-celeste-marca transition-colors" href="#">Contacto</a>
+<a class="text-on-primary/60 font-body-md hover:text-celeste-marca transition-colors" href="#">Preguntas frecuentes</a>
+</div>
+<div class="text-on-primary/60 font-body-md text-sm">
+                © 2024 saque. todos los derechos reservados.
+            </div>
+</div>
+</footer>
+<!-- Countdown Script -->
+<script>
+        function startTimer(duration, display) {
+            let timer = duration, minutes, seconds;
+            setInterval(function () {
+                minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                display.textContent = minutes + ":" + seconds;
+
+                if (--timer < 0) {
+                    timer = 0;
+                }
+            }, 1000);
+        }
+
+        window.onload = function () {
+            let fiveMinutes = 60 * 9 + 47,
+                display = document.querySelector('#timer');
+            startTimer(fiveMinutes, display);
+        };
+    </script>
+</body></html>

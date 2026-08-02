@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>saque - Canchas en José C. Paz</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;600;700;800&amp;family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#ebeef1",
+                        "outline": "#737785",
+                        "tertiary-fixed-dim": "#b4c7ed",
+                        "borde-u\u00ec": "#E2E8F0",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed": "#061b39",
+                        "primary-fixed-dim": "#b1c5ff",
+                        "inverse-surface": "#2d3133",
+                        "secondary-fixed": "#bfe8ff",
+                        "on-primary": "#ffffff",
+                        "celeste-marca": "#5CC5F2",
+                        "tertiary": "#344666",
+                        "on-tertiary-fixed-variant": "#354767",
+                        "surface-container-low": "#f1f4f7",
+                        "on-tertiary-container": "#c5d8ff",
+                        "primary-fixed": "#dae2ff",
+                        "on-surface": "#181c1e",
+                        "inverse-on-surface": "#eef1f4",
+                        "azul-accion": "#0E56C9",
+                        "muted": "#94A3B8",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e0e3e6",
+                        "humo-fondo": "#F6F9FC",
+                        "surface-container-high": "#e5e8eb",
+                        "grafito-secundario": "#46586E",
+                        "on-background": "#181c1e",
+                        "on-primary-fixed": "#001947",
+                        "on-primary-container": "#c9d6ff",
+                        "tertiary-fixed": "#d6e3ff",
+                        "outline-variant": "#c3c6d6",
+                        "primary": "#00409d",
+                        "on-error": "#ffffff",
+                        "primary-container": "#0e56c9",
+                        "on-secondary-fixed-variant": "#004d65",
+                        "error-container": "#ffdad6",
+                        "tinta": "#0A1F3D",
+                        "surface-tint": "#1157ca",
+                        "background": "#f7fafd",
+                        "error": "#DC2626",
+                        "surface-variant": "#e0e3e6",
+                        "surface-dim": "#d7dadd",
+                        "on-primary-fixed-variant": "#00419f",
+                        "on-secondary-container": "#005773",
+                        "secondary-fixed-dim": "#6dd2ff",
+                        "on-secondary-fixed": "#001f2a",
+                        "surface": "#f7fafd",
+                        "inverse-primary": "#b1c5ff",
+                        "surface-bright": "#f7fafd",
+                        "on-secondary": "#ffffff",
+                        "warning": "#F59E0B",
+                        "on-error-container": "#93000a",
+                        "secondary": "#006685",
+                        "on-surface-variant": "#424653",
+                        "tertiary-container": "#4c5e7f",
+                        "secondary-container": "#68d0fd",
+                        "success": "#16A34A"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "container-margin": "24px",
+                        "stack-md": "16px",
+                        "gutter": "16px",
+                        "stack-lg": "32px",
+                        "stack-sm": "8px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Archivo Narrow", "sans-serif"],
+                        "body-md": ["Public Sans", "sans-serif"],
+                        "display": ["Archivo Narrow", "sans-serif"],
+                        "label-md": ["Public Sans", "sans-serif"],
+                        "headline-md": ["Archivo Narrow", "sans-serif"],
+                        "number-data": ["Public Sans", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", {"lineHeight": "0.95", "letterSpacing": "-0.03em", "fontWeight": "800"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "display": ["48px", {"lineHeight": "0.95", "letterSpacing": "-0.03em", "fontWeight": "800"}],
+                        "label-md": ["14px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "number-data": ["16px", {"lineHeight": "1", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #F6F9FC;
+            font-family: 'Public Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .court-pattern {
+            background-image: 
+                linear-gradient(rgba(92, 197, 242, 0.16) 1.5px, transparent 1.5px),
+                linear-gradient(90deg, rgba(92, 197, 242, 0.16) 1.5px, transparent 1.5px);
+            background-size: 40px 40px;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<nav class="w-full top-0 sticky z-50 bg-humo-fondo border-b border-borde-uì">
+<div class="flex justify-between items-center px-container-margin py-4 max-w-[1440px] mx-auto">
+<div class="flex items-center gap-8">
+<a class="font-display text-display text-primary lowercase flex items-center gap-1" href="#">saque</a>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-primary font-bold border-b-2 border-primary font-label-md text-label-md" href="#">Buscar canchas</a>
+<a class="text-grafito-secundario hover:text-primary transition-colors font-label-md text-label-md" href="#">Turnos</a>
+<a class="text-grafito-secundario hover:text-primary transition-colors font-label-md text-label-md" href="#">Perfiles</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<a class="hidden md:block text-grafito-secundario hover:text-azul-accion transition-colors font-label-md text-label-md" href="#">Software para negocios</a>
+<button class="bg-azul-accion text-white px-6 py-2 rounded-full font-label-md text-label-md hover:scale-95 transition-transform">
+                    Ingresar
+                </button>
+</div>
+</div>
+</nav>
+<main class="flex-grow max-w-[1440px] mx-auto w-full px-container-margin py-stack-lg">
+<!-- Search & Filters Row -->
+<section class="mb-stack-lg">
+<div class="bg-white rounded-[16px] p-stack-md flex flex-wrap lg:flex-nowrap items-center gap-4">
+<!-- Sport Filter -->
+<div class="flex-1 min-w-[140px] relative">
+<label class="block text-[10px] font-bold text-muted uppercase mb-1 px-3">Deporte</label>
+<div class="flex items-center gap-2 px-3 py-2 bg-humo-fondo rounded-[10px] border-[1.5px] border-borde-uì cursor-pointer">
+<span class="material-symbols-outlined text-primary" data-icon="sports_soccer">sports_soccer</span>
+<span class="font-body-md text-tinta">Fútbol 5</span>
+</div>
+</div>
+<!-- Location Filter -->
+<div class="flex-[1.5] min-w-[200px] relative">
+<label class="block text-[10px] font-bold text-muted uppercase mb-1 px-3">Ubicación</label>
+<div class="flex items-center gap-2 px-3 py-2 bg-humo-fondo rounded-[10px] border-[1.5px] border-borde-uì">
+<span class="material-symbols-outlined text-primary" data-icon="location_on">location_on</span>
+<input class="bg-transparent border-none p-0 focus:ring-0 w-full font-body-md text-tinta" type="text" value="José C. Paz"/>
+</div>
+</div>
+<!-- Date Filter -->
+<div class="flex-1 min-w-[140px] relative">
+<label class="block text-[10px] font-bold text-muted uppercase mb-1 px-3">Fecha</label>
+<div class="flex items-center gap-2 px-3 py-2 bg-humo-fondo rounded-[10px] border-[1.5px] border-borde-uì cursor-pointer">
+<span class="material-symbols-outlined text-primary" data-icon="calendar_today">calendar_today</span>
+<span class="font-body-md text-tinta">Hoy</span>
+</div>
+</div>
+<!-- Time Filter -->
+<div class="flex-1 min-w-[140px] relative">
+<label class="block text-[10px] font-bold text-muted uppercase mb-1 px-3">Horario</label>
+<div class="flex items-center gap-2 px-3 py-2 bg-humo-fondo rounded-[10px] border-[1.5px] border-borde-uì cursor-pointer">
+<span class="material-symbols-outlined text-primary" data-icon="schedule">schedule</span>
+<span class="font-body-md text-tinta">Noche</span>
+</div>
+</div>
+<!-- More Filters Button -->
+<button class="px-6 h-[46px] mt-4 lg:mt-0 self-end border-[1.5px] border-azul-accion text-azul-accion rounded-full font-label-md hover:bg-azul-accion hover:text-white transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]" data-icon="tune">tune</span>
+                    Más filtros
+                </button>
+</div>
+</section>
+<!-- Results Header -->
+<div class="mb-stack-lg">
+<h1 class="font-headline-lg text-headline-lg text-tinta mb-1">Canchas en José C. Paz</h1>
+<p class="font-body-md text-grafito-secundario">Encontramos 12 lugares para que juegues hoy</p>
+</div>
+<!-- Cards Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-gutter">
+<!-- Card 1 -->
+<div class="bg-white rounded-[16px] overflow-hidden group">
+<div class="flex flex-col md:flex-row">
+<div class="md:w-2/5 aspect-video md:aspect-auto">
+<img class="w-full h-full object-cover" data-alt="High-quality professional soccer complex photography featuring lush synthetic turf fields under modern floodlights at dusk. The scene is crisp and athletic, with a clean atmosphere and deep blue evening sky. Professional architectural lighting highlights the textures of the green grass and white perimeter lines, maintaining a corporate and energetic tone." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAE1wAkrBECyCoWAliGJvVOqpRGQ5pdCkbb2ADuDKIcoYfW8PxTki0MBcma816EaHbbsRbjTDiDHGMBSjhUUgXR6yHxTHsKe2jQLqrXsVXCby2HExgSSBz7r4apc6W15bXvu2c2G-13pe7Aue0gp1l33Dbq9vggwQd0x53xDt6PRv3NNHaL8OcyXA9BgSUMxyXiwiyRZSTIALyvj-v8zY-_Z6W5fqGaL8T5nN8SkbijcTl30SvCAnzjalH6VAzGqzAlB85hl0fNJM4"/>
+</div>
+<div class="md:w-3/5 p-stack-md flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-md text-headline-md text-tinta">Arena Sport Club</h3>
+<div class="flex gap-1">
+<span class="bg-surface-container px-2 py-1 rounded-lg text-[10px] font-bold text-primary uppercase">F5</span>
+<span class="bg-surface-container px-2 py-1 rounded-lg text-[10px] font-bold text-primary uppercase">F7</span>
+</div>
+</div>
+<div class="flex items-center gap-1 text-muted mb-4">
+<span class="material-symbols-outlined text-[16px]" data-icon="near_me">near_me</span>
+<span class="font-label-md text-label-md">1.2 km • Av. Hipólito Yrigoyen 1540</span>
+</div>
+<div class="mb-4">
+<p class="text-[11px] font-bold text-grafito-secundario uppercase mb-2">Hoy a la noche</p>
+<div class="flex flex-wrap gap-2">
+<button class="bg-azul-accion text-white font-number-data text-number-data px-3 py-1.5 rounded-full hover:scale-105 transition-transform tabular-nums">19:00</button>
+<button class="bg-azul-accion text-white font-number-data text-number-data px-3 py-1.5 rounded-full hover:scale-105 transition-transform tabular-nums">20:30</button>
+<button class="bg-azul-accion text-white font-number-data text-number-data px-3 py-1.5 rounded-full hover:scale-105 transition-transform tabular-nums">22:00</button>
+<button class="border-[1.5px] border-borde-uì text-grafito-secundario font-number-data text-number-data px-3 py-1.5 rounded-full tabular-nums">+4</button>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-end border-t border-borde-uì pt-3">
+<div class="flex flex-col">
+<span class="text-[12px] text-muted leading-tight">Desde</span>
+<span class="font-headline-md text-headline-md text-tinta tabular-nums">$24.000</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[12px] text-muted leading-tight">Seña</span>
+<span class="font-number-data text-number-data text-grafito-secundario tabular-nums">$8.000</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white rounded-[16px] overflow-hidden group">
+<div class="flex flex-col md:flex-row">
+<div class="md:w-2/5 aspect-video md:aspect-auto">
+<img class="w-full h-full object-cover" data-alt="Daytime view of a premier sports facility with multiple pristine tennis and paddle courts. The lighting is bright and natural light-mode. The surrounding environment is clean with minimalist fences and high-quality blue court surfaces. The overall aesthetic is professional, sporty, and sophisticated, reflecting a modern athletic lifestyle." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnQiSM0uO1ThBvQoOqMeOnwSuWmxDKQfovNpi2pSZJF5f3gAnLkyj7EECA1bHisQszeFRI1h177PS8K-nkNpTYAfk7pC3XS1l--pCBD1HQSlIbQ7stCu76k_73Nx_2hXXv8_wqdRiiSMJD0iiY5oy5c8kYdY_0KHASDnT1Gxeh-V8XTZhhDK09AA1VAcD2Sx3-TGpCBjaiRQxvI_GX7pKAQanvtrFOGsyNTTgzdkiPOkSsH4GrFyKMby5pyt2NeV-MCMatAdiVegE"/>
+</div>
+<div class="md:w-3/5 p-stack-md flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-md text-headline-md text-tinta">El Trébol Fútbol</h3>
+<div class="flex gap-1">
+<span class="bg-surface-container px-2 py-1 rounded-lg text-[10px] font-bold text-primary uppercase">F5</span>
+<span class="bg-surface-container px-2 py-1 rounded-lg text-[10px] font-bold text-primary uppercase">Padel</span>
+</div>
+</div>
+<div class="flex items-center gap-1 text-muted mb-4">
+<span class="material-symbols-outlined text-[16px]" data-icon="near_me">near_me</span>
+<span class="font-label-md text-label-md">2.5 km • Ruta 197 y Artigas</span>
+</div>
+<div class="mb-4">
+<p class="text-[11px] font-bold text-grafito-secundario uppercase mb-2">Hoy a la noche</p>
+<div class="flex flex-wrap gap-2">
+<button class="bg-azul-accion text-white font-number-data text-number-data px-3 py-1.5 rounded-full hover:scale-105 transition-transform tabular-nums">21:00</button>
+<button class="bg-azul-accion text-white font-number-data text-number-data px-3 py-1.5 rounded-full hover:scale-105 transition-transform tabular-nums">22:30</button>
+<button class="border-[1.5px] border-borde-uì text-grafito-secundario font-number-data text-number-data px-3 py-1.5 rounded-full tabular-nums">+2</button>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-end border-t border-borde-uì pt-3">
+<div class="flex flex-col">
+<span class="text-[12px] text-muted leading-tight">Desde</span>
+<span class="font-headline-md text-headline-md text-tinta tabular-nums">$22.500</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[12px] text-muted leading-tight">Seña</span>
+<span class="font-number-data text-number-data text-grafito-secundario tabular-nums">$6.500</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white rounded-[16px] overflow-hidden group">
+<div class="flex flex-col md:flex-row">
+<div class="md:w-2/5 aspect-video md:aspect-auto">
+<img class="w-full h-full object-cover" data-alt="A clean, modern sports center interior with high ceilings and premium lighting. The focus is on a perfectly maintained indoor futsal court with bright yellow and white markings on a polished wood surface. The surrounding walls are neutral, maintaining a high-contrast corporate sports brand feel. No people are visible, emphasizing the quality of the facilities." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLMABfUKqMs9W9Y-7OVTucfzwZHV0EJwY1DezPVQFcVoSgsoy2blrQkFBRPGla2OmZlBKefLYGUXSXzzF0VX21ci_M9l3Jn0Pwg-5EVd0UC2HP-M5Dtb-zx9IX-tH7PD1Gaq2_c-7_tI3tf72jcTyjpXAXooC35I9xSBh-1ZKogL60rm8GjR4YnpjRVBYacSxxVGbtQO3gIOkfPKwjTteTKRa7GqM0OsWDEdQSlHD7SX-liVDFane_AZTeMH8FUtI2xHlMumywmA4"/>
+</div>
+<div class="md:w-3/5 p-stack-md flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-md text-headline-md text-tinta">Complejo Altamira</h3>
+<div class="flex gap-1">
+<span class="bg-surface-container px-2 py-1 rounded-lg text-[10px] font-bold text-primary uppercase">F5</span>
+</div>
+</div>
+<div class="flex items-center gap-1 text-muted mb-4">
+<span class="material-symbols-outlined text-[16px]" data-icon="near_me">near_me</span>
+<span class="font-label-md text-label-md">3.8 km • Calle 12 y Zuviría</span>
+</div>
+<div class="mb-4">
+<p class="text-[11px] font-bold text-grafito-secundario uppercase mb-2">Hoy a la noche</p>
+<div class="flex flex-wrap gap-2">
+<button class="bg-azul-accion text-white font-number-data text-number-data px-3 py-1.5 rounded-full hover:scale-105 transition-transform tabular-nums">19:00</button>
+<button class="bg-azul-accion text-white font-number-data text-number-data px-3 py-1.5 rounded-full hover:scale-105 transition-transform tabular-nums">20:00</button>
+<button class="bg-azul-accion text-white font-number-data text-number-data px-3 py-1.5 rounded-full hover:scale-105 transition-transform tabular-nums">21:00</button>
+<button class="bg-azul-accion text-white font-number-data text-number-data px-3 py-1.5 rounded-full hover:scale-105 transition-transform tabular-nums">22:00</button>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-end border-t border-borde-uì pt-3">
+<div class="flex flex-col">
+<span class="text-[12px] text-muted leading-tight">Desde</span>
+<span class="font-headline-md text-headline-md text-tinta tabular-nums">$26.000</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[12px] text-muted leading-tight">Seña</span>
+<span class="font-number-data text-number-data text-grafito-secundario tabular-nums">$10.000</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-white rounded-[16px] overflow-hidden group">
+<div class="flex flex-col md:flex-row">
+<div class="md:w-2/5 aspect-video md:aspect-auto">
+<img class="w-full h-full object-cover" data-alt="An outdoor multi-sport complex during the golden hour. The lighting is warm and cinematic, casting long soft shadows across professional-grade soccer fields. The facility is enclosed by high-quality netting and dark structural pillars. The aesthetic is athletic and premium, emphasizing a high-end recreational experience in a serene suburban setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDj6nmCFboJDJ9CgwGH4M3SR2yEtOANGWL4n7Sj_4xC0spheoy7KaJ3YVt2bKUDo8B0GQ506nkF79kAyq3RClo9bXhgXcN5wIEN-A_Zg2EGvvCWa20c3KzO2qjm9c-Mqb7JluXa3RDkhaR3en9AUEA8ae5RnTMk4VujdaybBknfJwBmFr7GrSrSn7OOaOsw-LCIo4FJu4959aclt93j0vVpAQ7cl5SMskJPT7NXNoxWzVywBpFden8j94YGMZSQF4alZu4BAhrd5c8"/>
+</div>
+<div class="md:w-3/5 p-stack-md flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-md text-headline-md text-tinta">Predio Las Heras</h3>
+<div class="flex gap-1">
+<span class="bg-surface-container px-2 py-1 rounded-lg text-[10px] font-bold text-primary uppercase">F5</span>
+<span class="bg-surface-container px-2 py-1 rounded-lg text-[10px] font-bold text-primary uppercase">F11</span>
+</div>
+</div>
+<div class="flex items-center gap-1 text-muted mb-4">
+<span class="material-symbols-outlined text-[16px]" data-icon="near_me">near_me</span>
+<span class="font-label-md text-label-md">4.1 km • General Las Heras 2900</span>
+</div>
+<div class="mb-4">
+<p class="text-[11px] font-bold text-grafito-secundario uppercase mb-2">Hoy a la noche</p>
+<div class="flex flex-wrap gap-2">
+<button class="bg-azul-accion text-white font-number-data text-number-data px-3 py-1.5 rounded-full hover:scale-105 transition-transform tabular-nums">22:00</button>
+<button class="bg-azul-accion text-white font-number-data text-number-data px-3 py-1.5 rounded-full hover:scale-105 transition-transform tabular-nums">23:00</button>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-end border-t border-borde-uì pt-3">
+<div class="flex flex-col">
+<span class="text-[12px] text-muted leading-tight">Desde</span>
+<span class="font-headline-md text-headline-md text-tinta tabular-nums">$20.000</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[12px] text-muted leading-tight">Seña</span>
+<span class="font-number-data text-number-data text-grafito-secundario tabular-nums">$5.000</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Map CTA (Optional but stylistic) -->
+<div class="mt-stack-lg bg-tinta rounded-[16px] p-stack-lg flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
+<div class="absolute inset-0 court-pattern opacity-10"></div>
+<div class="relative z-10 text-center md:text-left mb-6 md:mb-0">
+<h2 class="font-headline-md text-headline-md text-celeste-marca mb-2">¿Preferís ver el mapa?</h2>
+<p class="font-body-md text-white opacity-80">Mirá todas las canchas cercanas a tu ubicación actual.</p>
+</div>
+<button class="relative z-10 bg-white text-tinta px-8 py-3 rounded-full font-label-md hover:scale-95 transition-transform flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+                Abrir mapa
+            </button>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-auto bg-tinta">
+<div class="flex flex-col md:flex-row justify-between items-center px-container-margin py-stack-lg w-full max-w-[1440px] mx-auto">
+<div class="flex flex-col items-center md:items-start gap-2 mb-6 md:mb-0">
+<span class="font-display text-headline-md text-celeste-marca lowercase">saque</span>
+<p class="font-body-md text-on-tertiary-fixed-variant text-label-md">© 2024 saque. Todos los derechos reservados.</p>
+</div>
+<div class="flex gap-8">
+<a class="text-on-tertiary-fixed-variant hover:text-white transition-colors font-label-md text-label-md" href="#">Privacidad</a>
+<a class="text-on-tertiary-fixed-variant hover:text-white transition-colors font-label-md text-label-md" href="#">Términos</a>
+<a class="text-on-tertiary-fixed-variant hover:text-white transition-colors font-label-md text-label-md" href="#">Contacto</a>
+</div>
+</div>
+</footer>
+<script>
+        // Micro-interactions for buttons
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('mousedown', () => {
+                button.classList.add('scale-95');
+            });
+            button.addEventListener('mouseup', () => {
+                button.classList.remove('scale-95');
+            });
+            button.addEventListener('mouseleave', () => {
+                button.classList.remove('scale-95');
+            });
+        });
+
+        // Simple filter select logic simulation
+        const filterItems = document.querySelectorAll('.bg-humo-fondo.cursor-pointer');
+        filterItems.forEach(item => {
+            item.addEventListener('click', () => {
+                item.classList.toggle('border-azul-accion');
+                item.classList.toggle('bg-white');
+            });
+        });
+    </script>
+</body></html>

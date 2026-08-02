@@ -1,0 +1,402 @@
+<!DOCTYPE html><html class="light" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>saque - Detalle de Complejo</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700;800&amp;family=Public+Sans:wght@300;400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@100..900&amp;family=Public+Sans:wght@100..900&amp;display=swap" rel="stylesheet">
+<style>
+        body { font-family: 'Public Sans', sans-serif; }
+        .font-display { font-family: 'Archivo Narrow', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for horizontal lists */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-variant": "#e0e3e6",
+                      "grafito-secundario": "#46586E",
+                      "tertiary-fixed": "#d6e3ff",
+                      "muted": "#94A3B8",
+                      "outline": "#737785",
+                      "tertiary-fixed-dim": "#b4c7ed",
+                      "primary-fixed-dim": "#b1c5ff",
+                      "secondary-container": "#68d0fd",
+                      "on-background": "#181c1e",
+                      "inverse-surface": "#2d3133",
+                      "surface-tint": "#1157ca",
+                      "on-error": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "inverse-on-surface": "#eef1f4",
+                      "on-surface-variant": "#424653",
+                      "secondary-fixed": "#bfe8ff",
+                      "on-tertiary-fixed-variant": "#354767",
+                      "error-container": "#ffdad6",
+                      "tertiary": "#344666",
+                      "on-primary": "#ffffff",
+                      "primary-fixed": "#dae2ff",
+                      "borde-ui": "#E2E8F0",
+                      "surface-container-high": "#e5e8eb",
+                      "warning": "#F59E0B",
+                      "azul-accion": "#0E56C9",
+                      "secondary": "#006685",
+                      "on-primary-fixed-variant": "#00419f",
+                      "on-surface": "#181c1e",
+                      "primary": "#00409d",
+                      "celeste-marca": "#5CC5F2",
+                      "tertiary-container": "#4c5e7f",
+                      "on-primary-fixed": "#001947",
+                      "humo-fondo": "#F6F9FC",
+                      "background": "#f7fafd",
+                      "surface-container-highest": "#e0e3e6",
+                      "error": "#DC2626",
+                      "on-secondary-fixed": "#001f2a",
+                      "on-secondary-container": "#005773",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary-container": "#c5d8ff",
+                      "surface-container": "#ebeef1",
+                      "secondary-fixed-dim": "#6dd2ff",
+                      "primary-container": "#0e56c9",
+                      "on-error-container": "#93000a",
+                      "on-primary-container": "#c9d6ff",
+                      "tinta": "#0A1F3D",
+                      "outline-variant": "#c3c6d6",
+                      "inverse-primary": "#b1c5ff",
+                      "on-tertiary": "#ffffff",
+                      "surface-bright": "#f7fafd",
+                      "surface": "#f7fafd",
+                      "success": "#16A34A",
+                      "on-secondary-fixed-variant": "#004d65",
+                      "surface-dim": "#d7dadd",
+                      "on-tertiary-fixed": "#061b39",
+                      "surface-container-low": "#f1f4f7"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-margin": "24px",
+                      "unit": "4px",
+                      "gutter": "16px",
+                      "stack-md": "16px",
+                      "stack-lg": "32px",
+                      "stack-sm": "8px"
+              },
+              "fontFamily": {
+                      "number-data": ["Public Sans"],
+                      "body-md": ["Public Sans"],
+                      "label-md": ["Public Sans"],
+                      "body-lg": ["Public Sans"],
+                      "display": ["Archivo Narrow"],
+                      "headline-md": ["Archivo Narrow"],
+                      "headline-lg": ["Archivo Narrow"],
+                      "headline-lg-mobile": ["Archivo Narrow"]
+              }
+            }
+          }
+        }
+    </script>
+</head>
+<body class="bg-humo-fondo text-on-background selection:bg-celeste-marca selection:text-tinta">
+<!-- Top NavBar (Shared Component Guidance) -->
+<header class="sticky top-0 z-50 bg-humo-fondo dark:bg-tinta border-b border-borde-ui dark:border-grafito-secundario">
+<div class="flex justify-between items-center w-full px-container-margin max-w-7xl mx-auto h-20">
+<a class="font-display text-headline-md text-tinta dark:text-humo-fondo tracking-tighter" href="#">saque</a>
+<nav class="hidden md:flex space-x-8 items-center">
+<a class="font-label-md text-label-md text-azul-accion border-b-2 border-azul-accion pb-1" href="#">Buscar canchas</a>
+<a class="font-label-md text-label-md text-grafito-secundario dark:text-muted hover:text-tinta dark:hover:text-humo-fondo transition-colors duration-200" href="#">Turnos</a>
+<a class="font-label-md text-label-md text-grafito-secundario dark:text-muted hover:text-tinta dark:hover:text-humo-fondo transition-colors duration-200" href="#">Perfiles</a>
+</nav>
+<div class="flex items-center space-x-4">
+<a class="font-label-md text-label-md text-grafito-secundario hover:text-tinta transition-colors" href="#">Software para negocios</a>
+<button class="bg-azul-accion text-white px-6 py-2 rounded-full font-label-md text-label-md hover:opacity-90 transition-opacity">Ingresar</button>
+</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto pb-48 md:pb-32">
+<!-- Gallery Section -->
+<section class="relative w-full overflow-hidden bg-tinta group">
+<div class="flex transition-transform duration-500 ease-out h-[300px] md:h-[500px]" id="gallery" style="transform: translateX(-100%);">
+<div class="min-w-full h-full relative">
+<img class="w-full h-full object-cover" data-alt="A cinematic wide shot of a modern sports complex with pristine blue padel courts and green football turfs under soft evening lighting. The architecture is minimalist with metallic structures and glass panels, reflecting a professional and energetic atmosphere. The lighting is high-key with soft glows on the playing surfaces, emphasizing a clean and premium sports facility." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAb4yqeRZA58S2lHD55bdHYEtPAVwz2qDb9HA2deyfT7gD0em9mpBJlqK_dbWsVxecegxjYWf2aLa1dxlBgLWoHHo1m61cvANx8NQddNmql08twzRHIzp3OdLfha8zOweMxAeEEzc4Wyt1ENLw0R25YKUH8xKhlMp2fdkZXYuJF2HX-v4s1YnFDbVBP0VnUmm8qsNO9urUA8zZIJTGL5veU8Tbfay55Hd8qav3z-gQUAyyfTVEyLUU4NFlEOkPgKTZmo03_9KrFRtk">
+</div>
+<div class="min-w-full h-full relative">
+<img class="w-full h-full object-cover" data-alt="An interior close-up shot of a professional synthetic football field, showing the detailed texture of the green grass and white boundary lines. The perspective is low to the ground, suggesting action and precision. In the background, modern stadium lighting casts a powerful but diffused glow, maintaining the corporate and minimalist aesthetic of the saque brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsWfTpanoiTLlBCv74_hQzBJhugFNWG8v9VjWIXUDj_ETz5-lmOflQNyAqcfypL3yHpn987z7n1rZKwaCzcAm62IYr__43rZckrWGwJ2C7Qtzr3OfeLr1svqwqb2KVQYmmfgVYB8peRHY7EKWO9Cm8ST8JOFJJGu5jzxL1N5NIX2gdLTn-9k4i72E3OuBkUBgTh8o4xgFrrms8M09wDi2kcnv2Z69FXhAabkOCLHj2gSOfXFA3uhAJNmLY16UfoXj4f01scevoae0">
+</div>
+<div class="min-w-full h-full relative">
+<img class="w-full h-full object-cover" data-alt="A clean, minimalist locker room area in a high-end sports complex, featuring light wooden benches and sleek charcoal grey lockers. The space is illuminated by natural light through high windows, creating a serene and hygienic environment. The design follows the Rioplatense minimalist style with solid surfaces and zero unnecessary ornamentation." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0493rfR_temeXbiUavlyLEIf4jPLcU3usLFdPwpx6T683GlRK7gQ58UcH8v8JtIJFfND9xWJfHIoh6l7Dscg1fv8XKYhKeP4vdYMC7aAdvf8bf0RGXwrMRtW1-em8VLZAPPJsb4RVCRzDXeF8toX6yN6N48iEFYUb9i9HOOhrDAndqe5FRin8iZ4fDH5YXGEO5Hqv7WdWyyOpq2qdKo3OHMAqjFVkAq9DKCAK0dNmzYpdOX6BoDdM1C_PIm53kBCjYIepMm31ndA">
+</div>
+<div class="min-w-full h-full relative">
+<img class="w-full h-full object-cover" data-alt="A night view of outdoor football courts at a premium sports club, with vibrant green synthetic turf contrasting against a deep indigo sky. Powerful LED floodlights create sharp geometric shadows on the ground. The composition is balanced and professional, highlighting the structural clarity and high-contrast intersections of the sports facility." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_V-PC6ago9tYZLoit5I8nvvjnWikbwzxFHeeGwoyVfifwgQeqVtPwj8mMnDCi5_Q7AJV9Jt7lg4ez_EP1SuzLgCMmwwuRoy70ICmi3ngfS2siFL53XCtcA2FEe5fAwbLcWXykikml53H29b2ZZ-kwxeosTVvL0-kAe5UJsXkT4EXwfgbLv1zBL0RcWDPH3529p3kyFbuYABFD-IJjUqPDJtzL-KFV6Cu-ama3AMkzrXexYZXyh8fitumXUb34vk0Vg677_qTNSXY">
+</div>
+<div class="min-w-full h-full relative">
+<img class="w-full h-full object-cover" data-alt="A social area in a sports complex featuring a modern parrilla grill with stainless steel finishes and minimalist concrete seating. The lighting is warm and inviting, perfect for post-match gatherings. The aesthetic is grounded in the local culture, combining functional corporate design with traditional social spaces for an authentic Rioplatense experience." src="https://lh3.googleusercontent.com/aida-public/AB6AXuABUsK0aeAnm9SeIAr1rqOj2j0KqbIQPkkS36ixt1jDjBAm09mu_LPpGxNO1CgbaVOkMNUiWV1f3cbem0-blPaJcYC2HHqwM07axOJyGsp-EV7-jtCexFQ-hTgh-4jKtLl8J7FCnLaMUwJI7S8tPrgxIi3EfBwE7KhlIkEYEqedyrm1CGZjodyGCqyZA2T8fiEs_WQksVnRE41B-OGkKD7eDi_cV4cFqI4djUwSfr2WvTmB3xHU7AnqUjfxB3mqTE5Ju7KPYYnCOO4">
+</div>
+</div>
+<!-- Gallery Controls -->
+<button class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md transition-all" onclick="moveGallery(-1)">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md transition-all" onclick="moveGallery(1)">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+<div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2">
+<div class="w-2 h-2 rounded-full bg-white opacity-100" style="opacity: 0.4;"></div>
+<div class="w-2 h-2 rounded-full bg-white opacity-40" style="opacity: 1;"></div>
+<div class="w-2 h-2 rounded-full bg-white opacity-40" style="opacity: 0.4;"></div>
+<div class="w-2 h-2 rounded-full bg-white opacity-40" style="opacity: 0.4;"></div>
+<div class="w-2 h-2 rounded-full bg-white opacity-40" style="opacity: 0.4;"></div>
+</div>
+</section>
+<!-- Main Content -->
+<div class="px-container-margin py-stack-lg flex flex-col gap-12">
+<!-- Header Section -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<span class="bg-azul-accion text-white px-3 py-0.5 rounded text-[12px] font-bold tracking-wider">NUEVO</span>
+<div class="flex gap-2">
+<span class="px-3 py-1 rounded-full bg-white border border-borde-ui text-grafito-secundario text-label-md font-label-md">Fútbol 5</span>
+<span class="px-3 py-1 rounded-full bg-white border border-borde-ui text-grafito-secundario text-label-md font-label-md">Fútbol 7</span>
+<span class="px-3 py-1 rounded-full bg-white border border-borde-ui text-grafito-secundario text-label-md font-label-md">Pádel</span>
+</div>
+</div>
+<h1 class="font-display text-[48px] md:text-[64px] font-extrabold text-tinta leading-none mb-4">La Bombonerita Complejo</h1>
+<div class="flex items-center text-grafito-secundario">
+<span class="material-symbols-outlined mr-2">location_on</span>
+<p class="font-body-md text-body-md">Av. del Libertador 4500, Palermo, Ciudad Autónoma de Buenos Aires</p>
+</div>
+</div>
+</section>
+
+<!-- Content Grid: Canchas & Servicios -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+<!-- Canchas -->
+<div class="md:col-span-2 space-y-8">
+<h2 class="font-display text-headline-md text-tinta">Canchas</h2>
+<div class="w-full overflow-hidden rounded-xl border border-borde-ui bg-white">
+<div class="overflow-x-auto no-scrollbar">
+<div class="min-w-[1000px]">
+<!-- Grid Header (Hours) -->
+<div class="flex border-b border-borde-ui bg-humo-fondo">
+<div class="w-48 shrink-0 p-4 border-r border-borde-ui"></div>
+<div class="flex flex-1">
+<div class="flex-1 p-4 text-center font-number-data text-[12px] text-grafito-secundario border-r border-borde-ui/50">08</div>
+<div class="flex-1 p-4 text-center font-number-data text-[12px] text-grafito-secundario border-r border-borde-ui/50">09</div>
+<div class="flex-1 p-4 text-center font-number-data text-[12px] text-grafito-secundario border-r border-borde-ui/50">10</div>
+<div class="flex-1 p-4 text-center font-number-data text-[12px] text-grafito-secundario border-r border-borde-ui/50">11</div>
+<div class="flex-1 p-4 text-center font-number-data text-[12px] text-grafito-secundario border-r border-borde-ui/50">12</div>
+<div class="flex-1 p-4 text-center font-number-data text-[12px] text-grafito-secundario border-r border-borde-ui/50">13</div>
+<div class="flex-1 p-4 text-center font-number-data text-[12px] text-grafito-secundario border-r border-borde-ui/50">14</div>
+<div class="flex-1 p-4 text-center font-number-data text-[12px] text-grafito-secundario border-r border-borde-ui/50">15</div>
+<div class="flex-1 p-4 text-center font-number-data text-[12px] text-grafito-secundario border-r border-borde-ui/50">16</div>
+<div class="flex-1 p-4 text-center font-number-data text-[12px] text-grafito-secundario border-r border-borde-ui/50">17</div>
+<div class="flex-1 p-4 text-center font-number-data text-[12px] text-grafito-secundario border-r border-borde-ui/50">18</div>
+<div class="flex-1 p-4 text-center font-number-data text-[12px] text-grafito-secundario border-r border-borde-ui/50">19</div>
+<div class="flex-1 p-4 text-center font-number-data text-[12px] text-grafito-secundario border-r border-borde-ui/50">20</div>
+<div class="flex-1 p-4 text-center font-number-data text-[12px] text-grafito-secundario border-r border-borde-ui/50">21</div>
+<div class="flex-1 p-4 text-center font-number-data text-[12px] text-grafito-secundario border-r border-borde-ui/50">22</div>
+<div class="flex-1 p-4 text-center font-number-data text-[12px] text-grafito-secundario">23</div>
+</div>
+</div>
+<!-- Grid Rows -->
+<div class="divide-y divide-borde-ui">
+<!-- Row 1 -->
+<div class="flex h-24">
+<div class="w-48 shrink-0 p-4 border-r border-borde-ui bg-white sticky left-0 z-10">
+<p class="font-display text-label-md text-tinta">Cancha 1 F5</p>
+<p class="text-[10px] text-muted leading-tight mt-1">Sintético | Iluminación | Techada</p>
+</div>
+<div class="flex flex-1 relative">
+<div class="absolute inset-y-2 left-[56.25%] right-[12.5%] bg-grafito-secundario/40 rounded-lg"></div>
+<div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1"></div>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="flex h-24">
+<div class="w-48 shrink-0 p-4 border-r border-borde-ui bg-white sticky left-0 z-10">
+<p class="font-display text-label-md text-tinta">Cancha 2 F5</p>
+<p class="text-[10px] text-muted leading-tight mt-1">Sintético | Iluminación | Descubierta</p>
+</div>
+<div class="flex flex-1 relative">
+<div class="absolute inset-y-2 left-[75%] right-[18.75%] bg-grafito-secundario/40 rounded-lg"></div>
+<div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1 border-r border-borde-ui/30"></div><div class="flex-1"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-end gap-6 mt-4">
+<div class="flex items-center gap-2">
+<div class="w-4 h-4 rounded bg-grafito-secundario/40"></div>
+<span class="text-label-md text-grafito-secundario">No disponible</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-4 h-4 rounded bg-success"></div>
+<span class="text-label-md text-grafito-secundario">Tu reserva</span>
+</div>
+</div>
+</div>
+<!-- Servicios -->
+<div class="space-y-8">
+<h2 class="font-display text-headline-md text-tinta">Servicios</h2>
+<div class="flex flex-wrap gap-2">
+<div class="flex items-center gap-2 px-4 py-2 bg-white border border-borde-ui rounded-full text-grafito-secundario">
+<span class="material-symbols-outlined text-[20px]">shower</span>
+<span class="text-label-md font-label-md">Vestuario</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-white border border-borde-ui rounded-full text-grafito-secundario">
+<span class="material-symbols-outlined text-[20px]">outdoor_grill</span>
+<span class="text-label-md font-label-md">Parrilla</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-white border border-borde-ui rounded-full text-grafito-secundario">
+<span class="material-symbols-outlined text-[20px]">local_parking</span>
+<span class="text-label-md font-label-md">Estacionamiento</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-white border border-borde-ui rounded-full text-grafito-secundario">
+<span class="material-symbols-outlined text-[20px]">wifi</span>
+<span class="text-label-md font-label-md">Wi-Fi</span>
+</div>
+</div>
+</div>
+</div>
+<hr class="border-borde-ui">
+<!-- Horarios y Precios -->
+
+<!-- Cómo llegar -->
+<section class="space-y-8">
+<h2 class="font-display text-headline-md text-tinta">Cómo llegar</h2>
+<div class="w-full h-80 bg-surface-variant rounded-xl overflow-hidden relative group">
+<img class="w-full h-full object-cover" data-location="Palermo, Buenos Aires" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDh1AYUVWGnuUP4uIsunEFZfCcTtJGx4fep9Qohzpe_w_D7TOBLoFoOnHAdqduni5fACyqajAtl4nfdtgc38aMWvBpIa090uhjKZID8WCeyLDaqSJPjjxVCZ8oTRyCmdRsC2cHe45wbAjhboo2UWof2Gjbdb2LST84Kzep3RwNbjNVaUP1VOilw7httkpCLi0z61lT1Jf59f5qNhfX_NU-lPBbEsv1E2ehre_E8aKdhWwfN8TqjHeMd8wkkMj40utfKxp6PSOLxCXU">
+<div class="absolute inset-0 bg-tinta/10 group-hover:bg-tinta/0 transition-colors"></div>
+<div class="absolute bottom-6 left-6 bg-white p-4 rounded-lg shadow-sm border border-borde-ui flex items-center gap-4">
+<div class="w-10 h-10 bg-azul-accion/10 text-azul-accion rounded-full flex items-center justify-center" style="opacity: 0.4;">
+<span class="material-symbols-outlined">directions</span>
+</div>
+<div>
+<p class="font-label-md text-tinta leading-tight">Abrir en Google Maps</p>
+<p class="text-[12px] text-grafito-secundario">Av. del Libertador 4500</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Reglas del complejo -->
+<section class="space-y-8">
+<h2 class="font-display text-headline-md text-tinta">Reglas del complejo</h2>
+<div class="max-w-3xl">
+<p class="font-body-md text-body-md text-grafito-secundario leading-relaxed">
+                        Podés cancelar tu reserva sin cargo hasta 24 horas antes del turno. Pasado ese tiempo, la seña no será reembolsada. En caso de lluvia en canchas descubiertas, el complejo se comunicará para reprogramar o realizar la devolución del importe. Se solicita puntualidad y el uso de calzado adecuado para cada superficie.
+                    </p>
+</div>
+</section>
+</div>
+</main>
+<!-- Sticky Bottom Bar -->
+<div class="fixed bottom-0 left-0 right-0 z-[60] bg-white border-t border-borde-ui py-4 shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
+<div class="max-w-7xl mx-auto px-container-margin">
+<!-- Mobile Layout (Stacked) / Desktop (Single Line) -->
+<div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+<!-- Selectors Group -->
+<div class="flex flex-wrap items-center gap-3">
+<!-- Fecha Dropdown -->
+<div class="relative min-w-[160px]">
+<select class="w-full h-11 pl-4 pr-10 appearance-none bg-humo-fondo border-1.5 border-borde-ui rounded-[10px] font-label-md text-tinta focus:border-azul-accion focus:ring-0 transition-all cursor-pointer">
+<option>Hoy, 24 May</option>
+<option>Mañana, 25 May</option>
+<option>Dom, 26 May</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-grafito-secundario pointer-events-none">expand_more</span>
+</div>
+<!-- Cancha Dropdown -->
+<div class="relative min-w-[180px]">
+<select class="w-full h-11 pl-4 pr-10 appearance-none bg-humo-fondo border-1.5 border-borde-ui rounded-[10px] font-label-md text-tinta focus:border-azul-accion focus:ring-0 transition-all cursor-pointer">
+<option>Cancha 1 (F5)</option>
+<option>Cancha 2 (Pádel)</option>
+<option>Cancha 3 (F7)</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-grafito-secundario pointer-events-none">expand_more</span>
+</div>
+<!-- Horarios Scrollable -->
+<div class="flex-1 overflow-x-auto no-scrollbar flex items-center gap-2 px-2 border-l border-borde-ui">
+<button class="shrink-0 h-11 px-6 rounded-full bg-azul-accion text-white font-label-md whitespace-nowrap">19:00</button>
+<button class="shrink-0 h-11 px-6 rounded-full bg-humo-fondo border border-borde-ui text-grafito-secundario font-label-md whitespace-nowrap hover:border-azul-accion transition-colors">20:00</button>
+<button class="shrink-0 h-11 px-6 rounded-full bg-humo-fondo border border-borde-ui text-grafito-secundario font-label-md whitespace-nowrap hover:border-azul-accion transition-colors">21:00</button>
+<button class="shrink-0 h-11 px-6 rounded-full bg-humo-fondo border border-borde-ui text-grafito-secundario font-label-md whitespace-nowrap hover:border-azul-accion transition-colors">22:00</button>
+<button class="shrink-0 h-11 px-6 rounded-full bg-humo-fondo border border-borde-ui text-grafito-secundario font-label-md whitespace-nowrap hover:border-azul-accion transition-colors">23:00</button>
+</div>
+</div>
+<!-- Summary & Action -->
+<div class="flex items-center justify-between lg:justify-end gap-8 pt-4 lg:pt-0 border-t lg:border-t-0 border-borde-ui">
+<div class="flex gap-6">
+<div class="text-right">
+<p class="text-[10px] text-muted font-bold uppercase tracking-widest">Total</p>
+<p class="font-number-data text-number-data text-tinta">$18.000</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-muted font-bold uppercase tracking-widest">Seña</p>
+<p class="font-number-data text-number-data text-azul-accion">$5.000</p>
+</div>
+</div>
+<button class="h-14 px-10 bg-azul-accion text-white rounded-full font-label-md text-[16px] hover:opacity-90 transition-opacity active:scale-95 shadow-lg shadow-azul-accion/20">
+                        Reservar
+                    </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer (Shared Component Guidance) -->
+<footer class="bg-tinta dark:bg-on-background mt-20">
+<div class="w-full py-stack-lg px-container-margin flex flex-col md:flex-row justify-between items-center max-w-7xl mx-auto">
+<div class="flex flex-col items-center md:items-start gap-4 mb-8 md:mb-0">
+<span class="font-display text-headline-lg text-celeste-marca">saque</span>
+<p class="font-body-md text-body-md text-humo-fondo opacity-80">© saque. Todos los derechos reservados.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-8">
+<a class="font-label-md text-label-md text-humo-fondo opacity-80 hover:opacity-100 hover:text-celeste-marca transition-all" href="#">Legales</a>
+<a class="font-label-md text-label-md text-humo-fondo opacity-80 hover:opacity-100 hover:text-celeste-marca transition-all" href="#">Contacto</a>
+<a class="font-label-md text-label-md text-humo-fondo opacity-80 hover:opacity-100 hover:text-celeste-marca transition-all" href="#">Privacidad</a>
+<a class="font-label-md text-label-md text-humo-fondo opacity-80 hover:opacity-100 hover:text-celeste-marca transition-all" href="#">Términos de uso</a>
+</div>
+</div>
+</footer>
+<script>
+        let currentSlide = 0;
+        const totalSlides = 5;
+        const gallery = document.getElementById('gallery');
+        const dots = document.querySelectorAll('.absolute.bottom-6 .rounded-full');
+
+        function moveGallery(direction) {
+            currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+            gallery.style.transform = `translateX(-${currentSlide * 100}%)`;
+            
+            // Update dots
+            dots.forEach((dot, index) => {
+                dot.style.opacity = index === currentSlide ? '1' : '0.4';
+            });
+        }
+
+        // Auto slide
+        setInterval(() => moveGallery(1), 8000);
+
+        // Interactive micro-interactions for buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousedown', () => btn.classList.add('scale-95'));
+            btn.addEventListener('mouseup', () => btn.classList.remove('scale-95'));
+            btn.addEventListener('mouseleave', () => btn.classList.remove('scale-95'));
+        });
+    </script>
+
+
+</body></html>

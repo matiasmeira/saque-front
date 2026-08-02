@@ -1,26 +1,151 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   TOKENS DE MARCA — SAQUE
+   Todo el color y la tipografia del producto salen de aca.
+   Si algun dia cambia la marca, se cambia en este bloque y
+   se propaga a toda la app sola.
+   ============================================================ */
+@theme {
+  /* --- Colores de marca --- */
+  --color-tinta: #0a1f3d; /* texto principal, sidebar del panel */
+  --color-grafito: #46586e; /* texto secundario, labels */
+  --color-azul: #0e56c9; /* botones, links, accion */
+  --color-azul-oscuro: #0a45a5; /* hover del azul */
+  --color-celeste: #5cc5f2; /* acentos, graficos, marca */
+  --color-celeste-suave: #e8f6fd; /* fondos de acento */
+  --color-humo: #f6f9fc; /* fondo general */
+  --color-borde: #e2e8f0; /* bordes de 1px */
+
+  /* --- Colores de estado (SOLO grilla de turnos y reservas) ---
+     Regla: ningun color de marca entra aca, y ningun color de
+     estado se usa para decorar. Si se mezclan, el duenio no
+     puede leer su agenda de un vistazo. */
+  --color-disponible: #16a34a;
+  --color-disponible-suave: #eaf7ee;
+  --color-ocupado: #94a3b8;
+  --color-ocupado-suave: #f1f5f9;
+  --color-pendiente: #f59e0b;
+  --color-pendiente-suave: #fef6e7;
+  --color-cancelado: #dc2626;
+  --color-cancelado-suave: #fdeced;
+
+  /* --- Tipografia --- */
+  --font-display: var(--font-archivo); /* titulares */
+  --font-sans: var(--font-public-sans); /* interfaz y cuerpo */
+
+  /* --- Radios --- */
+  --radius-card: 1rem; /* 16px - tarjetas */
+  --radius-input: 0.625rem; /* 10px - inputs */
+}
+
+/* ============================================================
+   VARIABLES DE SHADCN
+   Los componentes de shadcn leen estos nombres. Al apuntarlos
+   a la paleta de arriba, cualquier componente que instalemos
+   sale pintado con la marca sin tocarle una linea.
+   ============================================================ */
 :root {
+  --radius: 0.625rem;
+
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0a1f3d;
+  --card: #ffffff;
+  --card-foreground: #0a1f3d;
+  --popover: #ffffff;
+  --popover-foreground: #0a1f3d;
+
+  --primary: #0e56c9;
+  --primary-foreground: #ffffff;
+  --secondary: #f6f9fc;
+  --secondary-foreground: #0a1f3d;
+
+  --muted: #f6f9fc;
+  --muted-foreground: #46586e;
+  --accent: #e8f6fd;
+  --accent-foreground: #0a1f3d;
+
+  --destructive: #dc2626;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #5cc5f2;
+
+  --chart-1: #0e56c9;
+  --chart-2: #5cc5f2;
+  --chart-3: #16a34a;
+  --chart-4: #f59e0b;
+  --chart-5: #46586e;
+
+  --sidebar: #0a1f3d;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #5cc5f2;
+  --sidebar-primary-foreground: #0a1f3d;
+  --sidebar-accent: #16305a;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #1c3a63;
+  --sidebar-ring: #5cc5f2;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-borde;
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    @apply bg-humo text-tinta font-sans antialiased;
+  }
+
+  /* Titulares: Archivo, bien apretado. */
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-extrabold tracking-tight;
+  }
+
+  /* Numeros tabulares en todo el producto.
+     Sin esto, los horarios y precios bailan de fila en fila
+     y la grilla del panel se ve amateur. */
+  body {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Foco visible siempre: accesibilidad y usabilidad con teclado. */
+  :focus-visible {
+    @apply outline-celeste outline-2 outline-offset-2;
+  }
 }
