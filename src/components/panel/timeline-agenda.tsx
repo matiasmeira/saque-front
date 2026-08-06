@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Clock, Wrench, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, UserX, Wrench, XCircle } from "lucide-react";
 import { aHHMM, aMinutos } from "@/lib/disponibilidad";
 import { PANEL_HORARIO, type BloqueoDelDia, type EstadoTurno, type Turno } from "@/mocks/agenda";
 
@@ -39,12 +39,14 @@ const ICONO_ESTADO: Record<EstadoTurno, typeof CheckCircle2> = {
   ocupado: CheckCircle2,
   pendiente: Clock,
   cancelado: XCircle,
+  ausente: UserX,
 };
 
 const CLASE_BLOQUE: Record<EstadoTurno, string> = {
   ocupado: "border-ocupado bg-ocupado-suave text-tinta",
   pendiente: "border-pendiente bg-pendiente-suave text-tinta",
   cancelado: "border-cancelado bg-cancelado-suave text-cancelado",
+  ausente: "border-ausente bg-ausente-suave text-ausente",
 };
 
 export function TimelineAgenda({
@@ -65,7 +67,7 @@ export function TimelineAgenda({
   const lineaTop = filaDeMinutos(minutosAhora) * ROW_H;
 
   return (
-    <div className="overflow-hidden rounded-card border border-borde bg-white">
+    <div className="overflow-hidden rounded-card bg-white shadow-card">
       <div className="flex border-b border-borde bg-humo">
         <div className="w-16 shrink-0" />
         <div className="grid flex-1" style={{ gridTemplateColumns: `repeat(${columnas.length}, minmax(0, 1fr))` }}>

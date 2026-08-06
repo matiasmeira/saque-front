@@ -69,10 +69,10 @@ const COLUMNAS = "grid-cols-[1.2fr_1fr_0.6fr_1fr_1.2fr_1.6fr_0.9fr_auto]";
 
 /**
  * Lista de canchas del complejo, físicas y compuestas mezcladas. Un
- * solo contenedor, sin bordes: las filas se separan por fondo
- * alternado + hover, no por líneas (Parte 10: los contenedores con
- * borde de 1px en todos lados son la primera señal de pantalla
- * genérica).
+ * solo contenedor, sin borde exterior: las filas se separan con un
+ * divisor casi invisible (divide-borde/60) y hover sutil, nunca un
+ * borde grueso (Parte 10: los contenedores con borde de 1px en todos
+ * lados son la primera señal de pantalla genérica).
  */
 export function TablaCanchas({
   canchas,
@@ -84,8 +84,8 @@ export function TablaCanchas({
   onAlternarActiva: (cancha: Cancha) => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-card bg-white">
-      <div className={`grid ${COLUMNAS} gap-3 bg-humo px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-grafito`}>
+    <div className="overflow-hidden rounded-card bg-white shadow-card">
+      <div className={`grid ${COLUMNAS} gap-3 bg-humo px-6 py-3 text-xs font-semibold uppercase tracking-wide text-grafito`}>
         <span>Nombre</span>
         <span>Deportes</span>
         <span>Cap.</span>
@@ -96,59 +96,56 @@ export function TablaCanchas({
         <span className="sr-only">Acciones</span>
       </div>
 
-      {canchas.map((cancha, indice) => (
-        <div
-          key={cancha.id}
-          className={`grid ${COLUMNAS} items-center gap-3 px-4 py-3 transition-colors hover:bg-celeste-suave/40 ${
-            indice % 2 === 1 ? "bg-humo/50" : "bg-white"
-          }`}
-        >
-          <span className="font-display text-sm font-bold text-tinta">{cancha.nombre}</span>
+      <div className="divide-y divide-borde/60">
+        {canchas.map((cancha) => (
+          <div key={cancha.id} className={`grid ${COLUMNAS} items-center gap-3 px-6 py-4 transition-colors hover:bg-humo/60`}>
+            <span className="font-display text-sm font-bold text-tinta">{cancha.nombre}</span>
 
-          <span className="flex flex-wrap gap-1">
-            {cancha.deportes.map((d) => (
-              <ChipDeporte key={d} valor={d} />
-            ))}
-          </span>
-
-          <span className="text-sm text-grafito">{cancha.capacidad}</span>
-
-          <span className="text-sm text-tinta">
-            {cancha.preciosBase.length > 1 ? "Desde " : ""}
-            {formatearPrecio(Math.min(...cancha.preciosBase.map((p) => p.precio)))}
-            <span className="block text-[11px] text-grafito">
-              {cancha.montoSena > 0 ? `Seña ${formatearPrecio(cancha.montoSena)}` : "Sin seña"}
+            <span className="flex flex-wrap gap-1">
+              {cancha.deportes.map((d) => (
+                <ChipDeporte key={d} valor={d} />
+              ))}
             </span>
-          </span>
 
-          <span className="text-sm text-tinta">
-            {cancha.duracionesPermitidas.join(", ")} min
-            {cancha.permiteInicioMediaHora && <span className="block text-[11px] text-grafito">Admite media hora</span>}
-          </span>
+            <span className="text-sm text-grafito">{cancha.capacidad}</span>
 
-          <Composicion cancha={cancha} />
-          <CeldaEstado cancha={cancha} />
+            <span className="text-sm text-tinta">
+              {cancha.preciosBase.length > 1 ? "Desde " : ""}
+              {formatearPrecio(Math.min(...cancha.preciosBase.map((p) => p.precio)))}
+              <span className="block text-[11px] text-grafito">
+                {cancha.montoSena > 0 ? `Seña ${formatearPrecio(cancha.montoSena)}` : "Sin seña"}
+              </span>
+            </span>
 
-          <div className="flex items-center gap-1 justify-self-end">
-            <button
-              type="button"
-              onClick={() => onEditar(cancha)}
-              aria-label={`Editar ${cancha.nombre}`}
-              className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo"
-            >
-              <Pencil className="size-4" aria-hidden />
-            </button>
-            <button
-              type="button"
-              onClick={() => onAlternarActiva(cancha)}
-              aria-label={cancha.isActive ? `Desactivar ${cancha.nombre}` : `Activar ${cancha.nombre}`}
-              className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo"
-            >
-              {cancha.isActive ? <PowerOff className="size-4" aria-hidden /> : <Power className="size-4" aria-hidden />}
-            </button>
+            <span className="text-sm text-tinta">
+              {cancha.duracionesPermitidas.join(", ")} min
+              {cancha.permiteInicioMediaHora && <span className="block text-[11px] text-grafito">Admite media hora</span>}
+            </span>
+
+            <Composicion cancha={cancha} />
+            <CeldaEstado cancha={cancha} />
+
+            <div className="flex items-center gap-1 justify-self-end">
+              <button
+                type="button"
+                onClick={() => onEditar(cancha)}
+                aria-label={`Editar ${cancha.nombre}`}
+                className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+              >
+                <Pencil className="size-4" aria-hidden />
+              </button>
+              <button
+                type="button"
+                onClick={() => onAlternarActiva(cancha)}
+                aria-label={cancha.isActive ? `Desactivar ${cancha.nombre}` : `Activar ${cancha.nombre}`}
+                className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+              >
+                {cancha.isActive ? <PowerOff className="size-4" aria-hidden /> : <Power className="size-4" aria-hidden />}
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

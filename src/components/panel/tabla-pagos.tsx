@@ -43,8 +43,8 @@ const COLUMNAS = "grid-cols-[0.7fr_1.2fr_1fr_0.9fr_1.3fr_0.9fr_1.2fr_auto]";
  */
 export function TablaPagos({ pagos, onEditar }: { pagos: Pago[]; onEditar: (pago: Pago) => void }) {
   return (
-    <div className="overflow-hidden rounded-card bg-white">
-      <div className={`grid ${COLUMNAS} gap-3 bg-humo px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-grafito`}>
+    <div className="overflow-hidden rounded-card bg-white shadow-card">
+      <div className={`grid ${COLUMNAS} gap-3 bg-humo px-6 py-3 text-xs font-semibold uppercase tracking-wide text-grafito`}>
         <span>Fecha</span>
         <span>Cliente</span>
         <span>Cancha</span>
@@ -55,49 +55,48 @@ export function TablaPagos({ pagos, onEditar }: { pagos: Pago[]; onEditar: (pago
         <span className="sr-only">Acciones</span>
       </div>
 
-      {pagos.map((pago, indice) => {
-        const IconoMetodo = ICONO_METODO[pago.metodoPago];
-        return (
-          <div
-            key={pago.reservaId}
-            className={`grid ${COLUMNAS} items-center gap-3 px-4 py-3 ${indice % 2 === 1 ? "bg-humo/50" : "bg-white"}`}
-          >
-            <span className="text-sm text-grafito">{fechaCorta(pago.fecha)}</span>
-            <span className="truncate text-sm font-semibold text-tinta">{pago.clienteNombre}</span>
-            <span className="truncate text-sm text-grafito">{pago.canchaNombre}</span>
-            <span className="text-sm text-tinta">{formatearPrecio(pago.totalTurno)}</span>
-            <span className="flex items-center gap-1.5 text-sm text-tinta">
-              <IconoMetodo className="size-3.5 shrink-0 text-grafito" aria-hidden />
-              {etiquetaMetodo(pago.metodoPago)}
-            </span>
-            <span className={`text-sm ${pago.generoComision ? "text-cancelado" : "text-grafito"}`}>
-              {pago.generoComision ? `−${formatearPrecio(pago.comision)}` : "$0"}
-            </span>
-            <span>
-              {pago.generoComision ? (
-                <>
-                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${ESTILO_LIQUIDACION[pago.estadoLiquidacion]}`}>
-                    {ETIQUETA_LIQUIDACION[pago.estadoLiquidacion]}
-                  </span>
-                  {pago.fechaAcreditacion && <span className="block text-[11px] text-grafito">{fechaCorta(pago.fechaAcreditacion)}</span>}
-                </>
-              ) : (
-                <span className="text-sm text-grafito">—</span>
-              )}
-            </span>
-            <span className="justify-self-end">
-              <button
-                type="button"
-                onClick={() => onEditar(pago)}
-                aria-label={`Editar cobro de ${pago.clienteNombre}`}
-                className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo"
-              >
-                <Pencil className="size-4" aria-hidden />
-              </button>
-            </span>
-          </div>
-        );
-      })}
+      <div className="divide-y divide-borde/60">
+        {pagos.map((pago) => {
+          const IconoMetodo = ICONO_METODO[pago.metodoPago];
+          return (
+            <div key={pago.reservaId} className={`grid ${COLUMNAS} items-center gap-3 px-6 py-4 transition-colors hover:bg-humo/60`}>
+              <span className="text-sm text-grafito">{fechaCorta(pago.fecha)}</span>
+              <span className="truncate text-sm font-semibold text-tinta">{pago.clienteNombre}</span>
+              <span className="truncate text-sm text-grafito">{pago.canchaNombre}</span>
+              <span className="text-sm text-tinta">{formatearPrecio(pago.totalTurno)}</span>
+              <span className="flex items-center gap-1.5 text-sm text-tinta">
+                <IconoMetodo className="size-3.5 shrink-0 text-grafito" aria-hidden />
+                {etiquetaMetodo(pago.metodoPago)}
+              </span>
+              <span className={`text-sm ${pago.generoComision ? "text-cancelado" : "text-grafito"}`}>
+                {pago.generoComision ? `−${formatearPrecio(pago.comision)}` : "$0"}
+              </span>
+              <span>
+                {pago.generoComision ? (
+                  <>
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${ESTILO_LIQUIDACION[pago.estadoLiquidacion]}`}>
+                      {ETIQUETA_LIQUIDACION[pago.estadoLiquidacion]}
+                    </span>
+                    {pago.fechaAcreditacion && <span className="block text-[11px] text-grafito">{fechaCorta(pago.fechaAcreditacion)}</span>}
+                  </>
+                ) : (
+                  <span className="text-sm text-grafito">—</span>
+                )}
+              </span>
+              <span className="justify-self-end">
+                <button
+                  type="button"
+                  onClick={() => onEditar(pago)}
+                  aria-label={`Editar cobro de ${pago.clienteNombre}`}
+                  className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+                >
+                  <Pencil className="size-4" aria-hidden />
+                </button>
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

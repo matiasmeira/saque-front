@@ -2,42 +2,60 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, Calendar, CreditCard, LayoutGrid, LogOut, Settings, Tag, Users, Utensils } from "lucide-react";
+import { BarChart3, Calendar, CreditCard, History, LayoutGrid, LogOut, Mail, Receipt, Settings, Tag, Users, Utensils, Wallet } from "lucide-react";
 import { Isotipo } from "@/components/saque/logo";
 import { useRolPanel } from "@/lib/rol-panel";
 import { usePermisos, useEmpleadoActual } from "@/lib/permisos";
 import { cerrarSesionEmpleado, useEmpleadoIdSesion } from "@/lib/sesion-caja";
 import type { Permiso } from "@/mocks/empleados";
 
-type Entrada =
-  | { tipo: "link"; href: string; label: string; icono: typeof Calendar; visible: (tienePermiso: (p: Permiso) => boolean, esDueno: boolean) => boolean }
-  | { tipo: "grupo"; label: string; icono: typeof Calendar; items: { href: string; label: string; visible: (tienePermiso: (p: Permiso) => boolean) => boolean }[] };
+type Item = { href: string; label: string; icono: typeof Calendar; visible: (tienePermiso: (p: Permiso) => boolean, esDueno: boolean) => boolean };
+type Grupo = { label: string; items: Item[] };
 
-// Buffet es un grupo, no un link — agrupa Productos (C11) y Vender
-// (C12) porque son dos permisos independientes: alguien puede vender
-// sin ver el stock completo, o llevar el stock sin tocar la caja.
-const ENTRADAS: Entrada[] = [
-  { tipo: "link", href: "/panel/agenda", label: "Agenda", icono: Calendar, visible: (tp) => tp("ver_agenda") },
-  { tipo: "link", href: "/panel/canchas", label: "Canchas", icono: LayoutGrid, visible: (_tp, esDueno) => esDueno },
-  { tipo: "link", href: "/panel/precios", label: "Precios", icono: Tag, visible: (_tp, esDueno) => esDueno },
-  { tipo: "link", href: "/panel/clientes", label: "Clientes", icono: Users, visible: (tp) => tp("ver_clientes") },
+// Los grupos son fijos (no dependen de rol/permiso, solo sus items):
+// GESTIÓN es el día a día, BUFFET agrupa Productos (C11) y Vender
+// (C12) porque son dos permisos independientes (alguien puede vender
+// sin ver el stock completo, o llevar el stock sin tocar la caja),
+// ADMINISTRACIÓN es todo lo que solo el dueño ve.
+const GRUPOS: Grupo[] = [
   {
-    tipo: "grupo",
-    label: "Buffet",
-    icono: Utensils,
+    label: "Gestión",
     items: [
-      { href: "/panel/buffet/productos", label: "Productos", visible: (tp) => tp("ver_stock_buffet") },
-      { href: "/panel/buffet/vender", label: "Vender", visible: (tp) => tp("vender_buffet") },
+      { href: "/panel/agenda", label: "Agenda", icono: Calendar, visible: (tp) => tp("ver_agenda") },
+      { href: "/panel/canchas", label: "Canchas", icono: LayoutGrid, visible: (_tp, esDueno) => esDueno },
+      { href: "/panel/precios", label: "Precios", icono: Tag, visible: (_tp, esDueno) => esDueno },
+      { href: "/panel/clientes", label: "Clientes", icono: Users, visible: (tp) => tp("ver_clientes") },
     ],
   },
-  { tipo: "link", href: "/panel/pagos", label: "Pagos", icono: CreditCard, visible: (_tp, esDueno) => esDueno },
-  { tipo: "link", href: "/panel/reportes", label: "Reportes", icono: BarChart3, visible: (_tp, esDueno) => esDueno },
-  { tipo: "link", href: "/panel/configuracion", label: "Configuración", icono: Settings, visible: (_tp, esDueno) => esDueno },
+  {
+    label: "Buffet",
+    items: [
+      { href: "/panel/buffet/productos", label: "Productos", icono: Utensils, visible: (tp) => tp("ver_stock_buffet") },
+      { href: "/panel/buffet/vender", label: "Vender", icono: Utensils, visible: (tp) => tp("vender_buffet") },
+    ],
+  },
+  {
+    label: "Caja",
+    items: [
+      { href: "/panel/caja", label: "Caja", icono: Wallet, visible: (tp) => tp("gestionar_caja") },
+      { href: "/panel/caja/historial", label: "Historial de caja", icono: History, visible: (_tp, esDueno) => esDueno },
+    ],
+  },
+  {
+    label: "Administración",
+    items: [
+      { href: "/panel/pagos", label: "Pagos", icono: CreditCard, visible: (_tp, esDueno) => esDueno },
+      { href: "/panel/gastos", label: "Gastos", icono: Receipt, visible: (_tp, esDueno) => esDueno },
+      { href: "/panel/reportes", label: "Reportes", icono: BarChart3, visible: (_tp, esDueno) => esDueno },
+      { href: "/panel/configuracion", label: "Configuración", icono: Settings, visible: (_tp, esDueno) => esDueno },
+      { href: "/panel/configuracion/ofertas", label: "Enviar ofertas", icono: Mail, visible: (_tp, esDueno) => esDueno },
+    ],
+  },
 ];
 
 const claseLink = (activo: boolean) =>
-  `flex h-11 items-center gap-3 rounded-input pl-2.5 pr-3 text-sm font-semibold transition-colors ${
-    activo ? "bg-white/10 text-white" : "text-[#9DB6D6] hover:bg-white/5 hover:text-white"
+  `flex h-11 items-center gap-3 rounded-input px-3 text-sm font-semibold transition-colors ${
+    activo ? "bg-celeste-suave text-tinta" : "text-[#9DB6D6] hover:bg-white/5 hover:text-white"
   }`;
 
 /**
@@ -68,39 +86,25 @@ export function SidebarPanel() {
         <span className="font-display text-base font-extrabold text-white">saque</span>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-0.5 px-3 py-2">
-        {ENTRADAS.map((entrada) => {
-          if (entrada.tipo === "link") {
-            if (!entrada.visible(tienePermiso, rol === "dueno")) return null;
-            const activo = pathname === entrada.href || pathname.startsWith(`${entrada.href}/`);
-            const Icono = entrada.icono;
-            return (
-              <Link key={entrada.href} href={entrada.href} aria-current={activo ? "page" : undefined} className={claseLink(activo)}>
-                <span className={`h-5 w-[3px] shrink-0 rounded-full ${activo ? "bg-celeste" : "bg-transparent"}`} aria-hidden />
-                <Icono className="size-[18px] shrink-0" aria-hidden />
-                {entrada.label}
-              </Link>
-            );
-          }
-
-          const items = entrada.items.filter((item) => item.visible(tienePermiso));
+      <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-5">
+        {GRUPOS.map((grupo) => {
+          const items = grupo.items.filter((item) => item.visible(tienePermiso, rol === "dueno"));
           if (items.length === 0) return null;
-          const Icono = entrada.icono;
           return (
-            <div key={entrada.label} className="mt-1 first:mt-0">
-              <div className="flex h-9 items-center gap-3 pl-2.5 pr-3 text-xs font-semibold uppercase tracking-wide text-[#6E86A8]">
-                <Icono className="size-[18px] shrink-0" aria-hidden />
-                {entrada.label}
+            <div key={grupo.label}>
+              <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.12em] text-[#6E86A8]">{grupo.label}</p>
+              <div className="flex flex-col gap-1">
+                {items.map((item) => {
+                  const activo = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  const Icono = item.icono;
+                  return (
+                    <Link key={item.href} href={item.href} aria-current={activo ? "page" : undefined} className={claseLink(activo)}>
+                      <Icono className="size-[18px] shrink-0" aria-hidden />
+                      {item.label}
+                    </Link>
+                  );
+                })}
               </div>
-              {items.map((item) => {
-                const activo = pathname === item.href || pathname.startsWith(`${item.href}/`);
-                return (
-                  <Link key={item.href} href={item.href} aria-current={activo ? "page" : undefined} className={claseLink(activo)}>
-                    <span className={`h-5 w-[3px] shrink-0 rounded-full ${activo ? "bg-celeste" : "bg-transparent"}`} aria-hidden />
-                    <span className="pl-[18px]">{item.label}</span>
-                  </Link>
-                );
-              })}
             </div>
           );
         })}

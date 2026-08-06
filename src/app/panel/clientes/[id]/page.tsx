@@ -16,9 +16,9 @@ import { historialDeClienteId, PANEL_CLIENTES, totalGastado, type Cliente } from
 
 function StatCard({ etiqueta, valor, resaltado }: { etiqueta: string; valor: string; resaltado?: boolean }) {
   return (
-    <div className="rounded-card bg-white p-5">
+    <div className="rounded-card bg-white p-6 shadow-card">
       <p className="text-xs font-semibold uppercase tracking-wide text-grafito">{etiqueta}</p>
-      <p className={`mt-1 font-display text-2xl font-extrabold ${resaltado ? "text-pendiente" : "text-tinta"}`}>{valor}</p>
+      <p className={`mt-1.5 font-display text-3xl font-extrabold tabular-nums ${resaltado ? "text-pendiente" : "text-tinta"}`}>{valor}</p>
     </div>
   );
 }
@@ -74,23 +74,23 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <HeaderPanel nombre={PANEL_COMPLEJO.nombre} estado={PANEL_COMPLEJO.estado} diasRestantesTrial={PANEL_COMPLEJO.diasRestantesTrial} />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-6">
-          <Link href="/panel/clientes" className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-grafito transition-colors hover:text-azul">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
+          <Link href="/panel/clientes" className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-grafito transition-colors hover:text-azul">
             <ArrowLeft className="size-4" aria-hidden />
             Volver a Clientes
           </Link>
 
           {!cliente ? (
-            <div className="flex flex-col items-center justify-center gap-2 rounded-card bg-white py-20 text-center">
+            <div className="flex flex-col items-center justify-center gap-2 rounded-card bg-white py-20 text-center shadow-card">
               <p className="font-display text-lg font-bold text-tinta">No encontramos ese cliente</p>
               <p className="text-sm text-grafito">El link puede estar mal, o el cliente ya no existe.</p>
             </div>
           ) : (
-            <div className="max-w-3xl space-y-4">
-              <div className="rounded-card bg-white p-5">
+            <div className="max-w-3xl space-y-6">
+              <div className="rounded-card bg-white p-6 shadow-card">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <h1 className="flex items-center gap-2 font-display text-xl font-bold text-tinta">
+                    <h1 className="flex items-center gap-2 font-display text-2xl font-extrabold tracking-tight text-tinta">
                       {cliente.nombre}
                       {cliente.esFrecuente && <Star className="size-4 fill-current text-disponible" aria-label="Cliente frecuente" />}
                       {cliente.bloqueado && (
@@ -120,18 +120,18 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
 
                   <Link
                     href={`/panel/agenda?nuevoTurnoNombre=${encodeURIComponent(cliente.nombre)}&nuevoTurnoTelefono=${encodeURIComponent(cliente.telefono)}`}
-                    className="flex h-10 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+                    className="flex h-10 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
                   >
                     <Plus className="size-4" aria-hidden />
                     Nueva reserva
                   </Link>
                 </div>
 
-                <div className="mt-4 flex flex-wrap gap-2 border-t border-humo pt-4">
+                <div className="mt-6 flex flex-wrap gap-2 border-t border-humo pt-6">
                   <button
                     type="button"
                     onClick={alternarFrecuente}
-                    className="flex h-9 items-center gap-1.5 rounded-full border border-borde px-3.5 text-sm font-semibold text-tinta transition-colors hover:bg-humo"
+                    className="flex h-9 items-center gap-1.5 rounded-full border border-borde px-3.5 text-sm font-semibold text-tinta transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
                   >
                     <Star className={`size-4 ${cliente.esFrecuente ? "fill-current text-disponible" : ""}`} aria-hidden />
                     {cliente.esFrecuente ? "Quitar de frecuentes" : "Marcar como frecuente"}
@@ -139,7 +139,7 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
                   <button
                     type="button"
                     onClick={registrarAusencia}
-                    className="flex h-9 items-center gap-1.5 rounded-full border border-borde px-3.5 text-sm font-semibold text-tinta transition-colors hover:bg-humo"
+                    className="flex h-9 items-center gap-1.5 rounded-full border border-borde px-3.5 text-sm font-semibold text-tinta transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
                   >
                     Registrar ausencia
                   </button>
@@ -147,7 +147,7 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
                     <button
                       type="button"
                       onClick={alternarBloqueado}
-                      className={`flex h-9 items-center gap-1.5 rounded-full border px-3.5 text-sm font-semibold transition-colors ${
+                      className={`flex h-9 items-center gap-1.5 rounded-full border px-3.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-celeste ${
                         cliente.bloqueado
                           ? "border-borde text-tinta hover:bg-humo"
                           : "border-cancelado text-cancelado hover:bg-cancelado-suave"
@@ -160,14 +160,14 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                 <StatCard etiqueta="Total gastado" valor={formatearPrecio(totalGastado(cliente.id))} />
                 <StatCard etiqueta="Reservas totales" valor={String(cliente.reservasTotales)} />
                 <StatCard etiqueta="Ausencias" valor={String(cliente.ausencias)} resaltado={cliente.ausencias > 0} />
               </div>
 
-              <div className="rounded-card bg-white p-5">
-                <h2 className="font-display text-base font-bold text-tinta">Historial de reservas</h2>
+              <div className="rounded-card bg-white p-6 shadow-card">
+                <h2 className="font-display text-lg font-bold text-tinta">Historial de reservas</h2>
 
                 {!cargado ? (
                   <div className="mt-4 animate-pulse space-y-2">

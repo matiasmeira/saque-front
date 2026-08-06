@@ -21,10 +21,10 @@ export function ListaTarifas({
   onQuitar: (tarifa: Tarifa) => void;
 }) {
   return (
-    <div className="rounded-card bg-white p-5">
+    <div className="rounded-card bg-white p-6 shadow-card">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="font-display text-base font-bold text-tinta">Tarifas especiales</h2>
+          <h2 className="font-display text-lg font-bold text-tinta">Tarifas especiales</h2>
           <p className="mt-0.5 text-sm text-grafito">Reglas de excepción por día y horario, por encima del precio base.</p>
         </div>
         <button

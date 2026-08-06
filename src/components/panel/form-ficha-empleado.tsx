@@ -7,7 +7,7 @@ export type DatosEmpleado = { nombre: string; contrasena?: string; pin?: string;
 
 const PIN_VALIDO = /^\d{4}$/;
 
-const campoClase = "w-full rounded-input border border-borde bg-humo px-3 py-2.5 text-tinta focus:border-azul focus:outline-none";
+const campoClase = "w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste";
 
 /**
  * Alta y edición comparten el mismo form (mismo patrón que

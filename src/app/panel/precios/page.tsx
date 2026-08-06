@@ -102,14 +102,14 @@ export default function PanelPrecios() {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <HeaderPanel nombre={PANEL_COMPLEJO.nombre} estado={PANEL_COMPLEJO.estado} diasRestantesTrial={PANEL_COMPLEJO.diasRestantesTrial} />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-6">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <h1 className="font-display text-xl font-bold text-tinta">Precios</h1>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <h1 className="font-display text-2xl font-extrabold tracking-tight text-tinta">Precios</h1>
             <select
               value={canchaId}
               onChange={(e) => setCanchaId(Number(e.target.value))}
               aria-label="Cancha a tarifar"
-              className="h-10 rounded-full border border-borde bg-white px-3.5 text-sm font-semibold text-tinta focus:border-azul focus:outline-none"
+              className="h-10 rounded-full bg-humo px-3.5 text-sm font-semibold text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
             >
               {canchas.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -122,13 +122,13 @@ export default function PanelPrecios() {
           {estadoCarga === "cargando" && <SkeletonPrecios />}
 
           {estadoCarga === "error" && (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center shadow-card">
               <AlertTriangle className="size-8 text-cancelado" aria-hidden />
               <p className="font-semibold text-tinta">No pudimos cargar los precios.</p>
               <button
                 type="button"
                 onClick={() => setReintento((r) => r + 1)}
-                className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+                className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Reintentar
               </button>
@@ -136,7 +136,7 @@ export default function PanelPrecios() {
           )}
 
           {estadoCarga === "listo" && (
-            <div className="max-w-2xl space-y-4">
+            <div className="max-w-2xl space-y-6">
               <PrecioBaseCancha key={`precio-base-${cancha.id}`} cancha={cancha} onGuardar={guardarPrecioBase} />
 
               <ListaTarifas

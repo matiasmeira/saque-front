@@ -54,7 +54,7 @@ export function FormHorariosAtencion({ horarios, onGuardar }: { horarios: Horari
                     value={d.abre}
                     onChange={(e) => actualizar(d.dia, { abre: e.target.value })}
                     aria-label={`Hora de apertura del ${etiqueta}`}
-                    className="rounded-input border border-borde bg-white px-2 py-1.5 text-sm text-tinta focus:border-azul focus:outline-none"
+                    className="rounded-input bg-white px-2 py-1.5 text-sm text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
                   />
                   <span className="text-xs text-grafito">a</span>
                   <input
@@ -62,7 +62,7 @@ export function FormHorariosAtencion({ horarios, onGuardar }: { horarios: Horari
                     value={d.cierra}
                     onChange={(e) => actualizar(d.dia, { cierra: e.target.value })}
                     aria-label={`Hora de cierre del ${etiqueta}`}
-                    className="rounded-input border border-borde bg-white px-2 py-1.5 text-sm text-tinta focus:border-azul focus:outline-none"
+                    className="rounded-input bg-white px-2 py-1.5 text-sm text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
                   />
                 </div>
               )}
@@ -80,7 +80,7 @@ export function FormHorariosAtencion({ horarios, onGuardar }: { horarios: Horari
       <button
         type="button"
         onClick={guardar}
-        className="flex h-10 items-center justify-center rounded-full bg-azul px-5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+        className="flex h-10 items-center justify-center rounded-full bg-azul px-5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
       >
         Guardar horarios
       </button>

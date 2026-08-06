@@ -5,8 +5,8 @@ import { formatearPrecio } from "@/lib/formato";
 import { METODOS_PAGO, type MetodoPago, type Pago } from "@/mocks/pagos";
 
 function chipClase(activo: boolean) {
-  return `h-9 rounded-full px-3 text-sm font-semibold transition-colors ${
-    activo ? "bg-celeste-suave text-tinta" : "border border-borde bg-white text-grafito hover:border-azul hover:text-azul"
+  return `h-9 rounded-full px-3 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-celeste ${
+    activo ? "bg-celeste-suave text-tinta" : "bg-humo text-grafito hover:text-azul"
   }`;
 }
 
@@ -20,7 +20,7 @@ function Switch({ checked, onChange, label }: { checked: boolean; onChange: (val
         aria-checked={checked}
         aria-label={label}
         onClick={() => onChange(!checked)}
-        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? "bg-azul" : "bg-borde"}`}
+        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-celeste ${checked ? "bg-azul" : "bg-borde"}`}
       >
         <span
           className={`absolute top-0.5 size-5 rounded-full bg-white transition-transform ${checked ? "translate-x-[22px]" : "translate-x-0.5"}`}
@@ -84,13 +84,13 @@ export function FormRegistrarCobro({
         <button
           type="button"
           onClick={onCancelar}
-          className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo"
+          className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
         >
           Cancelar
         </button>
         <button
           type="submit"
-          className="flex h-11 flex-1 items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+          className="flex h-11 flex-1 items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
         >
           Guardar
         </button>

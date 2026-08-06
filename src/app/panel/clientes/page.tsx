@@ -110,14 +110,14 @@ export default function PanelClientes() {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <HeaderPanel nombre={PANEL_COMPLEJO.nombre} estado={PANEL_COMPLEJO.estado} diasRestantesTrial={PANEL_COMPLEJO.diasRestantesTrial} />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-6">
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <h1 className="font-display text-xl font-bold text-tinta">Clientes</h1>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <h1 className="font-display text-2xl font-extrabold tracking-tight text-tinta">Clientes</h1>
             {rol === "dueno" && (
               <button
                 type="button"
                 onClick={() => descargarCSV(ordenados)}
-                className="flex h-10 items-center gap-1.5 rounded-full border border-borde bg-white px-4 font-display text-sm font-bold text-tinta transition-colors hover:bg-humo"
+                className="flex h-10 items-center gap-1.5 rounded-full border border-borde bg-white px-4 font-display text-sm font-bold text-tinta transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 <Download className="size-4" aria-hidden />
                 Exportar CSV
@@ -125,21 +125,21 @@ export default function PanelClientes() {
             )}
           </div>
 
-          <div className="relative mb-4 max-w-sm">
+          <div className="relative mb-6 max-w-sm">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-grafito" aria-hidden />
             <input
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar por nombre o teléfono"
               aria-label="Buscar clientes"
-              className="w-full rounded-full border border-borde bg-white py-2.5 pl-10 pr-4 text-sm text-tinta focus:border-azul focus:outline-none"
+              className="w-full rounded-full bg-humo py-2.5 pl-10 pr-4 text-sm text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
             />
           </div>
 
           {estadoCarga === "cargando" && <SkeletonClientes />}
 
           {estadoCarga === "error" && (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center shadow-card">
               <AlertTriangle className="size-8 text-cancelado" aria-hidden />
               <p className="font-semibold text-tinta">No pudimos cargar los clientes.</p>
               <button
@@ -153,7 +153,7 @@ export default function PanelClientes() {
           )}
 
           {estadoCarga === "listo" && clientes.length === 0 && (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center shadow-card">
               <Users className="size-8 text-grafito" aria-hidden />
               <p className="font-display font-bold text-tinta">Todavía no tenés clientes cargados</p>
               <p className="max-w-xs text-sm text-grafito">
@@ -163,7 +163,7 @@ export default function PanelClientes() {
           )}
 
           {estadoCarga === "listo" && clientes.length > 0 && ordenados.length === 0 && (
-            <div className="rounded-card bg-white py-16 text-center text-sm text-grafito">
+            <div className="rounded-card bg-white py-16 text-center text-sm text-grafito shadow-card">
               Ningún cliente coincide con &ldquo;{busqueda}&rdquo;.
             </div>
           )}

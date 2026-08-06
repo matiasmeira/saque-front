@@ -91,21 +91,21 @@ export default function PanelEmpleados() {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <HeaderPanel nombre={PANEL_COMPLEJO.nombre} estado={PANEL_COMPLEJO.estado} diasRestantesTrial={PANEL_COMPLEJO.diasRestantesTrial} />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-6">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
           <Link href="/panel/configuracion" className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-grafito hover:text-tinta">
             <ChevronLeft className="size-4" aria-hidden />
             Configuración
           </Link>
 
-          <div className="mb-5 flex items-center justify-between gap-3">
+          <div className="mb-6 flex items-center justify-between gap-3">
             <div>
-              <h1 className="font-display text-xl font-bold text-tinta">Empleados</h1>
+              <h1 className="font-display text-2xl font-extrabold tracking-tight text-tinta">Empleados</h1>
               <p className="text-sm text-grafito">Cada uno entra con nombre y contraseña, y solo puede hacer lo que le tildaste en sus permisos.</p>
             </div>
             <button
               type="button"
               onClick={() => setPanelAbierto({ tipo: "ficha", empleado: null })}
-              className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+              className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
             >
               <Plus className="size-4" aria-hidden />
               Nuevo empleado
@@ -115,13 +115,13 @@ export default function PanelEmpleados() {
           {estadoCarga === "cargando" && <SkeletonEmpleados />}
 
           {estadoCarga === "error" && (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center shadow-card">
               <AlertTriangle className="size-8 text-cancelado" aria-hidden />
               <p className="font-semibold text-tinta">No pudimos cargar los empleados.</p>
               <button
                 type="button"
                 onClick={() => setReintento((r) => r + 1)}
-                className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+                className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Reintentar
               </button>
@@ -129,14 +129,14 @@ export default function PanelEmpleados() {
           )}
 
           {estadoCarga === "listo" && empleados.length === 0 && (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center shadow-card">
               <Users className="size-8 text-grafito" aria-hidden />
               <p className="font-display font-bold text-tinta">Todavía no invitaste a nadie</p>
               <p className="max-w-xs text-sm text-grafito">Cargá a alguien de tu equipo con nombre, contraseña y los permisos que necesite.</p>
               <button
                 type="button"
                 onClick={() => setPanelAbierto({ tipo: "ficha", empleado: null })}
-                className="mt-1 flex h-10 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+                className="mt-1 flex h-10 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 <Plus className="size-4" aria-hidden />
                 Nuevo empleado
@@ -179,14 +179,14 @@ export default function PanelEmpleados() {
               <button
                 type="button"
                 onClick={() => setPanelAbierto(null)}
-                className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo"
+                className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={() => confirmarBaja(panelAbierto.empleado)}
-                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-cancelado font-display text-sm font-bold text-white transition-colors hover:bg-cancelado/90"
+                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-cancelado font-display text-sm font-bold text-white transition-colors hover:bg-cancelado/90 focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 <UserX className="size-4" aria-hidden />
                 Dar de baja

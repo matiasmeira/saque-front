@@ -20,7 +20,14 @@
  * criterio de seguridad que la contraseña: nunca se vuelve a mostrar
  * después del alta.
  */
-export type Permiso = "ver_agenda" | "cobrar_turnos" | "cancelar_turnos" | "ver_clientes" | "vender_buffet" | "ver_stock_buffet";
+export type Permiso =
+  | "ver_agenda"
+  | "cobrar_turnos"
+  | "cancelar_turnos"
+  | "ver_clientes"
+  | "vender_buffet"
+  | "ver_stock_buffet"
+  | "gestionar_caja";
 
 export const PERMISOS: { valor: Permiso; etiqueta: string; descripcion: string }[] = [
   { valor: "ver_agenda", etiqueta: "Ver agenda", descripcion: "Ver la grilla de turnos" },
@@ -29,6 +36,7 @@ export const PERMISOS: { valor: Permiso; etiqueta: string; descripcion: string }
   { valor: "ver_clientes", etiqueta: "Ver clientes", descripcion: "Ver la lista de clientes y su historial" },
   { valor: "vender_buffet", etiqueta: "Vender en el buffet", descripcion: "Cargar ventas del buffet" },
   { valor: "ver_stock_buffet", etiqueta: "Ver stock del buffet", descripcion: "Ver el inventario del buffet" },
+  { valor: "gestionar_caja", etiqueta: "Gestionar caja", descripcion: "Abrir, cerrar y registrar movimientos de caja" },
 ];
 
 export type EstadoEmpleado = "activo" | "inactivo";

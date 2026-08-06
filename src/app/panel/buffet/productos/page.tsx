@@ -94,14 +94,14 @@ export default function PanelProductosBuffet() {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <HeaderPanel nombre={PANEL_COMPLEJO.nombre} estado={PANEL_COMPLEJO.estado} diasRestantesTrial={PANEL_COMPLEJO.diasRestantesTrial} />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-6">
-          <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
-            <h1 className="font-display text-xl font-bold text-tinta">Productos del buffet</h1>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <h1 className="font-display text-2xl font-extrabold tracking-tight text-tinta">Productos del buffet</h1>
             {rol === "dueno" && (
               <button
                 type="button"
                 onClick={() => setPanelAbierto({ tipo: "ficha", producto: null })}
-                className="flex h-10 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+                className="flex h-10 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 <Plus className="size-4" aria-hidden />
                 Nuevo producto
@@ -110,7 +110,7 @@ export default function PanelProductosBuffet() {
           </div>
 
           {estadoCarga === "listo" && productos.length > 0 && (conStockBajo > 0 || agotados > 0) && (
-            <div className="mb-4 flex items-start gap-2 rounded-input bg-pendiente-suave px-3.5 py-2.5 text-sm text-pendiente">
+            <div className="mb-6 flex items-start gap-2 rounded-input bg-pendiente-suave px-3.5 py-2.5 text-sm text-pendiente">
               <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
               <span>
                 {conStockBajo > 0 && `${conStockBajo} ${conStockBajo === 1 ? "producto" : "productos"} con stock bajo`}
@@ -123,13 +123,13 @@ export default function PanelProductosBuffet() {
           {estadoCarga === "cargando" && <SkeletonProductosBuffet />}
 
           {estadoCarga === "error" && (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center shadow-card">
               <AlertTriangle className="size-8 text-cancelado" aria-hidden />
               <p className="font-semibold text-tinta">No pudimos cargar los productos.</p>
               <button
                 type="button"
                 onClick={() => setReintento((r) => r + 1)}
-                className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+                className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Reintentar
               </button>
@@ -137,7 +137,7 @@ export default function PanelProductosBuffet() {
           )}
 
           {estadoCarga === "listo" && productos.length === 0 && (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center shadow-card">
               <Package className="size-8 text-grafito" aria-hidden />
               <p className="font-display font-bold text-tinta">Todavía no cargaste productos</p>
               <p className="max-w-xs text-sm text-grafito">Cargá lo que vendés en el buffet para poder usar el punto de venta.</p>
@@ -145,7 +145,7 @@ export default function PanelProductosBuffet() {
                 <button
                   type="button"
                   onClick={() => setPanelAbierto({ tipo: "ficha", producto: null })}
-                  className="mt-1 flex h-10 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+                  className="mt-1 flex h-10 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
                 >
                   <Plus className="size-4" aria-hidden />
                   Nuevo producto

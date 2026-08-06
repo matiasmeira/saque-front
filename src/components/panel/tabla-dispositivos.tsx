@@ -18,39 +18,41 @@ export function TablaDispositivos({
   onRevocar: (dispositivo: Dispositivo) => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-card bg-white">
-      <div className="grid grid-cols-[1.4fr_1fr_1fr_auto] gap-3 bg-humo px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-grafito">
+    <div className="overflow-hidden rounded-card bg-white shadow-card">
+      <div className="grid grid-cols-[1.4fr_1fr_1fr_auto] gap-3 bg-humo px-6 py-3 text-xs font-semibold uppercase tracking-wide text-grafito">
         <span>Nombre</span>
         <span>Emparejado</span>
         <span>Último uso</span>
         <span className="sr-only">Acciones</span>
       </div>
 
-      {dispositivos.map((dispositivo, indice) => (
-        <div
-          key={dispositivo.id}
-          className={`grid grid-cols-[1.4fr_1fr_1fr_auto] items-center gap-3 px-4 py-2 ${indice % 2 === 1 ? "bg-humo/50" : "bg-white"}`}
-        >
-          <input
-            value={dispositivo.nombre}
-            onChange={(e) => onRenombrar(dispositivo.id, e.target.value)}
-            aria-label={`Nombre del dispositivo ${dispositivo.nombre}`}
-            className="w-full truncate rounded-input border border-transparent bg-transparent px-2 py-1.5 text-sm font-semibold text-tinta transition-colors hover:border-borde focus:border-azul focus:bg-humo focus:outline-none"
-          />
-          <span className="text-sm text-grafito">{fechaLarga(dispositivo.fechaEmparejamiento)}</span>
-          <span className="text-sm text-grafito">{fechaLarga(dispositivo.fechaUltimoUso)}</span>
-          <button
-            type="button"
-            onClick={() => onRevocar(dispositivo)}
-            aria-label={`Revocar ${dispositivo.nombre}`}
-            title="Revocar"
-            className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-cancelado transition-colors hover:bg-cancelado-suave"
+      <div className="divide-y divide-borde/60">
+        {dispositivos.map((dispositivo) => (
+          <div
+            key={dispositivo.id}
+            className="grid grid-cols-[1.4fr_1fr_1fr_auto] items-center gap-3 px-6 py-3.5 transition-colors hover:bg-humo/60"
           >
-            <ShieldOff className="size-4 shrink-0" aria-hidden />
-            Revocar
-          </button>
-        </div>
-      ))}
+            <input
+              value={dispositivo.nombre}
+              onChange={(e) => onRenombrar(dispositivo.id, e.target.value)}
+              aria-label={`Nombre del dispositivo ${dispositivo.nombre}`}
+              className="w-full truncate rounded-input border border-transparent bg-transparent px-2 py-1.5 text-sm font-semibold text-tinta transition-colors hover:border-borde focus:bg-white focus:outline-none focus:ring-2 focus:ring-celeste"
+            />
+            <span className="text-sm text-grafito">{fechaLarga(dispositivo.fechaEmparejamiento)}</span>
+            <span className="text-sm text-grafito">{fechaLarga(dispositivo.fechaUltimoUso)}</span>
+            <button
+              type="button"
+              onClick={() => onRevocar(dispositivo)}
+              aria-label={`Revocar ${dispositivo.nombre}`}
+              title="Revocar"
+              className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-cancelado transition-colors hover:bg-cancelado-suave"
+            >
+              <ShieldOff className="size-4 shrink-0" aria-hidden />
+              Revocar
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

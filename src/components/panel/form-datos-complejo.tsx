@@ -11,7 +11,7 @@ function chipClase(activo: boolean) {
   }`;
 }
 
-const campoClase = "w-full rounded-input border border-borde bg-humo px-3 py-2.5 text-tinta focus:border-azul focus:outline-none";
+const campoClase = "w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste";
 
 /** Sección 1 de C9: identidad del complejo. El CUIT pasa a solo lectura apenas queda verificado — ya no hay nada que "editar", solo lo que ya confirmó D3. */
 export function FormDatosComplejo({ datos, onGuardar }: { datos: DatosComplejo; onGuardar: (datos: DatosComplejo) => void }) {
@@ -99,7 +99,7 @@ export function FormDatosComplejo({ datos, onGuardar }: { datos: DatosComplejo; 
 
       <button
         type="submit"
-        className="flex h-10 items-center justify-center rounded-full bg-azul px-5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+        className="flex h-10 items-center justify-center rounded-full bg-azul px-5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
       >
         Guardar datos
       </button>

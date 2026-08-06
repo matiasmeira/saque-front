@@ -3,10 +3,10 @@ import { formatearPrecio } from "@/lib/formato";
 function Tarjeta({ etiqueta, valor, nota, tono }: { etiqueta: string; valor: string; nota?: string; tono?: "negativo" | "destacado" }) {
   const color = tono === "negativo" ? "text-cancelado" : tono === "destacado" ? "text-disponible" : "text-tinta";
   return (
-    <div className="rounded-card bg-white p-5">
+    <div className="rounded-card bg-white p-6 shadow-card">
       <p className="text-xs font-semibold uppercase tracking-wide text-grafito">{etiqueta}</p>
-      <p className={`mt-1 font-display text-2xl font-extrabold ${color}`}>{valor}</p>
-      {nota && <p className="mt-1 text-xs text-grafito">{nota}</p>}
+      <p className={`mt-1.5 font-display text-3xl font-extrabold tabular-nums ${color}`}>{valor}</p>
+      {nota && <p className="mt-2 text-xs text-grafito">{nota}</p>}
     </div>
   );
 }
@@ -31,7 +31,7 @@ export function ResumenPagos({
   neto: number;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
       <Tarjeta etiqueta="Turnos" valor={formatearPrecio(facturacionTurnos)} />
       <Tarjeta etiqueta="Buffet" valor={formatearPrecio(facturacionBuffet)} nota="Nunca genera comisión — es plata del complejo" />
       <Tarjeta

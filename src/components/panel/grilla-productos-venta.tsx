@@ -28,8 +28,8 @@ export function GrillaProductosVenta({
             type="button"
             disabled={sinStock}
             onClick={() => onAgregar(producto)}
-            className={`relative flex flex-col items-start gap-1 rounded-card p-4 text-left transition-colors ${
-              sinStock ? "cursor-not-allowed bg-humo/70 opacity-60" : "bg-white hover:bg-celeste-suave/40"
+            className={`relative flex flex-col items-start gap-1 rounded-card p-4 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-celeste ${
+              sinStock ? "cursor-not-allowed bg-humo/70 opacity-60" : "bg-white shadow-card hover:bg-celeste-suave/40"
             }`}
           >
             {enTicket > 0 && (

@@ -6,7 +6,7 @@ import type { ProductoBuffet } from "@/mocks/buffet";
 export type LineaTicket = { producto: ProductoBuffet; cantidad: number; subtotal: number };
 
 function chipClase(activo: boolean) {
-  return `h-9 rounded-full px-3 text-sm font-semibold transition-colors ${
+  return `h-9 rounded-full px-3 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-celeste ${
     activo ? "bg-celeste-suave text-tinta" : "border border-borde bg-white text-grafito hover:border-azul hover:text-azul"
   }`;
 }
@@ -48,8 +48,8 @@ export function TicketBuffet({
   const puedeCobrar = lineas.length > 0 && metodoPago !== null;
 
   return (
-    <div className="flex h-full flex-col rounded-card bg-white p-4">
-      <p className="mb-3 flex items-center gap-2 font-display text-base font-bold text-tinta">
+    <div className="flex h-full flex-col rounded-card bg-white p-6 shadow-card">
+      <p className="mb-3 flex items-center gap-2 font-display text-lg font-bold text-tinta">
         <ShoppingCart className="size-4 shrink-0" aria-hidden />
         Ticket
       </p>
@@ -109,7 +109,7 @@ export function TicketBuffet({
             id="ticket-turno"
             value={turnoId}
             onChange={(e) => onCambiarTurno(e.target.value)}
-            className="w-full rounded-input border border-borde bg-humo px-3 py-2 text-sm text-tinta focus:border-azul focus:outline-none"
+            className="w-full rounded-input bg-humo px-3.5 py-2 text-sm text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
           >
             <option value="">Venta suelta (sin turno)</option>
             {turnos.map((t) => (
@@ -133,14 +133,14 @@ export function TicketBuffet({
 
         <div className="flex items-center justify-between pt-1">
           <span className="text-sm font-semibold text-grafito">Total</span>
-          <span className="font-display text-xl font-extrabold text-tinta">{formatearPrecio(total)}</span>
+          <span className="font-display text-3xl font-extrabold tabular-nums text-tinta">{formatearPrecio(total)}</span>
         </div>
 
         <button
           type="button"
           onClick={onCobrar}
           disabled={!puedeCobrar}
-          className="flex h-12 w-full items-center justify-center rounded-full bg-azul font-display text-base font-bold text-white transition-colors hover:bg-azul-oscuro disabled:cursor-not-allowed disabled:bg-borde disabled:text-grafito"
+          className="flex h-12 w-full items-center justify-center rounded-full bg-azul font-display text-base font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste disabled:cursor-not-allowed disabled:bg-borde disabled:text-grafito"
         >
           Cobrar {lineas.length > 0 && formatearPrecio(total)}
         </button>

@@ -48,11 +48,11 @@ type EstadoCarga = "cargando" | "error" | "listo";
 
 function Seccion({ icono: Icono, titulo, descripcion, children }: { icono: typeof Building2; titulo: string; descripcion: string; children: ReactNode }) {
   return (
-    <section className="rounded-card bg-white p-5">
+    <section className="rounded-card bg-white p-6 shadow-card">
       <div className="mb-4 flex items-start gap-2.5">
         <Icono className="mt-0.5 size-5 shrink-0 text-azul" aria-hidden />
         <div>
-          <h2 className="font-display text-base font-bold text-tinta">{titulo}</h2>
+          <h2 className="font-display text-lg font-bold text-tinta">{titulo}</h2>
           <p className="text-sm text-grafito">{descripcion}</p>
         </div>
       </div>
@@ -213,19 +213,19 @@ export default function PanelConfiguracion() {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <HeaderPanel nombre={PANEL_COMPLEJO.nombre} estado={PANEL_COMPLEJO.estado} diasRestantesTrial={PANEL_COMPLEJO.diasRestantesTrial} />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-6">
-          <h1 className="mb-5 font-display text-xl font-bold text-tinta">Configuración</h1>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
+          <h1 className="mb-6 font-display text-2xl font-extrabold tracking-tight text-tinta">Configuración</h1>
 
           {estadoCarga === "cargando" && <SkeletonConfig />}
 
           {estadoCarga === "error" && (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center shadow-card">
               <AlertTriangle className="size-8 text-cancelado" aria-hidden />
               <p className="font-semibold text-tinta">No pudimos cargar la configuración.</p>
               <button
                 type="button"
                 onClick={() => setReintento((r) => r + 1)}
-                className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+                className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Reintentar
               </button>
@@ -233,7 +233,7 @@ export default function PanelConfiguracion() {
           )}
 
           {estadoCarga === "listo" && datos && politica && mercadoPago && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <Seccion icono={Building2} titulo="Datos del complejo" descripcion="Nombre, dirección y deportes que se ven en el marketplace.">
                 <FormDatosComplejo datos={datos} onGuardar={setDatos} />
               </Seccion>
@@ -274,7 +274,7 @@ export default function PanelConfiguracion() {
                   <button
                     type="button"
                     onClick={generarLink}
-                    className="flex h-10 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+                    className="flex h-10 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
                   >
                     <Plus className="size-4" aria-hidden />
                     Generar link para nueva caja
@@ -283,7 +283,7 @@ export default function PanelConfiguracion() {
                     <button
                       type="button"
                       onClick={() => setConfirmandoActivarCaja(true)}
-                      className="flex h-10 items-center gap-1.5 rounded-full border border-borde px-4 font-display text-sm font-bold text-tinta transition-colors hover:bg-humo"
+                      className="flex h-10 items-center gap-1.5 rounded-full border border-borde px-4 font-display text-sm font-bold text-tinta transition-colors hover:border-azul focus:outline-none focus:ring-2 focus:ring-celeste"
                     >
                       <Smartphone className="size-4" aria-hidden />
                       Activar esta computadora como caja
@@ -294,11 +294,11 @@ export default function PanelConfiguracion() {
 
               <Link
                 href="/panel/configuracion/empleados"
-                className="flex items-center gap-3 rounded-card bg-white p-5 transition-colors hover:bg-celeste-suave/40"
+                className="flex items-center gap-3 rounded-card bg-white p-6 shadow-card transition-colors hover:bg-celeste-suave/40"
               >
                 <Users className="size-5 shrink-0 text-azul" aria-hidden />
                 <div className="min-w-0 flex-1">
-                  <p className="font-display text-base font-bold text-tinta">Empleados</p>
+                  <p className="font-display text-lg font-bold text-tinta">Empleados</p>
                   <p className="text-sm text-grafito">
                     {empleadosActivos} {empleadosActivos === 1 ? "empleado activo" : "empleados activos"} — dales de alta con sus permisos o dá de baja accesos.
                   </p>
@@ -327,14 +327,14 @@ export default function PanelConfiguracion() {
               <button
                 type="button"
                 onClick={() => setDispositivoARevocar(null)}
-                className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo"
+                className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={() => confirmarRevocar(dispositivoARevocar)}
-                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-cancelado font-display text-sm font-bold text-white transition-colors hover:bg-cancelado/90"
+                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-cancelado font-display text-sm font-bold text-white transition-colors hover:bg-cancelado/90 focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Revocar
               </button>
@@ -355,14 +355,14 @@ export default function PanelConfiguracion() {
               <button
                 type="button"
                 onClick={() => setConfirmandoActivarCaja(false)}
-                className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo"
+                className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={activarEstaComputadoraComoCaja}
-                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Activar
               </button>

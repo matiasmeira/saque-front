@@ -99,7 +99,7 @@ export function FormTurnoRapido({
           id="turno-cancha"
           value={canchaSel}
           onChange={(e) => cambiarCancha(Number(e.target.value))}
-          className="w-full rounded-input border border-borde bg-humo px-3 py-2.5 text-tinta focus:border-azul focus:outline-none"
+          className="w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
         >
           {canchas.map((c) => (
             <option key={c.id} value={c.id}>
@@ -118,7 +118,7 @@ export function FormTurnoRapido({
             id="turno-duracion"
             value={duracion}
             onChange={(e) => cambiarDuracion(Number(e.target.value))}
-            className="w-full rounded-input border border-borde bg-humo px-3 py-2.5 text-tinta focus:border-azul focus:outline-none"
+            className="w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
           >
             {cancha.duracionesPermitidas.map((min) => (
               <option key={min} value={min}>
@@ -140,7 +140,7 @@ export function FormTurnoRapido({
             id="turno-hora"
             value={horaSel}
             onChange={(e) => setHoraSel(e.target.value)}
-            className="w-full rounded-input border border-borde bg-humo px-3 py-2.5 text-tinta focus:border-azul focus:outline-none"
+            className="w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
           >
             {horas.map((h) => (
               <option key={h} value={h}>
@@ -162,7 +162,7 @@ export function FormTurnoRapido({
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
           placeholder="Ej: Grupo del Colo"
-          className="w-full rounded-input border border-borde bg-humo px-3 py-2.5 text-tinta focus:border-azul focus:outline-none"
+          className="w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
         />
       </div>
 
@@ -177,7 +177,7 @@ export function FormTurnoRapido({
           value={telefono}
           onChange={(e) => setTelefono(e.target.value)}
           placeholder="11 5555-4444"
-          className="w-full rounded-input border border-borde bg-humo px-3 py-2.5 text-tinta focus:border-azul focus:outline-none"
+          className="w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
         />
       </div>
 
@@ -208,14 +208,14 @@ export function FormTurnoRapido({
         <button
           type="button"
           onClick={onCancelar}
-          className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo"
+          className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={horas.length === 0}
-          className="flex h-11 flex-1 items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro disabled:cursor-not-allowed disabled:bg-borde disabled:text-grafito"
+          className="flex h-11 flex-1 items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste disabled:cursor-not-allowed disabled:bg-borde disabled:text-grafito"
         >
           Guardar turno
         </button>

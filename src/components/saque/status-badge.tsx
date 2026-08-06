@@ -1,7 +1,7 @@
 /**
  * Badge de estado de una reserva.
  *
- * Estos cuatro colores son los unicos que se usan para estado, y
+ * Estos cinco colores son los unicos que se usan para estado, y
  * no se usan para nada mas. Es la regla que le permite al duenio
  * leer la grilla de turnos de un vistazo sin pensar.
  */
@@ -22,6 +22,10 @@ const ESTADOS = {
   cancelado: {
     label: "Cancelado",
     clase: "bg-cancelado-suave text-cancelado",
+  },
+  ausente: {
+    label: "Ausente",
+    clase: "bg-ausente-suave text-ausente",
   },
 } as const;
 

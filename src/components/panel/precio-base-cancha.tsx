@@ -26,8 +26,8 @@ export function PrecioBaseCancha({ cancha, onGuardar }: { cancha: Cancha; onGuar
   }
 
   return (
-    <div className="rounded-card bg-white p-5">
-      <h2 className="font-display text-base font-bold text-tinta">Precio base</h2>
+    <div className="rounded-card bg-white p-6 shadow-card">
+      <h2 className="font-display text-lg font-bold text-tinta">Precio base</h2>
       <p className="mt-0.5 text-sm text-grafito">Rige siempre que no haya una tarifa especial aplicable a ese día y horario.</p>
 
       <div className="mt-4 space-y-2.5">
@@ -44,7 +44,7 @@ export function PrecioBaseCancha({ cancha, onGuardar }: { cancha: Cancha; onGuar
                 min={0}
                 value={precios[d] ?? 0}
                 onChange={(e) => cambiar(d, Number(e.target.value))}
-                className="w-32 rounded-input border border-borde bg-humo px-3 py-2 text-right text-tinta focus:border-azul focus:outline-none"
+                className="w-32 rounded-input bg-humo px-3 py-2 text-right text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
               />
             </div>
           </div>

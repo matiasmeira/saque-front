@@ -17,7 +17,7 @@ export function HeaderPanel({
   diasRestantesTrial?: number;
 }) {
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-borde bg-white px-6">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-borde bg-white px-8">
       <h1 className="truncate font-display text-base font-bold text-tinta">{nombre}</h1>
 
       <div className="flex items-center gap-2">

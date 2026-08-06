@@ -135,19 +135,19 @@ export default function PanelVenderBuffet() {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <HeaderPanel nombre={PANEL_COMPLEJO.nombre} estado={PANEL_COMPLEJO.estado} diasRestantesTrial={PANEL_COMPLEJO.diasRestantesTrial} />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-6">
-          <h1 className="mb-5 font-display text-xl font-bold text-tinta">Vender en el buffet</h1>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
+          <h1 className="mb-6 font-display text-2xl font-extrabold tracking-tight text-tinta">Vender en el buffet</h1>
 
           {estadoCarga === "cargando" && <SkeletonVentaBuffet />}
 
           {estadoCarga === "error" && (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center shadow-card">
               <AlertTriangle className="size-8 text-cancelado" aria-hidden />
               <p className="font-semibold text-tinta">No pudimos cargar los productos.</p>
               <button
                 type="button"
                 onClick={() => setReintento((r) => r + 1)}
-                className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+                className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Reintentar
               </button>
@@ -155,7 +155,7 @@ export default function PanelVenderBuffet() {
           )}
 
           {estadoCarga === "listo" && productos.length === 0 && (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center shadow-card">
               <Package className="size-8 text-grafito" aria-hidden />
               <p className="font-display font-bold text-tinta">Todavía no hay productos cargados</p>
               <p className="max-w-xs text-sm text-grafito">Pedile al dueño que cargue el catálogo en Productos del buffet.</p>
@@ -163,7 +163,7 @@ export default function PanelVenderBuffet() {
           )}
 
           {estadoCarga === "listo" && productos.length > 0 && (
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px] lg:items-start">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
               <GrillaProductosVenta productos={productos} cantidadesEnTicket={cantidadesEnTicket} onAgregar={agregarUnidad} />
               <div className="lg:sticky lg:top-6">
                 <TicketBuffet

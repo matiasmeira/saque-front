@@ -128,31 +128,31 @@ export default function PanelPagos() {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <HeaderPanel nombre={PANEL_COMPLEJO.nombre} estado={PANEL_COMPLEJO.estado} diasRestantesTrial={PANEL_COMPLEJO.diasRestantesTrial} />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-6">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
           <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
-            <h1 className="font-display text-xl font-bold text-tinta">Pagos y liquidaciones</h1>
+            <h1 className="font-display text-2xl font-extrabold tracking-tight text-tinta">Pagos y liquidaciones</h1>
             <button
               type="button"
               onClick={() => descargarCSV(pagos)}
-              className="flex h-10 items-center gap-1.5 rounded-full border border-borde bg-white px-4 font-display text-sm font-bold text-tinta transition-colors hover:bg-humo"
+              className="flex h-10 items-center gap-1.5 rounded-full border border-borde bg-white px-4 font-display text-sm font-bold text-tinta transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
             >
               <Download className="size-4" aria-hidden />
               Exportar CSV
             </button>
           </div>
-          <p className="mb-5 text-sm text-grafito">
+          <p className="mb-6 text-sm text-grafito">
             Plan {PANEL_COMPLEJO.plan === "comision" ? `comisión — ${formatearPrecio(450)} por reserva que pasa por el Split de Saque` : "suscripción — sin comisión por reserva"}
           </p>
 
-          <div className="mb-5 flex flex-wrap items-center gap-2">
-            <div className="flex rounded-full border border-borde bg-white p-1">
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            <div className="flex rounded-full bg-humo p-1">
               <button
                 type="button"
                 onClick={() => {
                   setDesde(inicioSemana(hoyISO()));
                   setHasta(finSemana(hoyISO()));
                 }}
-                className="h-8 rounded-full px-3.5 text-sm font-semibold text-grafito transition-colors hover:text-tinta"
+                className="h-9 rounded-full px-4 text-sm font-semibold text-grafito transition-colors hover:text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Esta semana
               </button>
@@ -162,7 +162,7 @@ export default function PanelPagos() {
                   setDesde(inicioMes(hoyISO()));
                   setHasta(finMes(hoyISO()));
                 }}
-                className="h-8 rounded-full px-3.5 text-sm font-semibold text-grafito transition-colors hover:text-tinta"
+                className="h-9 rounded-full px-4 text-sm font-semibold text-grafito transition-colors hover:text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Este mes
               </button>
@@ -172,7 +172,7 @@ export default function PanelPagos() {
               value={desde}
               onChange={(e) => setDesde(e.target.value)}
               aria-label="Desde"
-              className="h-10 rounded-full border border-borde bg-white px-3.5 text-sm text-tinta focus:border-azul focus:outline-none"
+              className="h-10 rounded-full bg-humo px-4 text-sm text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
             />
             <span className="text-sm text-grafito">a</span>
             <input
@@ -181,14 +181,14 @@ export default function PanelPagos() {
               min={desde}
               onChange={(e) => setHasta(e.target.value)}
               aria-label="Hasta"
-              className="h-10 rounded-full border border-borde bg-white px-3.5 text-sm text-tinta focus:border-azul focus:outline-none"
+              className="h-10 rounded-full bg-humo px-4 text-sm text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
             />
           </div>
 
           {estadoCarga === "cargando" && <SkeletonPagos />}
 
           {estadoCarga === "error" && (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center shadow-card">
               <AlertTriangle className="size-8 text-cancelado" aria-hidden />
               <p className="font-semibold text-tinta">No pudimos cargar los pagos.</p>
               <button
@@ -202,7 +202,7 @@ export default function PanelPagos() {
           )}
 
           {estadoCarga === "listo" && pagos.length === 0 && ventas.length === 0 && (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center shadow-card">
               <Receipt className="size-8 text-grafito" aria-hidden />
               <p className="font-display font-bold text-tinta">Todavía no hay pagos en este período</p>
               <p className="max-w-xs text-sm text-grafito">Probá con otro rango de fechas.</p>
@@ -210,12 +210,12 @@ export default function PanelPagos() {
           )}
 
           {estadoCarga === "listo" && (pagos.length > 0 || ventas.length > 0) && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <ResumenPagos facturacionTurnos={facturacionTurnos} facturacionBuffet={facturacionBuffet} comision={comisionTotal} neto={neto} />
               {pagos.length > 0 && <TablaPagos pagos={pagos} onEditar={setPanelAbierto} />}
               {ventas.length > 0 && (
                 <div>
-                  <p className="mb-2 font-display text-base font-bold text-tinta">Ventas del buffet</p>
+                  <p className="mb-3 font-display text-lg font-bold text-tinta">Ventas del buffet</p>
                   <TablaVentasBuffet ventas={ventas} />
                 </div>
               )}

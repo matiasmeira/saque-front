@@ -92,7 +92,7 @@ export function FormTarifa({
             required
             value={horaDesde}
             onChange={(e) => setHoraDesde(e.target.value)}
-            className="w-full rounded-input border border-borde bg-humo px-3 py-2.5 text-tinta focus:border-azul focus:outline-none"
+            className="w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
           />
         </div>
         <div>
@@ -106,7 +106,7 @@ export function FormTarifa({
             min={horaDesde || undefined}
             value={horaHasta}
             onChange={(e) => setHoraHasta(e.target.value)}
-            className="w-full rounded-input border border-borde bg-humo px-3 py-2.5 text-tinta focus:border-azul focus:outline-none"
+            className="w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
           />
         </div>
       </div>
@@ -124,7 +124,7 @@ export function FormTarifa({
                 onChange={(e) => setPrecios((prev) => ({ ...prev, [d]: Number(e.target.value) }))}
                 placeholder="0"
                 aria-label={`Precio para ${d} minutos`}
-                className="w-full rounded-input border border-borde bg-humo px-3 py-2 text-tinta focus:border-azul focus:outline-none"
+                className="w-full rounded-input bg-humo px-3 py-2 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
               />
             </div>
           ))}

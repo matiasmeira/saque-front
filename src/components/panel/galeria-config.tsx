@@ -90,7 +90,7 @@ export function GaleriaConfig({
           onChange={(e) => setEtiquetaNueva(e.target.value)}
           placeholder="Ej: Cancha techada"
           aria-label="Descripción de la foto nueva"
-          className="w-full rounded-input border border-borde bg-humo px-3 py-2.5 text-sm text-tinta focus:border-azul focus:outline-none"
+          className="w-full rounded-input bg-humo px-3 py-2.5 text-sm text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
         />
         <button
           type="submit"

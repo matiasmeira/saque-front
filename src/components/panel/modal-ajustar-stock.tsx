@@ -33,7 +33,7 @@ export function ModalAjustarStock({ producto, onGuardar, onCancelar }: { product
           autoFocus
           value={cantidad}
           onChange={(e) => setCantidad(Number(e.target.value))}
-          className="w-full rounded-input border border-borde bg-humo px-3 py-2.5 text-tinta focus:border-azul focus:outline-none"
+          className="w-full rounded-input bg-humo px-3.5 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
         />
         <p className="mt-1 text-xs text-grafito">
           Queda en {Math.max(0, producto.stock + (Number.isFinite(cantidad) ? cantidad : 0))} unidades.
@@ -50,13 +50,13 @@ export function ModalAjustarStock({ producto, onGuardar, onCancelar }: { product
         <button
           type="button"
           onClick={onCancelar}
-          className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo"
+          className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
         >
           Cancelar
         </button>
         <button
           type="submit"
-          className="flex h-11 flex-1 items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+          className="flex h-11 flex-1 items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
         >
           Sumar stock
         </button>

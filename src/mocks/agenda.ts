@@ -11,7 +11,7 @@ import { calcularPrecio, diaSemanaDeFecha, PANEL_TARIFAS } from "@/mocks/tarifas
 
 export type BloqueoDelDia = { horaInicio: string; horaFin: string; motivo?: string };
 
-export type EstadoTurno = "ocupado" | "pendiente" | "cancelado";
+export type EstadoTurno = "ocupado" | "pendiente" | "cancelado" | "ausente";
 export type EstadoComplejo = "borrador" | "publicado" | "despublicado" | "suspendido";
 /** ver Parte 11: comisión ($450 fijos por reserva) o suscripción escalonada (sin comisión) */
 export type PlanComplejo = "comision" | "suscripcion";

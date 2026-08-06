@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { ArrowRightLeft, Calendar, Clock, Phone, Repeat, User } from "lucide-react";
 import { StatusBadge } from "@/components/saque/status-badge";
+import { ModalPanel } from "@/components/panel/modal-panel";
+import { useHoraActual } from "@/lib/hora-actual";
 import { fechaLarga, formatearPrecio } from "@/lib/formato";
 import type { Cancha } from "@/mocks/canchas";
 import type { Turno } from "@/mocks/agenda";
@@ -25,9 +27,12 @@ export function DetalleTurno({
   canchasCompatibles,
   puedeCobrar,
   puedeCancelar,
+  esDueno,
   onMarcarPagado,
   onCancelar,
   onMover,
+  onMarcarAusente,
+  onDeshacerAusencia,
 }: {
   turno: Turno;
   cancha: Cancha;
@@ -36,12 +41,22 @@ export function DetalleTurno({
   /** permisos cobrar_turnos / cancelar_turnos del usuario actual — el dueño siempre los tiene */
   puedeCobrar: boolean;
   puedeCancelar: boolean;
+  /** "Deshacer ausencia" es solo del dueño — nunca en Modo Caja */
+  esDueno: boolean;
   onMarcarPagado: () => void;
   onCancelar: () => void;
   onMover: (canchaDestinoId: number) => void;
+  onMarcarAusente: () => void;
+  onDeshacerAusencia: () => void;
 }) {
   const conSenia = turno.senia > 0;
   const [destino, setDestino] = useState(canchasCompatibles[0]?.id ?? "");
+  const [confirmando, setConfirmando] = useState<"ausente" | "deshacer-ausencia" | null>(null);
+
+  const horaActual = useHoraActual();
+  const yaEmpezo = new Date(`${turno.fecha}T${turno.horaInicio}`) <= horaActual;
+  const puedeMarcarAusente = (turno.estado === "ocupado" || turno.estado === "pendiente") && yaEmpezo;
+  const puedeDeshacerAusencia = turno.estado === "ausente" && esDueno;
 
   return (
     <div className="space-y-5">
@@ -109,7 +124,7 @@ export function DetalleTurno({
             value={destino}
             onChange={(e) => setDestino(Number(e.target.value))}
             aria-label="Cancha destino"
-            className="w-full rounded-input border border-borde bg-white px-3 py-2.5 text-tinta focus:border-azul focus:outline-none"
+            className="w-full rounded-input bg-white px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
           >
             {canchasCompatibles.map((c) => (
               <option key={c.id} value={c.id}>
@@ -120,20 +135,20 @@ export function DetalleTurno({
           <button
             type="button"
             onClick={() => destino && onMover(Number(destino))}
-            className="flex h-10 w-full items-center justify-center rounded-full border border-azul font-display text-sm font-bold text-azul transition-colors hover:bg-celeste-suave"
+            className="flex h-10 w-full items-center justify-center rounded-full border border-azul font-display text-sm font-bold text-azul transition-colors hover:bg-celeste-suave focus:outline-none focus:ring-2 focus:ring-celeste"
           >
             Mover turno
           </button>
         </div>
       )}
 
-      {turno.estado !== "cancelado" && (puedeCobrar || puedeCancelar) && (
+      {turno.estado !== "cancelado" && (puedeCobrar || puedeCancelar || puedeMarcarAusente || puedeDeshacerAusencia) && (
         <div className="space-y-2 pt-2">
           {puedeCobrar && conSenia && !turno.seniaPagada && (
             <button
               type="button"
               onClick={onMarcarPagado}
-              className="flex h-11 w-full items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+              className="flex h-11 w-full items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
             >
               Marcar como pagado
             </button>
@@ -142,12 +157,63 @@ export function DetalleTurno({
             <button
               type="button"
               onClick={onCancelar}
-              className="flex h-11 w-full items-center justify-center rounded-full border-2 border-cancelado font-display text-sm font-bold text-cancelado transition-colors hover:bg-cancelado-suave"
+              className="flex h-11 w-full items-center justify-center rounded-full border-2 border-cancelado font-display text-sm font-bold text-cancelado transition-colors hover:bg-cancelado-suave focus:outline-none focus:ring-2 focus:ring-celeste"
             >
               Cancelar turno
             </button>
           )}
+          {puedeMarcarAusente && (
+            <button
+              type="button"
+              onClick={() => setConfirmando("ausente")}
+              className="flex h-11 w-full items-center justify-center rounded-full border-2 border-ausente font-display text-sm font-bold text-ausente transition-colors hover:bg-ausente-suave focus:outline-none focus:ring-2 focus:ring-celeste"
+            >
+              Marcar ausente
+            </button>
+          )}
+          {puedeDeshacerAusencia && (
+            <button
+              type="button"
+              onClick={() => setConfirmando("deshacer-ausencia")}
+              className="flex h-11 w-full items-center justify-center rounded-full border-2 border-azul font-display text-sm font-bold text-azul transition-colors hover:bg-celeste-suave focus:outline-none focus:ring-2 focus:ring-celeste"
+            >
+              Deshacer ausencia
+            </button>
+          )}
         </div>
+      )}
+
+      {confirmando && (
+        <ModalPanel
+          titulo={confirmando === "ausente" ? "Marcar ausente" : "Deshacer ausencia"}
+          onClose={() => setConfirmando(null)}
+        >
+          <p className="text-sm text-grafito">
+            {confirmando === "ausente"
+              ? "El jugador no se presentó. Marcar el turno como ausente."
+              : "El turno vuelve a mostrarse como confirmado."}
+          </p>
+          <div className="mt-5 flex gap-3">
+            <button
+              type="button"
+              onClick={() => setConfirmando(null)}
+              className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-tinta transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+            >
+              Volver
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (confirmando === "ausente") onMarcarAusente();
+                else onDeshacerAusencia();
+                setConfirmando(null);
+              }}
+              className="flex h-11 flex-1 items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
+            >
+              Confirmar
+            </button>
+          </div>
+        </ModalPanel>
       )}
     </div>
   );

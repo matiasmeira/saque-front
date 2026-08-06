@@ -5,7 +5,7 @@ import type { ProductoBuffet } from "@/mocks/buffet";
 
 export type DatosProducto = { nombre: string; descripcion: string; precio: number; stock?: number; umbralAlerta: number };
 
-const campoClase = "w-full rounded-input border border-borde bg-humo px-3 py-2.5 text-tinta focus:border-azul focus:outline-none";
+const campoClase = "w-full rounded-input bg-humo px-3.5 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste";
 
 /**
  * Alta y edición comparten el mismo form (mismo patrón que
@@ -114,13 +114,13 @@ export function FormFichaProducto({
         <button
           type="button"
           onClick={onCancelar}
-          className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo"
+          className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
         >
           Cancelar
         </button>
         <button
           type="submit"
-          className="flex h-11 flex-1 items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+          className="flex h-11 flex-1 items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
         >
           Guardar
         </button>

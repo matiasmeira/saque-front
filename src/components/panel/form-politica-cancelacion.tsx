@@ -34,7 +34,7 @@ export function FormPoliticaCancelacion({
           required
           value={horasLimite}
           onChange={(e) => setHorasLimite(Number(e.target.value))}
-          className="w-32 rounded-input border border-borde bg-humo px-3 py-2.5 text-tinta focus:border-azul focus:outline-none"
+          className="w-32 rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
         />
       </div>
 

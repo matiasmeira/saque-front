@@ -21,8 +21,8 @@ export function VistaPreviaPrecio({ cancha, tarifas }: { cancha: Cancha; tarifas
   const resultado = calcularPrecio(cancha, tarifas, dia, hora, duracion);
 
   return (
-    <div className="rounded-card bg-celeste-suave p-5">
-      <h2 className="flex items-center gap-2 font-display text-base font-bold text-tinta">
+    <div className="rounded-card bg-celeste-suave p-6 shadow-card">
+      <h2 className="flex items-center gap-2 font-display text-lg font-bold text-tinta">
         <Calculator className="size-[18px] shrink-0" aria-hidden />
         Vista previa
       </h2>
@@ -37,7 +37,7 @@ export function VistaPreviaPrecio({ cancha, tarifas }: { cancha: Cancha; tarifas
             id="preview-dia"
             value={dia}
             onChange={(e) => setDia(e.target.value as DiaSemana)}
-            className="h-10 rounded-input border border-borde bg-white px-3 text-sm text-tinta focus:border-azul focus:outline-none"
+            className="h-10 rounded-input bg-white px-3 text-sm text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
           >
             {DIAS_SEMANA.map((d) => (
               <option key={d.valor} value={d.valor}>
@@ -56,7 +56,7 @@ export function VistaPreviaPrecio({ cancha, tarifas }: { cancha: Cancha; tarifas
             type="time"
             value={hora}
             onChange={(e) => setHora(e.target.value)}
-            className="h-10 rounded-input border border-borde bg-white px-3 text-sm text-tinta focus:border-azul focus:outline-none"
+            className="h-10 rounded-input bg-white px-3 text-sm text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
           />
         </div>
 
@@ -69,7 +69,7 @@ export function VistaPreviaPrecio({ cancha, tarifas }: { cancha: Cancha; tarifas
               id="preview-duracion"
               value={duracion}
               onChange={(e) => setDuracion(Number(e.target.value))}
-              className="h-10 rounded-input border border-borde bg-white px-3 text-sm text-tinta focus:border-azul focus:outline-none"
+              className="h-10 rounded-input bg-white px-3 text-sm text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
             >
               {cancha.duracionesPermitidas.map((min) => (
                 <option key={min} value={min}>

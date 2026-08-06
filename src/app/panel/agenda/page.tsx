@@ -11,6 +11,7 @@ import { DrawerPanel } from "@/components/panel/drawer-panel";
 import { FormTurnoRapido } from "@/components/panel/form-turno-rapido";
 import { DetalleTurno } from "@/components/panel/detalle-turno";
 import { useBloqueadoPorCaja, usePermisos } from "@/lib/permisos";
+import { useRolPanel } from "@/lib/rol-panel";
 import { useHoraActual } from "@/lib/hora-actual";
 import { diaCorto, diasVisibles, hoyISO, inicioSemana, rangoSemanaLabel, sumarDias } from "@/lib/fecha";
 import { fechaLarga } from "@/lib/formato";
@@ -47,6 +48,7 @@ export default function PanelAgenda() {
   const searchParams = useSearchParams();
   const tienePermiso = usePermisos();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
+  const rol = useRolPanel();
   const horaActual = useHoraActual();
 
   const puedeVerAgenda = tienePermiso("ver_agenda");
@@ -153,6 +155,24 @@ export default function PanelAgenda() {
     setPanelAbierto(null);
   }
 
+  function marcarAusente(turno: Turno) {
+    setTurnosPorFecha((prev) => ({
+      ...prev,
+      [turno.fecha]: (prev[turno.fecha] ?? []).map((t) => (t.id === turno.id ? { ...t, estado: "ausente" } : t)),
+    }));
+    setPanelAbierto(null);
+  }
+
+  function deshacerAusencia(turno: Turno) {
+    setTurnosPorFecha((prev) => ({
+      ...prev,
+      [turno.fecha]: (prev[turno.fecha] ?? []).map((t) =>
+        t.id === turno.id ? { ...t, estado: t.senia > 0 && !t.seniaPagada ? "pendiente" : "ocupado" } : t,
+      ),
+    }));
+    setPanelAbierto(null);
+  }
+
   function moverTurno(turno: Turno, canchaDestinoId: number) {
     setTurnosPorFecha((prev) => ({
       ...prev,
@@ -187,8 +207,8 @@ export default function PanelAgenda() {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <HeaderPanel nombre={PANEL_COMPLEJO.nombre} estado={PANEL_COMPLEJO.estado} diasRestantesTrial={PANEL_COMPLEJO.diasRestantesTrial} />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-6">
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-1">
               <button
                 type="button"
@@ -217,7 +237,7 @@ export default function PanelAgenda() {
                   value={canchaSemana}
                   onChange={(e) => setCanchaSemana(Number(e.target.value))}
                   aria-label="Cancha a mostrar"
-                  className="h-10 rounded-full border border-borde bg-white px-3.5 text-sm font-semibold text-tinta focus:border-azul focus:outline-none"
+                  className="h-10 rounded-full bg-humo px-3.5 text-sm font-semibold text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
                 >
                   {PANEL_CANCHAS.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -227,7 +247,7 @@ export default function PanelAgenda() {
                 </select>
               )}
 
-              <div className="flex rounded-full border border-borde bg-white p-1">
+              <div className="flex rounded-full bg-humo p-1">
                 <button
                   type="button"
                   onClick={() => setVista("dia")}
@@ -253,7 +273,7 @@ export default function PanelAgenda() {
               <button
                 type="button"
                 onClick={abrirNuevoGenerico}
-                className="flex h-10 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+                className="flex h-10 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 <Plus className="size-4" aria-hidden />
                 Nuevo turno
@@ -264,13 +284,13 @@ export default function PanelAgenda() {
           {estadoCarga === "cargando" && <SkeletonAgenda columnas={vista === "dia" ? PANEL_CANCHAS.length : 7} />}
 
           {estadoCarga === "error" && (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-card border border-borde bg-white py-20 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center shadow-card">
               <AlertTriangle className="size-8 text-cancelado" aria-hidden />
               <p className="font-semibold text-tinta">No pudimos cargar la agenda.</p>
               <button
                 type="button"
                 onClick={() => setReintento((r) => r + 1)}
-                className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+                className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Reintentar
               </button>
@@ -281,7 +301,7 @@ export default function PanelAgenda() {
             <div className="relative">
               {diaVacio && (
                 <div className="pointer-events-none absolute inset-x-0 top-24 z-10 flex justify-center px-4">
-                  <div className="pointer-events-auto max-w-xs rounded-card border border-borde bg-white p-5 text-center shadow-sm">
+                  <div className="pointer-events-auto max-w-xs rounded-card bg-white p-5 text-center shadow-card">
                     <p className="font-display text-sm font-bold text-tinta">Todavía no hay turnos este día</p>
                     <p className="mt-1 text-sm text-grafito">Tocá cualquier horario libre para cargar el primero.</p>
                   </div>
@@ -313,6 +333,10 @@ export default function PanelAgenda() {
             <span className="flex items-center gap-1.5">
               <span className="size-3 rounded border-l-2 border-cancelado bg-cancelado-suave" aria-hidden />
               Cancelado
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-3 rounded border-l-2 border-ausente bg-ausente-suave" aria-hidden />
+              Ausente
             </span>
             <span className="flex items-center gap-1.5">
               <span
@@ -357,9 +381,12 @@ export default function PanelAgenda() {
             canchasCompatibles={canchasCompatibles(PANEL_CANCHAS.find((c) => c.id === panelAbierto.turno.canchaId))}
             puedeCobrar={puedeCobrarTurnos}
             puedeCancelar={puedeCancelarTurnos}
+            esDueno={rol === "dueno"}
             onMarcarPagado={() => marcarPagado(panelAbierto.turno)}
             onCancelar={() => cancelarTurno(panelAbierto.turno)}
             onMover={(destinoId) => moverTurno(panelAbierto.turno, destinoId)}
+            onMarcarAusente={() => marcarAusente(panelAbierto.turno)}
+            onDeshacerAusencia={() => deshacerAusencia(panelAbierto.turno)}
           />
         </DrawerPanel>
       )}

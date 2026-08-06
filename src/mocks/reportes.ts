@@ -18,6 +18,7 @@ import { crearRand, hashSeed } from "@/lib/prng";
 import { diasEntre, sumarDias } from "@/lib/fecha";
 import { PANEL_CANCHAS } from "@/mocks/canchas";
 import { PANEL_CLIENTES } from "@/mocks/clientes";
+import { gastosDelPeriodo, PANEL_GASTOS, totalGastos } from "@/mocks/gastos";
 import { METODOS_PAGO, type MetodoPago } from "@/mocks/pagos";
 import { diaSemanaDeFecha, type DiaSemana } from "@/mocks/tarifas";
 
@@ -59,11 +60,14 @@ export type ClientesReporteResponse = {
   topClientes: TopCliente[];
 };
 
+export type ResultadoReporteResponse = { facturado: number; gastos: number; neto: number };
+
 export type Reporte = {
   facturacion: Comparativo<FacturacionReporteResponse>;
   ocupacion: Comparativo<OcupacionReporteResponse>;
   horariosPedidos: Comparativo<HorariosPedidosReporteResponse>;
   clientes: Comparativo<ClientesReporteResponse>;
+  resultado: Comparativo<ResultadoReporteResponse>;
 };
 
 function shuffle<T>(lista: T[], rand: () => number): T[] {
@@ -190,6 +194,18 @@ export function generarReporte(desde: string, hasta: string): Reporte {
     clientes: {
       actual: { clientesNuevos: actual.clientesNuevos, totalAusencias: actual.totalAusencias, topClientes: actual.topClientes },
       anterior: { clientesNuevos: anterior.clientesNuevos, totalAusencias: anterior.totalAusencias, topClientes: anterior.topClientes },
+    },
+    resultado: {
+      actual: {
+        facturado: actual.facturacionTotal,
+        gastos: totalGastos(gastosDelPeriodo(PANEL_GASTOS, desde, hasta)),
+        neto: actual.facturacionTotal - totalGastos(gastosDelPeriodo(PANEL_GASTOS, desde, hasta)),
+      },
+      anterior: {
+        facturado: anterior.facturacionTotal,
+        gastos: totalGastos(gastosDelPeriodo(PANEL_GASTOS, desdeAnterior, hastaAnterior)),
+        neto: anterior.facturacionTotal - totalGastos(gastosDelPeriodo(PANEL_GASTOS, desdeAnterior, hastaAnterior)),
+      },
     },
   };
 }

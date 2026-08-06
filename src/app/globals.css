@@ -31,14 +31,23 @@
   --color-pendiente-suave: #fef6e7;
   --color-cancelado: #dc2626;
   --color-cancelado-suave: #fdeced;
+  --color-ausente: #c2410c;
+  --color-ausente-suave: #fdf1e7;
 
   /* --- Tipografia --- */
   --font-display: var(--font-archivo); /* titulares */
   --font-sans: var(--font-public-sans); /* interfaz y cuerpo */
 
   /* --- Radios --- */
-  --radius-card: 1rem; /* 16px - tarjetas */
+  --radius-card: 0.75rem; /* 12px - tarjetas */
   --radius-input: 0.625rem; /* 10px - inputs */
+
+  /* --- Sombras ---
+     Sombra difusa y sutil para el lenguaje de card nuevo: nada de
+     borde duro, la separación de la card contra el fondo humo la da
+     esta sombra. shadow-card en vez de la shadow-sm generica de
+     Tailwind, para tener un solo lugar donde ajustarla. */
+  --shadow-card: 0 1px 2px 0 rgb(10 31 61 / 0.04), 0 8px 24px -8px rgb(10 31 61 / 0.10);
 }
 
 /* ============================================================
