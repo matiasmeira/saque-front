@@ -1,49 +1,66 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { MapPin, Navigation, ShowerHead, Flame, ParkingCircle, UtensilsCrossed, Wifi } from "lucide-react";
+import {
+  MapPin,
+  Navigation,
+  ShowerHead,
+  Flame,
+  ParkingCircle,
+  UtensilsCrossed,
+  Wifi,
+  Store,
+  DoorOpen,
+} from "lucide-react";
 import { HeaderPublico } from "@/components/saque/header-publico";
 import { FooterPublico } from "@/components/saque/footer-publico";
 import { GaleriaFotos } from "@/components/saque/galeria-fotos";
 import { GrillaDisponibilidad } from "@/components/saque/grilla-disponibilidad";
 import { ReservaBlock } from "@/components/saque/reserva-block";
 import { LineasDeCancha } from "@/components/saque/lineas-de-cancha";
-import { DEPORTES } from "@/mocks/deportes";
-import { SERVICIOS } from "@/mocks/servicios";
-import { COMPLEJOS, type Complejo, type HorarioAtencion } from "@/mocks/complejos";
+import { etiquetaDeporte } from "@/lib/deportes";
+import { publico } from "@/lib/api/endpoints/publico";
+import { ApiError } from "@/lib/api/errores";
+import type { ComplejoDetalleResponse } from "@/lib/api/tipos/publico";
+import type { Servicio } from "@/lib/api/tipos/comunes";
 
-const ICONOS_SERVICIO: Record<string, typeof ShowerHead> = {
-  vestuario: ShowerHead,
-  parrilla: Flame,
-  estacionamiento: ParkingCircle,
-  buffet: UtensilsCrossed,
-  wifi: Wifi,
+/** Los 7 valores del enum Servicio del backend. */
+const SERVICIOS: Record<Servicio, { etiqueta: string; Icono: typeof ShowerHead }> = {
+  VESTUARIOS: { etiqueta: "Vestuarios", Icono: DoorOpen },
+  DUCHAS: { etiqueta: "Duchas", Icono: ShowerHead },
+  PARRILLA: { etiqueta: "Parrilla", Icono: Flame },
+  ESTACIONAMIENTO: { etiqueta: "Estacionamiento", Icono: ParkingCircle },
+  BUFFET: { etiqueta: "Buffet", Icono: UtensilsCrossed },
+  KIOSCO: { etiqueta: "Kiosco", Icono: Store },
+  WIFI: { etiqueta: "WiFi", Icono: Wifi },
 };
 
-const DIAS_SCHEMA: Record<string, string[]> = {
-  "Lun a Vie": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-  "Sáb y Dom": ["Saturday", "Sunday"],
-  "Todos los días": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-};
-
-function buscarComplejo(slug: string): Complejo | undefined {
-  return COMPLEJOS.find((c) => c.slug === slug);
+/** `"MONDAY"` → `"Monday"`, que es lo que espera schema.org. */
+function diaSchema(diaSemana: string): string {
+  return diaSemana.charAt(0) + diaSemana.slice(1).toLowerCase();
 }
 
-function aHoraISO(hora: string) {
-  const limpio = hora.trim().padStart(2, "0");
-  return limpio === "24" ? "23:59" : `${limpio}:00`;
+/**
+ * El JSON-LD ahora sale de HorarioAtencionDto, que viene estructurado
+ * (diaSemana + horaApertura + horaCierre). Antes había que parsear strings
+ * tipo "Lun a Vie" y "09 a 24" para reconstruirlo.
+ */
+function openingHoursSpecification(complejo: ComplejoDetalleResponse) {
+  return complejo.horariosAtencion.map((h) => ({
+    "@type": "OpeningHoursSpecification",
+    dayOfWeek: diaSchema(h.diaSemana),
+    opens: h.horaApertura.slice(0, 5),
+    closes: h.horaCierre.slice(0, 5),
+  }));
 }
 
-function openingHoursSpecification(horarioAtencion: HorarioAtencion[]) {
-  return horarioAtencion.map((h) => {
-    const [desde, hasta] = h.horario.split(" a ").map((s) => s.trim());
-    return {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: DIAS_SCHEMA[h.dias] ?? [],
-      opens: aHoraISO(desde),
-      closes: aHoraISO(hasta),
-    };
-  });
+async function buscarComplejo(slug: string): Promise<ComplejoDetalleResponse | null> {
+  try {
+    return await publico.detalle(slug);
+  } catch (e) {
+    // 404 del backend = complejo inexistente o dado de baja.
+    if (e instanceof ApiError && e.status === 404) return null;
+    throw e;
+  }
 }
 
 export async function generateMetadata({
@@ -52,49 +69,52 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const complejo = buscarComplejo(slug);
+  const complejo = await buscarComplejo(slug);
   if (!complejo) return { title: "Complejo no encontrado — saque" };
 
-  const deportesLabel = complejo.deportes
-    .map((d) => DEPORTES.find((dep) => dep.valor === d)?.etiqueta)
-    .filter(Boolean)
-    .join(", ");
-  const titulo = `${complejo.nombre} — Reservá cancha en José C. Paz | saque`;
-  const descripcion = `${complejo.nombre}, en ${complejo.direccion}. Reservá ${deportesLabel} online, pagás la seña y el turno queda confirmado al instante.`;
+  const deportesLabel = complejo.deportes.map(etiquetaDeporte).join(", ");
+  const titulo = `${complejo.nombre} — Reservá tu cancha | saque`;
+  const descripcion = `${complejo.nombre}, en ${complejo.direccion}. Reservá ${deportesLabel} online y el turno queda confirmado al instante.`;
 
   return {
     title: titulo,
     description: descripcion,
-    openGraph: {
-      title: titulo,
-      description: descripcion,
-      type: "website",
-    },
+    openGraph: { title: titulo, description: descripcion, type: "website" },
   };
 }
 
 export default async function FichaComplejo({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const complejo = buscarComplejo(slug);
+  const complejo = await buscarComplejo(slug);
   if (!complejo) notFound();
-
-  const precios = complejo.canchas.map((c) => c.precio);
-  const priceRange = `$${Math.min(...precios).toLocaleString("es-AR")}–$${Math.max(...precios).toLocaleString("es-AR")}`;
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SportsActivityLocation",
     name: complejo.nombre,
+    // El DTO trae la dirección como un solo string: no hay campos separados de
+    // localidad ni provincia para desglosar acá.
     address: {
       "@type": "PostalAddress",
       streetAddress: complejo.direccion,
-      addressLocality: "José C. Paz",
-      addressRegion: "Buenos Aires",
       addressCountry: "AR",
     },
-    geo: { "@type": "GeoCoordinates", latitude: complejo.lat, longitude: complejo.lng },
-    priceRange,
-    openingHoursSpecification: openingHoursSpecification(complejo.horarioAtencion),
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: complejo.latitud,
+      longitude: complejo.longitud,
+    },
+    ...(complejo.precioDesde !== null && {
+      priceRange: `Desde $${complejo.precioDesde.toLocaleString("es-AR")}`,
+    }),
+    ...(complejo.promedioCalificacion !== null && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: complejo.promedioCalificacion,
+        reviewCount: complejo.cantidadCalificaciones ?? 0,
+      },
+    }),
+    openingHoursSpecification: openingHoursSpecification(complejo),
   };
 
   return (
@@ -107,17 +127,12 @@ export default async function FichaComplejo({ params }: { params: Promise<{ slug
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-10 pb-56 sm:px-8 lg:px-10 lg:pb-16">
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          {complejo.nuevo && (
-            <span className="rounded bg-azul px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">
-              Nuevo
-            </span>
-          )}
           {complejo.deportes.map((valor) => (
             <span
               key={valor}
               className="rounded-full border border-borde bg-white px-3 py-1 text-sm text-grafito"
             >
-              {DEPORTES.find((d) => d.valor === valor)?.etiqueta ?? valor}
+              {etiquetaDeporte(valor)}
             </span>
           ))}
         </div>
@@ -128,40 +143,40 @@ export default async function FichaComplejo({ params }: { params: Promise<{ slug
 
         <div className="mt-3 flex items-center gap-1.5 text-grafito">
           <MapPin className="size-[18px] shrink-0" aria-hidden />
-          <p>
-            {complejo.direccion}, José C. Paz
-          </p>
+          <p>{complejo.direccion}</p>
         </div>
 
         <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-3">
           <div className="space-y-10 lg:col-span-2">
-            <section>
+            <section id="canchas" className="scroll-mt-24">
               <h2 className="mb-4 font-display text-[1.75rem] font-extrabold tracking-[-0.02em] text-tinta">
                 Canchas
               </h2>
               <GrillaDisponibilidad complejo={complejo} />
             </section>
 
-            <section>
-              <h2 className="mb-4 font-display text-[1.75rem] font-extrabold tracking-[-0.02em] text-tinta">
-                Servicios
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {complejo.servicios.map((valor) => {
-                  const servicio = SERVICIOS.find((s) => s.valor === valor);
-                  const Icono = ICONOS_SERVICIO[valor];
-                  return (
-                    <span
-                      key={valor}
-                      className="inline-flex items-center gap-2 rounded-full border border-borde bg-white px-4 py-2 text-sm text-grafito"
-                    >
-                      {Icono && <Icono className="size-[18px]" aria-hidden />}
-                      {servicio?.etiqueta ?? valor}
-                    </span>
-                  );
-                })}
-              </div>
-            </section>
+            {complejo.servicios.length > 0 && (
+              <section>
+                <h2 className="mb-4 font-display text-[1.75rem] font-extrabold tracking-[-0.02em] text-tinta">
+                  Servicios
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {complejo.servicios.map((valor) => {
+                    const servicio = SERVICIOS[valor];
+                    const Icono = servicio?.Icono;
+                    return (
+                      <span
+                        key={valor}
+                        className="inline-flex items-center gap-2 rounded-full border border-borde bg-white px-4 py-2 text-sm text-grafito"
+                      >
+                        {Icono && <Icono className="size-[18px]" aria-hidden />}
+                        {servicio?.etiqueta ?? valor}
+                      </span>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
             <section>
               <h2 className="mb-4 font-display text-[1.75rem] font-extrabold tracking-[-0.02em] text-tinta">
@@ -170,7 +185,7 @@ export default async function FichaComplejo({ params }: { params: Promise<{ slug
               <div className="relative h-64 overflow-hidden rounded-card bg-tinta">
                 <LineasDeCancha className="opacity-[0.16]" />
                 <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${complejo.lat},${complejo.lng}`}
+                  href={`https://www.google.com/maps/search/?api=1&query=${complejo.latitud},${complejo.longitud}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="absolute bottom-5 left-5 flex items-center gap-3 rounded-card bg-white px-4 py-3 transition-transform hover:scale-[1.02]"
@@ -184,13 +199,6 @@ export default async function FichaComplejo({ params }: { params: Promise<{ slug
                   </span>
                 </a>
               </div>
-            </section>
-
-            <section>
-              <h2 className="mb-4 font-display text-[1.75rem] font-extrabold tracking-[-0.02em] text-tinta">
-                Reglas del complejo
-              </h2>
-              <p className="max-w-3xl leading-relaxed text-grafito">{complejo.reglas}</p>
             </section>
           </div>
 
