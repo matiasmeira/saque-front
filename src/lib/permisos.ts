@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { usePerfil } from "@/hooks/api/use-perfil";
+import { tienePermisoDelBack } from "@/lib/api/permisos-mapeo";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useEmparejado, useEmpleadoIdSesion } from "@/lib/sesion-caja";
 import { PANEL_EMPLEADOS, type Empleado, type Permiso } from "@/mocks/empleados";
@@ -36,16 +38,30 @@ export function useEmpleadoActual(): Empleado | null {
 
 /**
  * El dueño tiene todos los permisos siempre, implícito — nunca se le
- * chequea la lista. Un empleado solo tiene los que el dueño le tildó
- * en su ficha (C10); si no hay sesión de empleado resuelta (rol
- * "empleado" sin identidad real detrás — ver useEmpleadoActual), no
- * tiene ninguno. Devuelve la función de chequeo en vez de un objeto,
- * para poder escribir `tienePermiso("cobrar_turnos")` en el punto de uso.
+ * chequea la lista, igual que hace el back con OWNER/ADMIN. Un empleado
+ * solo tiene los que el dueño le tildó en su ficha (C10); si no hay
+ * sesión de empleado resuelta, no tiene ninguno. Devuelve la función de
+ * chequeo en vez de un objeto, para poder escribir
+ * `tienePermiso("cobrar_turnos")` en el punto de uso.
+ *
+ * Con sesión real, los permisos salen de PerfilResponse.permisos y se
+ * traducen con tienePermisoDelBack (los dos conjuntos NO coinciden: ver
+ * PLAN_CONEXION.md §5.7). Sin sesión, cae al mock mientras dure la
+ * migración.
+ *
+ * Este gate es SOLO de UX: evita mostrar pantallas vacías y 403 inútiles.
+ * La barrera de verdad son los @PreAuthorize del backend.
  */
 export function usePermisos(): (permiso: Permiso) => boolean {
   const rol = useRolPanel();
   const empleadoActual = useEmpleadoActual();
-  return (permiso: Permiso) => rol === "dueno" || (empleadoActual?.permisos.includes(permiso) ?? false);
+  const { data: perfil } = usePerfil();
+
+  return (permiso: Permiso) => {
+    if (rol === "dueno") return true;
+    if (perfil) return tienePermisoDelBack(perfil.permisos, permiso);
+    return empleadoActual?.permisos.includes(permiso) ?? false;
+  };
 }
 
 /**

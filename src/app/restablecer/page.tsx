@@ -4,15 +4,21 @@ import { Suspense, useEffect, useRef, useState, type ClipboardEvent, type FormEv
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { HeaderMinimo } from "@/components/saque/header-minimo";
-import { simularLlamada } from "@/lib/mock-api";
+import { auth } from "@/lib/api/endpoints/auth";
+import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { esPasswordValida, passwordsCoinciden, POLITICA_PASSWORD_DESCRIPCION } from "@/lib/password";
 
-// TODO backend: código fijo de desarrollo, igual que en /verificar.
-const CODIGO_MOCK = "123456";
 const COOLDOWN_REENVIO_SEG = 60;
 const CANTIDAD_DIGITOS = 6;
 
-type Fase = "verificando" | "invalido" | "restablecer" | "listo";
+/**
+ * No existe "verificando": el backend no expone forma de validar un token de
+ * reset antes de usarlo — POST /auth/password/reset lo consume y falla si no
+ * sirve. Antes esta pantalla simulaba esa validación mirando si el token
+ * contenía la palabra "expirado"; ahora se muestra el formulario directamente
+ * y el error real aparece al enviarlo.
+ */
+type Fase = "invalido" | "restablecer" | "listo";
 
 const campoClase =
   "w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste";
@@ -30,24 +36,10 @@ function RestablecerContenido() {
   const searchParams = useSearchParams();
   const tokenUrl = searchParams.get("token");
 
-  const [fase, setFase] = useState<Fase>(() => (tokenUrl ? "verificando" : "invalido"));
+  const [fase, setFase] = useState<Fase>(() => (tokenUrl ? "restablecer" : "invalido"));
   const [cooldown, setCooldown] = useState(0);
   const [mostrarCodigoManual, setMostrarCodigoManual] = useState(false);
-
-  useEffect(() => {
-    // TODO backend: validar el token antes de mostrar el form podría
-    // hacerse contra un endpoint dedicado; acá se infiere del mismo
-    // POST /auth/password/reset, así que solo chequeamos que exista.
-    if (!tokenUrl) return;
-    let cancelado = false;
-    simularLlamada(!tokenUrl.includes("expirado"), 400).then((valido) => {
-      if (cancelado) return;
-      setFase(valido ? "restablecer" : "invalido");
-    });
-    return () => {
-      cancelado = true;
-    };
-  }, [tokenUrl]);
+  const [emailReenvio, setEmailReenvio] = useState("");
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -55,10 +47,18 @@ function RestablecerContenido() {
     return () => clearInterval(id);
   }, [cooldown]);
 
+  /**
+   * Reenviar exige el email: el link no lo trae y el backend identifica al
+   * usuario por el token opaco, no por una sesión. El cooldown se arranca
+   * igual haya funcionado o no, para no habilitar un botón de reintento
+   * instantáneo contra un endpoint con rate limit.
+   */
   function reenviar() {
     if (cooldown > 0) return;
-    // TODO backend: POST /auth/password/recuperar { email } de nuevo
+    const limpio = emailReenvio.trim().toLowerCase();
+    if (!limpio) return;
     setCooldown(COOLDOWN_REENVIO_SEG);
+    void auth.recuperarPassword({ email: limpio }).catch(() => {});
   }
 
   return (
@@ -66,24 +66,33 @@ function RestablecerContenido() {
       <HeaderMinimo volver="/ingresar" />
       <main className="flex flex-1 items-center justify-center px-5 py-10">
         <div className="w-full max-w-sm">
-          {fase === "verificando" && <p className="text-center text-sm text-grafito">Verificando el link...</p>}
-
           {fase === "invalido" && (
             <div className="text-center">
               <h1 className="font-display text-xl font-bold text-tinta">Ese link ya no es válido</h1>
               <p className="mt-1 text-sm text-grafito">Puede haber expirado o ya haberse usado. Pedí uno nuevo.</p>
+              <input
+                type="email"
+                autoComplete="email"
+                value={emailReenvio}
+                onChange={(e) => setEmailReenvio(e.target.value)}
+                placeholder="nombre@ejemplo.com"
+                aria-label="Tu email"
+                className={`${campoClase} mt-4`}
+              />
               <button
                 type="button"
                 onClick={reenviar}
-                disabled={cooldown > 0}
-                className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro disabled:cursor-not-allowed disabled:bg-borde disabled:text-grafito"
+                disabled={cooldown > 0 || !emailReenvio.trim()}
+                className="mt-3 flex h-12 w-full items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro disabled:cursor-not-allowed disabled:bg-borde disabled:text-grafito"
               >
                 {cooldown > 0 ? `Reenviar link en ${cooldown}s` : "Reenviar link"}
               </button>
             </div>
           )}
 
-          {fase === "restablecer" && <FormNuevaPassword onListo={() => setFase("listo")} />}
+          {fase === "restablecer" && tokenUrl && (
+            <FormNuevaPassword token={tokenUrl} onListo={() => setFase("listo")} />
+          )}
 
           {fase === "listo" && (
             <div className="text-center">
@@ -98,7 +107,7 @@ function RestablecerContenido() {
             </div>
           )}
 
-          {(fase === "verificando" || fase === "invalido") && (
+          {fase === "invalido" && (
             <div className="mt-6 border-t border-borde pt-5 text-center">
               {!mostrarCodigoManual ? (
                 <button
@@ -119,21 +128,30 @@ function RestablecerContenido() {
   );
 }
 
-function FormNuevaPassword({ onListo }: { onListo: () => void }) {
+function FormNuevaPassword({ token, onListo }: { token: string; onListo: () => void }) {
   const [password, setPassword] = useState("");
   const [confirmar, setConfirmar] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  function restablecer(e: FormEvent) {
+  async function restablecer(e: FormEvent) {
     e.preventDefault();
     if (!esPasswordValida(password)) return setError(POLITICA_PASSWORD_DESCRIPCION);
     if (!passwordsCoinciden(password, confirmar)) return setError("Las contraseñas no coinciden.");
 
     setError(null);
     setEnviando(true);
-    // TODO backend: POST /auth/password/reset { token, nuevaPassword: password }
-    simularLlamada({ ok: true }, 500).then(() => onListo());
+    try {
+      await auth.resetPassword({ token, nuevaPassword: password });
+      onListo();
+    } catch (e) {
+      setError(
+        e instanceof ApiError
+          ? mensajeVisible(e)
+          : "No pudimos cambiar la contraseña. Intentá de nuevo.",
+      );
+      setEnviando(false);
+    }
   }
 
   return (
@@ -217,7 +235,7 @@ function FormCodigoManual({ onListo }: { onListo: () => void }) {
     inputsRef.current[Math.min(texto.length, CANTIDAD_DIGITOS - 1)]?.focus();
   }
 
-  function restablecer(e: FormEvent) {
+  async function restablecer(e: FormEvent) {
     e.preventDefault();
     const codigo = digitos.join("");
     if (!email.trim() || codigo.length < CANTIDAD_DIGITOS) return;
@@ -226,17 +244,24 @@ function FormCodigoManual({ onListo }: { onListo: () => void }) {
 
     setError(null);
     setEnviando(true);
-    // TODO backend: POST /auth/password/reset { email, codigo, nuevaPassword }
-    simularLlamada(codigo === CODIGO_MOCK, 500).then((valido) => {
-      if (valido) {
-        onListo();
-        return;
-      }
-      setError("Ese código no es correcto. Revisá el mail o pedí uno nuevo.");
+    try {
+      // El backend acepta token XOR (email + codigo); esta es la segunda vía.
+      await auth.resetPassword({
+        email: email.trim().toLowerCase(),
+        codigo,
+        nuevaPassword: password,
+      });
+      onListo();
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? mensajeVisible(err)
+          : "No pudimos cambiar la contraseña. Intentá de nuevo.",
+      );
       setDigitos(Array(CANTIDAD_DIGITOS).fill(""));
       inputsRef.current[0]?.focus();
       setEnviando(false);
-    });
+    }
   }
 
   return (

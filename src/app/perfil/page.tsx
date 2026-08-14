@@ -19,6 +19,7 @@ import { HeaderPublico } from "@/components/saque/header-publico";
 import { FooterPublico } from "@/components/saque/footer-publico";
 import { EmptyState } from "@/components/saque/empty-state";
 import { borrarUsuario, useUsuario, guardarUsuario, type Usuario } from "@/lib/usuario";
+import { useLogout } from "@/hooks/api/use-perfil";
 import { PERFIL_MOCK } from "@/mocks/perfil";
 
 type EstadoCarga = "cargando" | "error" | "listo";
@@ -159,7 +160,20 @@ export default function Perfil() {
     return () => clearTimeout(id);
   }, [clave, mockError]);
 
-  function cerrarSesion() {
+  const logout = useLogout();
+
+  /**
+   * Cierre de sesión real: POST /api/v1/auth/logout incrementa tokenVersion en
+   * el backend, lo que invalida TODOS los JWT de este usuario al instante (no
+   * sólo el de esta pestaña). Recién después se limpia el token local y el
+   * cache de queries. Si la llamada falla igual se limpia del lado del
+   * cliente — quedar "logueado" localmente contra un token muerto es peor.
+   *
+   * borrarUsuario() sigue acá para limpiar el usuario mock heredado; se va
+   * cuando /perfil se migre entero a PerfilResponse.
+   */
+  async function cerrarSesion() {
+    await logout.mutateAsync().catch(() => {});
     borrarUsuario();
     router.push("/");
   }
