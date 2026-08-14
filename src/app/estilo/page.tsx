@@ -16,6 +16,7 @@ import { FiltrosResultados } from "@/components/saque/filtros-resultados";
 import { GaleriaFotos } from "@/components/saque/galeria-fotos";
 import { GrillaDisponibilidad } from "@/components/saque/grilla-disponibilidad";
 import { ReservaBlock } from "@/components/saque/reserva-block";
+import type { ComplejoDetalleResponse } from "@/lib/api/tipos/publico";
 import { CountdownBadge } from "@/components/saque/countdown-badge";
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { MetricaComparada } from "@/components/panel/metrica-comparada";
@@ -42,6 +43,31 @@ const CLIENTES_DEMO = [
   { nombre: "Ana Ríos", reservas: 6, ultima: "hace 5 días" },
   { nombre: "Grupo del Colo", reservas: 4, ultima: "hace 1 semana" },
 ];
+
+/**
+ * Fixture con la forma de ComplejoDetalleResponse. El slug es real: la grilla
+ * consulta la disponibilidad del backend, así que acá se ve con datos de verdad.
+ */
+const COMPLEJO_DEMO: ComplejoDetalleResponse = {
+  slug: "arena-sport-club",
+  nombre: "Arena Sport Club",
+  direccion: "Av. Croacia 1250, José C. Paz",
+  latitud: -34.5221,
+  longitud: -58.7573,
+  deportes: ["FUTBOL", "PADEL"],
+  servicios: ["PARRILLA", "VESTUARIOS", "ESTACIONAMIENTO", "BUFFET", "WIFI"],
+  fotos: [],
+  horariosAtencion: [
+    { diaSemana: "MONDAY", horaApertura: "09:00:00", horaCierre: "23:00:00" },
+  ],
+  canchas: [],
+  precioDesde: 12000,
+  requiereSena: true,
+  senaDesde: 4000,
+  promedioCalificacion: 4.6,
+  cantidadCalificaciones: 23,
+  comentarioDestacado: null,
+};
 
 const COLORES = [
   { nombre: "Tinta", clase: "bg-tinta", hex: "#0A1F3D", uso: "Texto, sidebar" },
@@ -449,10 +475,11 @@ export default function GuiaDeEstilo() {
 
       {/* ---------- GRILLA DE DISPONIBILIDAD (A3) ---------- */}
       <Seccion titulo="Grilla de disponibilidad (A3)">
-        <GrillaDisponibilidad complejo={COMPLEJOS[0]} />
+        <GrillaDisponibilidad complejo={COMPLEJO_DEMO} />
         <p className="mt-3 text-xs text-grafito">
-          Una cancha por fila, una hora por columna — mismo lenguaje que la agenda de C2, pero de
-          solo lectura. Las celdas libres son link directo al checkout.
+          Consulta la disponibilidad real del backend para el slug de demo: una fila por cancha y un
+          chip por turno libre. Los chips son link directo al checkout, con el slot entero
+          (inicio y fin) en la URL.
         </p>
       </Seccion>
 
@@ -460,7 +487,7 @@ export default function GuiaDeEstilo() {
       <Seccion titulo="ReservaBlock (A3)">
         <div className="relative rounded-card bg-humo p-6 shadow-card" style={{ minHeight: 420 }}>
           <div className="max-w-xs">
-            <ReservaBlock complejo={COMPLEJOS[0]} />
+            <ReservaBlock complejo={COMPLEJO_DEMO} />
           </div>
         </div>
         <p className="mt-3 text-xs text-grafito">

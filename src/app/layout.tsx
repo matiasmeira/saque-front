@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Archivo, Public_Sans } from "next/font/google";
-import { Suspense } from "react";
+
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -31,21 +31,18 @@ export default function RootLayout({
   return (
     <html lang="es-AR">
       <body className={`${archivo.variable} ${publicSans.variable}`}>
-        <Providers>
-          {/*
-            17 de las 20 páginas que usan useSearchParams() no tienen boundary
-            propio — todas las de /panel lo usan de forma transitiva a través de
-            useRolPanel()/usePermisos(). Sin un Suspense por encima, el
-            prerender estático de `next build` falla con
-            "missing-suspense-with-csr-bailout" y corta el build entero.
+        {/*
+          Sin Suspense acá a propósito. Un boundary en la raíz arranca el
+          streaming en TODAS las rutas, y una vez que el shell salió con 200 ya
+          no se puede cambiar el status: notFound() renderiza la pantalla de
+          404 pero responde 200, que para la zona pública es un problema de SEO
+          (Google indexaría complejos inexistentes).
 
-            Este boundary raíz es deliberadamente amplio: desbloquea el build
-            sin tocar pantallas que se migran en fases posteriores. A medida
-            que cada pantalla se conecte, conviene bajarle el boundary a su
-            propio subárbol para no perder el HTML estático de toda la página.
-          */}
-          <Suspense fallback={null}>{children}</Suspense>
-        </Providers>
+          Las rutas que sí necesitan boundary — las que usan useSearchParams()
+          sin uno propio — lo declaran en su layout: ver app/panel/layout.tsx y
+          sus pares en /caja, /ingresar, /mis-reservas, /perfil y /reservar.
+        */}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

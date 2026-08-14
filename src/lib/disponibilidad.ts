@@ -1,8 +1,12 @@
 /**
- * Matemática de horarios para A3: todo se deriva de rangos ocupados
- * + duración del turno. Una sola fuente de verdad — la grilla y el
- * selector de turnos del bloque de reserva leen de acá, así nunca
- * se pueden desincronizar entre sí.
+ * Matemática de horarios sobre rangos ocupados + duración del turno.
+ *
+ * La zona pública YA NO usa esto: /complejo/[slug] consume la grilla real de
+ * GET /publico/complejos/{slug}/disponibilidad, que el backend devuelve
+ * cruzada contra horarios de atención, días no laborables, bloqueos y
+ * reservas. Lo que queda acá sólo lo consume el panel (form-turno-rapido,
+ * timeline-agenda y el generador de mocks/agenda), y se va cuando la agenda
+ * se migre en la Fase 4.
  */
 export type RangoOcupado = { desde: string; hasta: string };
 
@@ -60,20 +64,6 @@ export function segmentosDelDia(ocupado: RangoOcupado[], abre: string, cierra: s
   }
   if (cursor < cierraMin) segmentos.push({ desde: cursor, hasta: cierraMin, libre: true });
   return segmentos;
-}
-
-// TODO backend: el mock solo tiene la ocupación de "hoy". Para poder
-// pasar de fecha en la grilla sin mentir con datos idénticos todos
-// los días, desplazamos los rangos de forma determinística según
-// cuántos días faltan. Se reemplaza entero cuando haya disponibilidad
-// real por fecha.
-export function ocupadoConVariacion(base: RangoOcupado[], offsetDias: number): RangoOcupado[] {
-  if (offsetDias === 0) return base;
-  const desplazamiento = (offsetDias * 47) % 90;
-  return base.map((r) => ({
-    desde: aHHMM(aMinutos(r.desde) + desplazamiento),
-    hasta: aHHMM(aMinutos(r.hasta) + desplazamiento),
-  }));
 }
 
 /**
