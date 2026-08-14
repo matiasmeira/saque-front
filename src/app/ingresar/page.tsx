@@ -91,8 +91,19 @@ export default function Ingresar() {
     return <div className="min-h-dvh bg-humo" />;
   }
 
-  /** Adónde va el usuario una vez que hay sesión. */
+  /**
+   * Adónde va el usuario una vez que hay sesión.
+   *
+   * `volverA` lo manda el checkout, que necesita retomar un slot concreto
+   * (cancha + inicio + fin + deporte). Se valida que sea una ruta interna:
+   * un `volverA` con URL absoluta sería un open redirect.
+   */
   function entrar(perfil: PerfilResponse) {
+    const volverA = searchParams.get("volverA");
+    if (volverA?.startsWith("/") && !volverA.startsWith("//")) {
+      router.push(volverA);
+      return;
+    }
     if (modoReserva) {
       router.push(cerrarHacia);
       return;
