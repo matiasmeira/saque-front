@@ -3,21 +3,21 @@
 import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Clock, Dumbbell, MapPin, SlidersHorizontal } from "lucide-react";
-import { DEPORTES } from "@/mocks/deportes";
-import { ZONAS } from "@/mocks/zonas";
+import { DEPORTES } from "@/lib/deportes";
 import { FRANJAS } from "@/mocks/franjas";
 import { Selector } from "@/components/saque/selector";
 import { SelectorFecha } from "@/components/saque/selector-fecha";
+import { SelectorUbicacion, type Ubicacion } from "@/components/saque/selector-ubicacion";
 import { FilterSheet } from "@/components/saque/filter-sheet";
 
 /**
  * Barra de filtros compacta de A2 — versión horizontal de los
- * mismos campos que A1 (Selector, SelectorFecha), no una segunda
- * implementación. Cada cambio renavega /buscar con los params
+ * mismos campos que A1 (Selector, SelectorFecha, SelectorUbicacion), no una
+ * segunda implementación. Cada cambio renavega /buscar con los params
  * actualizados: es lo más simple que sigue siendo real (sin estado
  * duplicado del lado del cliente que se pueda desincronizar de la URL).
  */
-type Filtros = { deporte: string; zona: string; fecha: string; franja: string };
+type Filtros = { deporte: string; fecha: string; franja: string };
 
 function CampoCompacto({ icon, label, children }: { icon: ReactNode; label: string; children: ReactNode }) {
   return (
@@ -31,14 +31,28 @@ function CampoCompacto({ icon, label, children }: { icon: ReactNode; label: stri
   );
 }
 
-export function FiltrosResultados({ deporte, zona, fecha, franja }: Filtros) {
+export function FiltrosResultados({
+  deporte,
+  fecha,
+  franja,
+  ubicacion,
+}: Filtros & { ubicacion: Ubicacion | null }) {
   const router = useRouter();
   const [sheetAbierta, setSheetAbierta] = useState(false);
-  const valores: Filtros = { deporte, zona, fecha, franja };
+  const valores: Filtros = { deporte, fecha, franja };
+
+  function navegar(filtros: Filtros, nuevaUbicacion: Ubicacion | null) {
+    const params = new URLSearchParams(filtros);
+    if (nuevaUbicacion) {
+      params.set("lat", String(nuevaUbicacion.lat));
+      params.set("lng", String(nuevaUbicacion.lng));
+      params.set("lugar", nuevaUbicacion.etiqueta);
+    }
+    router.push(`/buscar?${params.toString()}`);
+  }
 
   function actualizar(cambios: Partial<Filtros>) {
-    const params = new URLSearchParams({ ...valores, ...cambios });
-    router.push(`/buscar?${params.toString()}`);
+    navegar({ ...valores, ...cambios }, ubicacion);
   }
 
   return (
@@ -50,7 +64,11 @@ export function FiltrosResultados({ deporte, zona, fecha, franja }: Filtros) {
           </CampoCompacto>
 
           <CampoCompacto icon={<MapPin className="size-[18px]" aria-hidden />} label="Ubicación">
-            <Selector id="f-zona" value={zona} onChange={(v) => actualizar({ zona: v })} opciones={ZONAS} />
+            <SelectorUbicacion
+              id="f-ubicacion"
+              value={ubicacion}
+              onChange={(nueva) => navegar(valores, nueva)}
+            />
           </CampoCompacto>
 
           <CampoCompacto icon={<CalendarDays className="size-[18px]" aria-hidden />} label="Fecha">

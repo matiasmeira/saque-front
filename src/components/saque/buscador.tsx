@@ -3,20 +3,21 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Clock, Dumbbell, MapPin } from "lucide-react";
-import { DEPORTES } from "@/mocks/deportes";
-import { ZONAS } from "@/mocks/zonas";
+import { DEPORTES } from "@/lib/deportes";
 import { FRANJAS } from "@/mocks/franjas";
 import { CampoFormulario } from "@/components/saque/campo-formulario";
 import { Selector } from "@/components/saque/selector";
 import { SelectorFecha, proximosDias } from "@/components/saque/selector-fecha";
+import { SelectorUbicacion, type Ubicacion } from "@/components/saque/selector-ubicacion";
 
 /**
  * El buscador de la home.
  *
- * Arranca con valores usables sin esperar nada: "Dónde" nace en
- * "Cerca mío" (primera opción del mock) y no depende de permiso de
- * geolocalización ni de ningún dato que llegue después. La home
- * nunca muestra un estado de carga como protagonista.
+ * Arranca con valores usables sin esperar nada: "Dónde" nace vacío y
+ * no depende de permiso de geolocalización ni de ningún dato que
+ * llegue después. La home nunca muestra un estado de carga como
+ * protagonista. Buscar sin ubicación es válido: el backend devuelve
+ * entonces todos los complejos ordenados por calificación.
  *
  * La hoja es de ancho completo (no un "card" angosto) y sube sobre
  * el hero con margen negativo: así el corte entre el panel tinta y
@@ -40,13 +41,23 @@ export function Buscador() {
     dias.find((d) => d.fecha.getDay() === 0)!,
   ];
 
-  const [deporte, setDeporte] = useState(DEPORTES[0].valor);
-  const [zona, setZona] = useState(ZONAS[0].valor);
+  const [deporte, setDeporte] = useState<string>(DEPORTES[0].valor);
+  const [ubicacion, setUbicacion] = useState<Ubicacion | null>(null);
   const [fecha, setFecha] = useState(dias[0].valor);
   const [franja, setFranja] = useState(FRANJAS[2].valor);
 
+  /**
+   * La ubicación es opcional: sin lat/lng el listado devuelve todos los
+   * complejos ordenados por calificación, así que el botón nunca se bloquea
+   * esperando que el usuario elija un lugar.
+   */
   function buscar() {
-    const params = new URLSearchParams({ deporte, zona, fecha, franja });
+    const params = new URLSearchParams({ deporte, fecha, franja });
+    if (ubicacion) {
+      params.set("lat", String(ubicacion.lat));
+      params.set("lng", String(ubicacion.lng));
+      params.set("lugar", ubicacion.etiqueta);
+    }
     router.push(`/buscar?${params.toString()}`);
   }
 
@@ -61,8 +72,8 @@ export function Buscador() {
             <Selector id="deporte" value={deporte} onChange={setDeporte} opciones={DEPORTES} />
           </CampoFormulario>
 
-          <CampoFormulario icon={<MapPin className="size-[18px]" aria-hidden />} label="Dónde" htmlFor="zona">
-            <Selector id="zona" value={zona} onChange={setZona} opciones={ZONAS} />
+          <CampoFormulario icon={<MapPin className="size-[18px]" aria-hidden />} label="Dónde" htmlFor="ubicacion">
+            <SelectorUbicacion id="ubicacion" value={ubicacion} onChange={setUbicacion} />
           </CampoFormulario>
 
           <div className="grid grid-cols-2 divide-x divide-borde">

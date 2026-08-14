@@ -10,8 +10,12 @@
  * No hay refresh: el backend no expone endpoint de refresh, y ademas invalida
  * todos los JWT del usuario al incrementar tokenVersion (logout, cambio de
  * password). Un 401 significa sesion muerta, no sesion renovable.
+ *
+ * Este modulo NO importa React a proposito. Lo consume cliente.ts, que a su
+ * vez consumen Server Components (por ejemplo /buscar, que llama a la zona
+ * publica): un import de hooks aca rompe el build entero. El hook de lectura
+ * reactiva vive en src/hooks/api/use-sesion.ts.
  */
-import { useSyncExternalStore } from "react";
 
 const CLAVE_TOKEN = "saque:token";
 const EVENTO_CAMBIO = "saque:token-cambio";
@@ -45,15 +49,6 @@ export function suscribirseToken(callback: () => void) {
   };
 }
 
-function obtenerSnapshot(): string | null {
-  return leerToken();
-}
-
-/** `true` si hay token guardado. No valida que siga vigente: eso lo dice el back. */
-export function useHaySesion(): boolean {
-  return useSyncExternalStore(
-    suscribirseToken,
-    () => obtenerSnapshot() !== null,
-    () => false,
-  );
+export function hayToken(): boolean {
+  return leerToken() !== null;
 }
