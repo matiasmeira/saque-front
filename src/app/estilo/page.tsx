@@ -356,7 +356,12 @@ export default function GuiaDeEstilo() {
 
       {/* ---------- FILTROS DE RESULTADOS (A2) ---------- */}
       <Seccion titulo="Filtros de resultados (A2)">
-        <FiltrosResultados deporte="futbol-5" zona="jose-c-paz" fecha="2026-07-25" franja="noche" />
+        <FiltrosResultados
+          deporte="FUTBOL"
+          fecha="2026-07-25"
+          franja="noche"
+          ubicacion={{ lat: -34.5221, lng: -58.7573, etiqueta: "José C. Paz, Buenos Aires" }}
+        />
         <p className="mt-3 text-xs text-grafito">
           Cada campo renavega /buscar con los params actualizados. &quot;Más filtros&quot; abre la
           hoja inferior — tocá el botón para probarla.
@@ -366,11 +371,35 @@ export default function GuiaDeEstilo() {
       {/* ---------- TARJETAS DE RESULTADO (A2) ---------- */}
       <Seccion titulo="VenueCard (A2)">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <VenueCard complejo={COMPLEJOS[0]} momentoLabel="Hoy a la noche" fecha="2026-07-25" />
           <VenueCard
-            complejo={COMPLEJOS.find((c) => c.id === "club-pinares")!}
-            momentoLabel="Hoy a la noche"
-            fecha="2026-07-25"
+            complejo={{
+              slug: "arena-sport-club",
+              nombre: "Arena Sport Club",
+              direccion: "Av. Croacia 1250, José C. Paz",
+              fotoPrincipal: null,
+              deportes: ["FUTBOL", "PADEL"],
+              precioDesde: 12000,
+              requiereSena: true,
+              senaDesde: 4000,
+              distanciaKm: 1.2,
+              promedioCalificacion: 4.6,
+              cantidadCalificaciones: 23,
+            }}
+          />
+          <VenueCard
+            complejo={{
+              slug: "club-pinares",
+              nombre: "Club Pinares",
+              direccion: "Ruta 8 km 42, Pilar",
+              fotoPrincipal: null,
+              deportes: ["TENIS"],
+              precioDesde: null,
+              requiereSena: false,
+              senaDesde: null,
+              distanciaKm: null,
+              promedioCalificacion: null,
+              cantidadCalificaciones: 0,
+            }}
           />
         </div>
         <p className="mt-3 text-xs text-grafito">

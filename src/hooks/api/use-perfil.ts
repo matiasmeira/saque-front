@@ -6,7 +6,8 @@ import { auth, usuarios } from "@/lib/api/endpoints/auth";
 import { establecimientos } from "@/lib/api/endpoints/establecimientos";
 import { ApiError } from "@/lib/api/errores";
 import { keys } from "@/lib/api/keys";
-import { borrarToken, guardarToken, useHaySesion } from "@/lib/api/sesion";
+import { borrarToken, guardarToken } from "@/lib/api/sesion";
+import { useHaySesion } from "@/hooks/api/use-sesion";
 import type { AuthRequest, PerfilResponse } from "@/lib/api/tipos/auth";
 
 /**
