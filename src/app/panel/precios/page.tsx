@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
@@ -13,17 +13,23 @@ import { SkeletonPrecios } from "@/components/panel/skeleton-precios";
 import { DrawerPanel } from "@/components/panel/drawer-panel";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useBloqueadoPorCaja } from "@/lib/permisos";
-import { PANEL_COMPLEJO } from "@/mocks/agenda";
-import { PANEL_CANCHAS, type PrecioPorDuracion } from "@/mocks/canchas";
-import { etiquetaDias, PANEL_TARIFAS, type DiaSemana, type Tarifa } from "@/mocks/tarifas";
+import { type PrecioPorDuracion } from "@/mocks/canchas";
+import { etiquetaDias, type DiaSemana, type Tarifa } from "@/mocks/tarifas";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { canchas as endpointCanchas } from "@/lib/api/endpoints/canchas";
+import { keys } from "@/lib/api/keys";
+import { ApiError, mensajeVisible } from "@/lib/api/errores";
+import { aCanchaPanel, aCanchaRequest } from "@/lib/api/adaptadores/canchas";
+import { aTarifasDto, aTarifasPanel } from "@/lib/api/tarifas";
+import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
 
 type PanelAbierto = { tipo: "nueva" } | { tipo: "editar"; tarifaId: number } | null;
 type EstadoCarga = "cargando" | "error" | "listo";
+type DatosTarifa = { dias: DiaSemana[]; horaDesde: string; horaHasta: string; precios: PrecioPorDuracion[] };
 
 // Pádel D arranca seleccionada a propósito: tiene dos duraciones y
 // ya una tarifa especial cargada, así la pantalla muestra el caso
 // completo (precio base + tarifa) sin tener que cambiar de cancha.
-const CANCHA_INICIAL = 5;
 
 // ?mockError=1 fuerza el error; ?mockVacio=1 fuerza el caso "cancha
 // sin tarifas especiales, solo base" vaciando todas las tarifas —
@@ -32,23 +38,27 @@ const CANCHA_INICIAL = 5;
 // Tarifa ya existe en el backend Spring Boot, asociada a Cancha.
 export default function PanelPrecios() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const rol = useRolPanel();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
 
-  const mockError = searchParams.get("mockError") === "1";
-  const mockVacio = searchParams.get("mockVacio") === "1";
+  const queryClient = useQueryClient();
+  const { establecimientoId } = useEstablecimientoActivo();
 
-  const [canchas, setCanchas] = useState(PANEL_CANCHAS);
-  const [tarifas, setTarifas] = useState<Tarifa[]>([]);
-  const [canchaId, setCanchaId] = useState(CANCHA_INICIAL);
+  const [canchaId, setCanchaId] = useState<number | null>(null);
   const [panelAbierto, setPanelAbierto] = useState<PanelAbierto>(null);
-  const [reintento, setReintento] = useState(0);
-  const [proximoId, setProximoId] = useState(1000);
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
 
-  const clave = `${mockError}|${mockVacio}|${reintento}`;
-  const [resuelto, setResuelto] = useState<{ clave: string; error: boolean } | null>(null);
-  const estadoCarga: EstadoCarga = resuelto?.clave !== clave ? "cargando" : resuelto.error ? "error" : "listo";
+  const consulta = useQuery({
+    queryKey: keys.canchas(establecimientoId ?? 0),
+    queryFn: () => endpointCanchas.listar(establecimientoId!),
+    enabled: establecimientoId !== null,
+  });
+
+  const estadoCarga: EstadoCarga = consulta.isPending
+    ? "cargando"
+    : consulta.isError
+      ? "error"
+      : "listo";
 
   // "!bloqueadoPorCaja &&" evita una carrera con useBloqueadoPorCaja:
   // si esta PC se acaba de emparejar como caja (desde C9), "rol" pasa
@@ -58,41 +68,71 @@ export default function PanelPrecios() {
     if (!bloqueadoPorCaja && rol === "empleado") router.replace("/panel/agenda");
   }, [bloqueadoPorCaja, rol, router]);
 
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (mockError) {
-        setResuelto({ clave, error: true });
-        return;
-      }
-      setCanchas(PANEL_CANCHAS.map((c) => ({ ...c })));
-      setTarifas(mockVacio ? [] : PANEL_TARIFAS.map((t) => ({ ...t })));
-      setResuelto({ clave, error: false });
-    }, 500);
-    return () => clearTimeout(id);
-  }, [clave, mockError, mockVacio]);
+  const canchasApi = consulta.data ?? [];
+  const canchas = canchasApi.map(aCanchaPanel);
+  const cancha = canchas.find((c) => c.id === canchaId) ?? canchas[0];
+  const canchaApi = canchasApi.find((c) => c.id === cancha?.id);
 
+  // Las tarifas viven DENTRO de CanchaResponse, no en un endpoint propio.
+  const tarifasDeCancha = canchaApi ? aTarifasPanel(canchaApi.tarifas, canchaApi.id) : [];
+
+  function alFallar(e: unknown, porDefecto: string) {
+    setErrorAccion(e instanceof ApiError ? mensajeVisible(e) : porDefecto);
+  }
+
+  /**
+   * No hay endpoint de tarifas: viajan dentro de CanchaRequest. Cualquier
+   * cambio —precio base o una tarifa— es un PUT COMPLETO de la cancha, así
+   * que hay que reenviar todo lo demás sin tocarlo o se pierde.
+   *
+   * Esto es también lo que ejercita el fix de mapToTarifaDto en el backend:
+   * hasta que exista la primera tarifa, esa rama del mapper nunca corría.
+   */
+  const guardar = useMutation({
+    mutationFn: ({
+      preciosBase,
+      tarifas,
+    }: {
+      preciosBase?: PrecioPorDuracion[];
+      tarifas: Tarifa[];
+    }) =>
+      endpointCanchas.actualizar(establecimientoId!, cancha.id, {
+        ...aCanchaRequest({
+          ...cancha,
+          preciosBase: preciosBase ?? cancha.preciosBase,
+        }),
+        tarifas: aTarifasDto(tarifas),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.canchas(establecimientoId ?? 0) });
+      setPanelAbierto(null);
+      setErrorAccion(null);
+    },
+    onError: (e) => alFallar(e, "No pudimos guardar los precios."),
+  });
+
+  // El early return va DESPUES de todos los hooks: React exige que se llamen
+  // en el mismo orden en cada render (react-hooks/rules-of-hooks).
   if (bloqueadoPorCaja || rol === "empleado") return <div className="min-h-dvh bg-humo" />;
 
-  const cancha = canchas.find((c) => c.id === canchaId) ?? canchas[0];
-  const tarifasDeCancha = tarifas.filter((t) => t.canchaId === cancha.id);
-
   function guardarPrecioBase(precios: PrecioPorDuracion[]) {
-    setCanchas((prev) => prev.map((c) => (c.id === cancha.id ? { ...c, preciosBase: precios } : c)));
+    guardar.mutate({ preciosBase: precios, tarifas: tarifasDeCancha });
   }
 
-  function crearTarifa(datos: { dias: DiaSemana[]; horaDesde: string; horaHasta: string; precios: PrecioPorDuracion[] }) {
-    setTarifas((prev) => [...prev, { ...datos, id: proximoId, canchaId: cancha.id }]);
-    setProximoId((id) => id + 1);
-    setPanelAbierto(null);
+  function crearTarifa(datos: DatosTarifa) {
+    guardar.mutate({
+      tarifas: [...tarifasDeCancha, { ...datos, id: tarifasDeCancha.length, canchaId: cancha.id }],
+    });
   }
 
-  function editarTarifa(id: number, datos: { dias: DiaSemana[]; horaDesde: string; horaHasta: string; precios: PrecioPorDuracion[] }) {
-    setTarifas((prev) => prev.map((t) => (t.id === id ? { ...t, ...datos } : t)));
-    setPanelAbierto(null);
+  function editarTarifa(id: number, datos: DatosTarifa) {
+    guardar.mutate({
+      tarifas: tarifasDeCancha.map((t) => (t.id === id ? { ...t, ...datos } : t)),
+    });
   }
 
   function quitarTarifa(tarifa: Tarifa) {
-    setTarifas((prev) => prev.filter((t) => t.id !== tarifa.id));
+    guardar.mutate({ tarifas: tarifasDeCancha.filter((t) => t.id !== tarifa.id) });
   }
 
   return (
@@ -100,13 +140,13 @@ export default function PanelPrecios() {
       <SidebarPanel />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <HeaderPanel nombre={PANEL_COMPLEJO.nombre} estado={PANEL_COMPLEJO.estado} diasRestantesTrial={PANEL_COMPLEJO.diasRestantesTrial} />
+        <HeaderPanel />
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
           <div className="mb-6 flex items-center justify-between gap-3">
             <h1 className="font-display text-2xl font-extrabold tracking-tight text-tinta">Precios</h1>
             <select
-              value={canchaId}
+              value={canchaId ?? cancha?.id ?? ""}
               onChange={(e) => setCanchaId(Number(e.target.value))}
               aria-label="Cancha a tarifar"
               className="h-10 rounded-full bg-humo px-3.5 text-sm font-semibold text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
@@ -119,6 +159,12 @@ export default function PanelPrecios() {
             </select>
           </div>
 
+          {errorAccion && (
+            <p role="alert" className="mb-4 max-w-2xl rounded-card bg-white p-4 text-sm text-cancelado shadow-card">
+              {errorAccion}
+            </p>
+          )}
+
           {estadoCarga === "cargando" && <SkeletonPrecios />}
 
           {estadoCarga === "error" && (
@@ -127,7 +173,7 @@ export default function PanelPrecios() {
               <p className="font-semibold text-tinta">No pudimos cargar los precios.</p>
               <button
                 type="button"
-                onClick={() => setReintento((r) => r + 1)}
+                onClick={() => consulta.refetch()}
                 className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Reintentar
