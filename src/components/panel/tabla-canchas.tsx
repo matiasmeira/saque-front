@@ -1,4 +1,4 @@
-import { Pencil, Power, PowerOff, Wrench } from "lucide-react";
+import { Pencil, PowerOff, Wrench } from "lucide-react";
 import { DEPORTES } from "@/mocks/deportes";
 import { esCompuesta, PANEL_CANCHAS, type Cancha } from "@/mocks/canchas";
 import { formatearPrecio } from "@/lib/formato";
@@ -77,11 +77,11 @@ const COLUMNAS = "grid-cols-[1.2fr_1fr_0.6fr_1fr_1.2fr_1.6fr_0.9fr_auto]";
 export function TablaCanchas({
   canchas,
   onEditar,
-  onAlternarActiva,
+  onDesactivar,
 }: {
   canchas: Cancha[];
   onEditar: (cancha: Cancha) => void;
-  onAlternarActiva: (cancha: Cancha) => void;
+  onDesactivar: (cancha: Cancha) => void;
 }) {
   return (
     <div className="overflow-hidden rounded-card bg-white shadow-card">
@@ -136,11 +136,11 @@ export function TablaCanchas({
               </button>
               <button
                 type="button"
-                onClick={() => onAlternarActiva(cancha)}
-                aria-label={cancha.isActive ? `Desactivar ${cancha.nombre}` : `Activar ${cancha.nombre}`}
+                onClick={() => onDesactivar(cancha)}
+                aria-label={`Desactivar ${cancha.nombre}`}
                 className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
               >
-                {cancha.isActive ? <PowerOff className="size-4" aria-hidden /> : <Power className="size-4" aria-hidden />}
+                <PowerOff className="size-4" aria-hidden />
               </button>
             </div>
           </div>

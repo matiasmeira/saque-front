@@ -9,6 +9,7 @@ import { keys } from "@/lib/api/keys";
 import { borrarToken, guardarToken } from "@/lib/api/sesion";
 import { useHaySesion } from "@/hooks/api/use-sesion";
 import type { AuthRequest, PerfilResponse } from "@/lib/api/tipos/auth";
+import type { EstablecimientoResponse } from "@/lib/api/tipos/establecimientos";
 
 /**
  * Perfil del usuario autenticado. Es LA fuente de verdad del rol y los
@@ -37,6 +38,13 @@ export function usePerfil() {
  */
 export function useEstablecimientoActivo(): {
   establecimientoId: number | null;
+  /**
+   * El establecimiento completo, disponible sólo para OWNER/ADMIN: para un
+   * EMPLOYEE el perfil trae el id pero no hay endpoint que devuelva ese
+   * establecimiento (GET /establecimientos lista los PROPIOS y no existe
+   * GET /establecimientos/{id}).
+   */
+  establecimiento: EstablecimientoResponse | null;
   cargando: boolean;
 } {
   const { data: perfil, isPending: perfilPendiente } = usePerfil();
@@ -50,17 +58,22 @@ export function useEstablecimientoActivo(): {
   });
 
   if (perfil?.establecimientoId != null) {
-    return { establecimientoId: perfil.establecimientoId, cargando: false };
+    return {
+      establecimientoId: perfil.establecimientoId,
+      establecimiento: null,
+      cargando: false,
+    };
   }
 
   if (esDuenoOAdmin) {
     return {
       establecimientoId: mios?.[0]?.id ?? null,
+      establecimiento: mios?.[0] ?? null,
       cargando: misEstablecimientosPendientes,
     };
   }
 
-  return { establecimientoId: null, cargando: perfilPendiente };
+  return { establecimientoId: null, establecimiento: null, cargando: perfilPendiente };
 }
 
 /** Login con email y contraseña. Guarda el token y precarga el perfil. */
