@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { AlertTriangle, Plus, Receipt, Trash2 } from "lucide-react";
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
@@ -15,8 +15,12 @@ import { useRolPanel } from "@/lib/rol-panel";
 import { useBloqueadoPorCaja } from "@/lib/permisos";
 import { finMes, finSemana, hoyISO, inicioMes, inicioSemana } from "@/lib/fecha";
 import { formatearPrecio } from "@/lib/formato";
-import { PANEL_COMPLEJO } from "@/mocks/agenda";
-import { CATEGORIAS_GASTO, gastosDelPeriodo, gastosPorCategoria, PANEL_GASTOS, totalGastos, type CategoriaGasto, type Gasto } from "@/mocks/gastos";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CATEGORIAS_GASTO, gastosPorCategoria, totalGastos, type CategoriaGasto, type Gasto } from "@/mocks/gastos";
+import { gastos as endpointGastos } from "@/lib/api/endpoints/gastos";
+import { keys } from "@/lib/api/keys";
+import { ApiError, mensajeVisible } from "@/lib/api/errores";
+import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
 
 type EstadoCarga = "cargando" | "error" | "listo";
 type PanelAbierto = { tipo: "ficha"; gasto: Gasto | null } | { tipo: "eliminar"; gasto: Gasto } | null;
@@ -24,57 +28,86 @@ type PanelAbierto = { tipo: "ficha"; gasto: Gasto | null } | { tipo: "eliminar";
 // Solo dueño — mismo criterio que Reportes/Pagos/Precios: información financiera, ningún permiso de empleado la habilita.
 export default function PanelGastos() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const rol = useRolPanel();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
 
-  const mockError = searchParams.get("mockError") === "1";
-  const mockVacio = searchParams.get("mockVacio") === "1";
+  const queryClient = useQueryClient();
+  const { establecimientoId } = useEstablecimientoActivo();
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
 
-  const [gastos, setGastos] = useState<Gasto[]>([]);
   const [desde, setDesde] = useState(() => inicioMes(hoyISO()));
   const [hasta, setHasta] = useState(() => finMes(hoyISO()));
   const [categoria, setCategoria] = useState<CategoriaGasto | "TODAS">("TODAS");
   const [panelAbierto, setPanelAbierto] = useState<PanelAbierto>(null);
-  const [reintento, setReintento] = useState(0);
-  const [proximoId, setProximoId] = useState(1000);
 
   useEffect(() => {
     if (!bloqueadoPorCaja && rol === "empleado") router.replace("/panel/agenda");
   }, [bloqueadoPorCaja, rol, router]);
 
-  const clave = `${desde}|${hasta}|${mockError}|${mockVacio}|${reintento}`;
-  const [resuelto, setResuelto] = useState<{ clave: string; error: boolean } | null>(null);
-  const estadoCarga: EstadoCarga = resuelto?.clave !== clave ? "cargando" : resuelto.error ? "error" : "listo";
+  /**
+   * El filtro por categoría lo resuelve el backend, pero se deja del lado del
+   * cliente sobre el conjunto ya traído: cambiar de categoría no debería
+   * disparar una request nueva cuando el período ya está en memoria.
+   */
+  const consulta = useQuery({
+    queryKey: keys.gastos(establecimientoId ?? 0, desde, hasta),
+    queryFn: () => endpointGastos.listar(establecimientoId!, { desde, hasta }),
+    enabled: establecimientoId !== null,
+  });
 
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (mockError) {
-        setResuelto({ clave, error: true });
-        return;
-      }
-      setGastos(mockVacio ? [] : gastosDelPeriodo(PANEL_GASTOS, desde, hasta).map((g) => ({ ...g })));
-      setResuelto({ clave, error: false });
-    }, 500);
-    return () => clearTimeout(id);
-  }, [clave, desde, hasta, mockError, mockVacio]);
+  const estadoCarga: EstadoCarga = consulta.isPending
+    ? "cargando"
+    : consulta.isError
+      ? "error"
+      : "listo";
+
+  const gastos: Gasto[] = (consulta.data?.content ?? []).map((g) => ({
+    id: g.id,
+    fecha: g.fecha,
+    monto: g.monto,
+    categoria: g.categoria,
+    descripcion: g.descripcion,
+    metodoPago: g.metodoPago,
+    comprobanteUrl: g.comprobanteUrl ?? undefined,
+  }));
+
+  function invalidar() {
+    queryClient.invalidateQueries({ queryKey: ["gastos"] });
+    setPanelAbierto(null);
+    setErrorAccion(null);
+  }
+
+  function alFallar(e: unknown, porDefecto: string) {
+    setErrorAccion(e instanceof ApiError ? mensajeVisible(e) : porDefecto);
+  }
+
+  const guardar = useMutation({
+    mutationFn: ({ id, datos }: { id: number | null; datos: DatosGasto }) =>
+      id === null
+        ? endpointGastos.crear(establecimientoId!, datos)
+        : endpointGastos.actualizar(establecimientoId!, id, datos),
+    onSuccess: invalidar,
+    onError: (e) => alFallar(e, "No pudimos guardar el gasto."),
+  });
+
+  const eliminar = useMutation({
+    mutationFn: (id: number) => endpointGastos.eliminar(establecimientoId!, id),
+    onSuccess: invalidar,
+    onError: (e) => alFallar(e, "No pudimos eliminar el gasto."),
+  });
 
   if (bloqueadoPorCaja || rol === "empleado") return <div className="min-h-dvh bg-humo" />;
 
   function crearGasto(datos: DatosGasto) {
-    setGastos((prev) => [{ id: proximoId, ...datos }, ...prev].sort((a, b) => (a.fecha < b.fecha ? 1 : -1)));
-    setProximoId((id) => id + 1);
-    setPanelAbierto(null);
+    guardar.mutate({ id: null, datos });
   }
 
   function editarGasto(id: number, datos: DatosGasto) {
-    setGastos((prev) => prev.map((g) => (g.id === id ? { ...g, ...datos } : g)).sort((a, b) => (a.fecha < b.fecha ? 1 : -1)));
-    setPanelAbierto(null);
+    guardar.mutate({ id, datos });
   }
 
   function eliminarGasto(id: number) {
-    setGastos((prev) => prev.filter((g) => g.id !== id));
-    setPanelAbierto(null);
+    eliminar.mutate(id);
   }
 
   const gastosFiltrados = categoria === "TODAS" ? gastos : gastos.filter((g) => g.categoria === categoria);
@@ -86,7 +119,7 @@ export default function PanelGastos() {
       <SidebarPanel />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <HeaderPanel nombre={PANEL_COMPLEJO.nombre} estado={PANEL_COMPLEJO.estado} diasRestantesTrial={PANEL_COMPLEJO.diasRestantesTrial} />
+        <HeaderPanel />
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -155,6 +188,12 @@ export default function PanelGastos() {
             </select>
           </div>
 
+          {errorAccion && (
+            <p role="alert" className="mb-4 rounded-card bg-white p-4 text-sm text-cancelado shadow-card">
+              {errorAccion}
+            </p>
+          )}
+
           {estadoCarga === "cargando" && <SkeletonGastos />}
 
           {estadoCarga === "error" && (
@@ -163,7 +202,7 @@ export default function PanelGastos() {
               <p className="font-semibold text-tinta">No pudimos cargar los gastos.</p>
               <button
                 type="button"
-                onClick={() => setReintento((r) => r + 1)}
+                onClick={() => consulta.refetch()}
                 className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Reintentar
