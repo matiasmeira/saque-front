@@ -1,7 +1,13 @@
 import { apiFetch, nuevaIdempotencyKey } from "../cliente";
 import { construirQuery } from "../query";
 import type { EstadoReserva, Page, ParamsPaginacion } from "../tipos/comunes";
-import type { ReservaRequest, ReservaResponse } from "../tipos/reservas";
+import type {
+  FinalizarReservaRequest,
+  MoverReservaRequest,
+  ReservaManualRequest,
+  ReservaRequest,
+  ReservaResponse,
+} from "../tipos/reservas";
 
 /** ReservaController — base /api/v1/reservas. */
 export const reservas = {
@@ -54,4 +60,56 @@ export const reservas = {
    */
   cancelar: (id: number) =>
     apiFetch<ReservaResponse>(`/api/v1/reservas/${id}/cancelar`, { method: "PUT" }),
+
+  // --- Panel (OWNER / ADMIN / EMPLOYEE) -------------------------------------
+
+  /** Agenda del día. `fecha` es un único día y es obligatoria. */
+  porEstablecimiento: (
+    estId: number,
+    fecha: string,
+    { incluirCanceladas = false, size = 100 } = {},
+  ) =>
+    apiFetch<Page<ReservaResponse>>(
+      `/api/v1/reservas/establecimiento/${estId}${construirQuery({
+        fecha,
+        incluirCanceladas,
+        size,
+      })}`,
+    ),
+
+  /** Nace en CONFIRMADA, con expiraEn null: no pasa por el hold de 10 minutos. */
+  crearManual: (body: ReservaManualRequest) =>
+    apiFetch<ReservaResponse>("/api/v1/reservas/manual", {
+      method: "POST",
+      body,
+      idempotencyKey: nuevaIdempotencyKey(),
+    }),
+
+  /**
+   * Cierra el turno registrando con qué se pagó. metodoPago es @NotNull, así
+   * que la UI necesita pedirlo sí o sí antes de llamar acá.
+   * Falla si la reserva sigue en PENDIENTE_SENA o si está cancelada.
+   */
+  finalizar: (id: number, body: FinalizarReservaRequest) =>
+    apiFetch<ReservaResponse>(`/api/v1/reservas/${id}/finalizar`, {
+      method: "PATCH",
+      body,
+    }),
+
+  /** Sólo desde CONFIRMADA y sólo si el turno YA empezó. */
+  marcarAusente: (id: number) =>
+    apiFetch<ReservaResponse>(`/api/v1/reservas/${id}/ausente`, { method: "PATCH" }),
+
+  /** Sólo desde AUSENTE, y sólo OWNER/ADMIN (un empleado no puede revertir). */
+  revertirAusencia: (id: number) =>
+    apiFetch<ReservaResponse>(`/api/v1/reservas/${id}/revertir-ausencia`, {
+      method: "PATCH",
+    }),
+
+  /** Sólo desde PENDIENTE_SENA o CONFIRMADA, y a una cancha del mismo establecimiento. */
+  moverCancha: (id: number, body: MoverReservaRequest) =>
+    apiFetch<ReservaResponse>(`/api/v1/reservas/${id}/mover-cancha`, {
+      method: "PUT",
+      body,
+    }),
 };
