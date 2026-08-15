@@ -48,6 +48,20 @@ export type ReservaResponse = {
   metodoPago: MetodoPago | null;
 };
 
+/**
+ * Reserva de mostrador. A diferencia de ReservaRequest, el cliente puede no
+ * tener cuenta: va como texto libre.
+ */
+export type ReservaManualRequest = {
+  canchaId: number;
+  fechaHoraInicio: FechaHoraISO;
+  fechaHoraFin: FechaHoraISO;
+  deporteSeleccionado: Deporte;
+  nombreCliente: string;
+  telefonoCliente?: string;
+  senaFisicaRecibida?: boolean;
+};
+
 export type FinalizarReservaRequest = {
   metodoPago: MetodoPago;
 };

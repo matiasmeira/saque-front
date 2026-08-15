@@ -6,6 +6,8 @@ import { StatusBadge } from "@/components/saque/status-badge";
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { useHoraActual } from "@/lib/hora-actual";
 import { fechaLarga, formatearPrecio } from "@/lib/formato";
+import { METODOS_PAGO } from "@/mocks/pagos";
+import type { MetodoPago } from "@/lib/api/tipos/comunes";
 import type { Cancha } from "@/mocks/canchas";
 import type { Turno } from "@/mocks/agenda";
 
@@ -43,15 +45,19 @@ export function DetalleTurno({
   puedeCancelar: boolean;
   /** "Deshacer ausencia" es solo del dueño — nunca en Modo Caja */
   esDueno: boolean;
-  onMarcarPagado: () => void;
+  onMarcarPagado: (metodoPago: MetodoPago) => void;
   onCancelar: () => void;
   onMover: (canchaDestinoId: number) => void;
   onMarcarAusente: () => void;
   onDeshacerAusencia: () => void;
 }) {
-  const conSenia = turno.senia > 0;
   const [destino, setDestino] = useState(canchasCompatibles[0]?.id ?? "");
   const [confirmando, setConfirmando] = useState<"ausente" | "deshacer-ausencia" | null>(null);
+  const [metodoPago, setMetodoPago] = useState<MetodoPago>("EFECTIVO");
+
+  // Con datos reales `senia` es lo que YA se cobró (ReservaResponse.senaPagada):
+  // el monto de la seña a cobrar vive en la cancha, no en la reserva.
+  const conSenia = turno.senia > 0;
 
   const horaActual = useHoraActual();
   const yaEmpezo = new Date(`${turno.fecha}T${turno.horaInicio}`) <= horaActual;
@@ -144,14 +150,43 @@ export function DetalleTurno({
 
       {turno.estado !== "cancelado" && (puedeCobrar || puedeCancelar || puedeMarcarAusente || puedeDeshacerAusencia) && (
         <div className="space-y-2 pt-2">
-          {puedeCobrar && conSenia && !turno.seniaPagada && (
-            <button
-              type="button"
-              onClick={onMarcarPagado}
-              className="flex h-11 w-full items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
-            >
-              Marcar como pagado
-            </button>
+          {/*
+            Cobrar es PATCH /reservas/{id}/finalizar, y su DTO exige metodoPago
+            (@NotNull). Sin elegirlo el backend devuelve 400, así que el
+            selector no es un adorno: es parte del contrato. Antes esta pantalla
+            no lo pedía y el cobro era un simple flag local.
+
+            Sólo aparece sobre reservas CONFIRMADAS: finalizar una que sigue en
+            PENDIENTE_SENA también devuelve 400.
+          */}
+          {puedeCobrar && (
+            <div className="rounded-input border border-borde p-3">
+              <label
+                htmlFor="metodo-pago"
+                className="mb-1.5 block text-xs font-semibold text-grafito"
+              >
+                ¿Con qué pagó?
+              </label>
+              <select
+                id="metodo-pago"
+                value={metodoPago}
+                onChange={(e) => setMetodoPago(e.target.value as MetodoPago)}
+                className="mb-2.5 h-10 w-full rounded-input border border-borde bg-humo px-2 text-sm text-tinta focus:border-azul focus:outline-none"
+              >
+                {METODOS_PAGO.map((m) => (
+                  <option key={m.valor} value={m.valor}>
+                    {m.etiqueta}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => onMarcarPagado(metodoPago)}
+                className="flex h-11 w-full items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
+              >
+                Cobrar y cerrar turno
+              </button>
+            </div>
           )}
           {puedeCancelar && (
             <button

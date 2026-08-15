@@ -15,27 +15,29 @@ import { useRolPanel } from "@/lib/rol-panel";
 import { useHoraActual } from "@/lib/hora-actual";
 import { diaCorto, diasVisibles, hoyISO, inicioSemana, rangoSemanaLabel, sumarDias } from "@/lib/fecha";
 import { fechaLarga } from "@/lib/formato";
-import { DEPORTES } from "@/mocks/deportes";
-import { PANEL_CANCHAS, type Cancha } from "@/mocks/canchas";
-import { bloqueosDelDia, PANEL_COMPLEJO, turnosDelDia, type Turno } from "@/mocks/agenda";
+import { useQuery } from "@tanstack/react-query";
+import { abreviaturaDeporte } from "@/lib/deportes";
+import { canchas as endpointCanchas } from "@/lib/api/endpoints/canchas";
+import { keys } from "@/lib/api/keys";
+import { ApiError, mensajeVisible } from "@/lib/api/errores";
+import { aCanchaPanel } from "@/lib/api/adaptadores/canchas";
+import { aFechaHora } from "@/lib/api/fechas";
+import { useAccionesReserva, useAgenda } from "@/hooks/api/use-agenda";
+import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
+import type { TurnoConReserva } from "@/lib/api/adaptadores/agenda";
+import type { Turno } from "@/mocks/agenda";
+import type { MetodoPago } from "@/lib/api/tipos/comunes";
+import { type Cancha } from "@/mocks/canchas";
 
 type Vista = "dia" | "semana";
 type PanelAbierto =
   | { tipo: "nuevo"; canchaId: number; fecha: string; hora?: string; nombreInicial?: string; telefonoInicial?: string }
-  | { tipo: "detalle"; turno: Turno }
+  | { tipo: "detalle"; turno: TurnoConReserva }
   | null;
 type EstadoCarga = "cargando" | "error" | "listo";
 
 function etiquetaDeportes(cancha: Cancha): string {
-  return cancha.deportes.map((d) => DEPORTES.find((x) => x.valor === d)?.abreviatura ?? d).join(" / ");
-}
-
-/** físicas activas, distintas de la actual, que comparten algún deporte con ella — destinos válidos para "Mover a otra cancha". */
-function canchasCompatibles(cancha: Cancha | undefined): Cancha[] {
-  if (!cancha) return [];
-  return PANEL_CANCHAS.filter(
-    (c) => c.id !== cancha.id && c.isActive && c.canchasFisicas.length === 0 && c.deportes.some((d) => cancha.deportes.includes(d)),
-  );
+  return cancha.deportes.map(abreviaturaDeporte).join(" / ");
 }
 
 // ?mockError=1 y ?mockVacio=1 fuerzan esos estados para poder
@@ -56,13 +58,12 @@ export default function PanelAgenda() {
   const puedeCobrarTurnos = tienePermiso("cobrar_turnos");
   const puedeCancelarTurnos = tienePermiso("cancelar_turnos");
 
-  const mockError = searchParams.get("mockError") === "1";
-  const mockVacio = searchParams.get("mockVacio") === "1";
+  const { establecimientoId } = useEstablecimientoActivo();
 
   const [fecha, setFecha] = useState(() => hoyISO());
   const [vista, setVista] = useState<Vista>("dia");
-  const [canchaSemana, setCanchaSemana] = useState(PANEL_CANCHAS[0].id);
-  const [turnosPorFecha, setTurnosPorFecha] = useState<Record<string, Turno[]>>({});
+  const [canchaSemana, setCanchaSemana] = useState<number | null>(null);
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
   // Si llega desde "Nueva reserva" en la ficha de un cliente (C6), el
   // turno arranca precargado — se lee una sola vez, al montar, del
   // valor inicial de useState (no en un efecto: un setState síncrono
@@ -71,9 +72,17 @@ export default function PanelAgenda() {
     const nombreInicial = searchParams.get("nuevoTurnoNombre");
     const telefonoInicial = searchParams.get("nuevoTurnoTelefono");
     if (!nombreInicial || !telefonoInicial) return null;
-    return { tipo: "nuevo", canchaId: PANEL_CANCHAS[0].id, fecha: hoyISO(), nombreInicial, telefonoInicial };
+    return { tipo: "nuevo", canchaId: 0, fecha: hoyISO(), nombreInicial, telefonoInicial };
   });
-  const [reintento, setReintento] = useState(0);
+
+  const consultaCanchas = useQuery({
+    queryKey: keys.canchas(establecimientoId ?? 0),
+    queryFn: () => endpointCanchas.listar(establecimientoId!),
+    enabled: establecimientoId !== null,
+  });
+  const canchas = (consultaCanchas.data ?? []).map(aCanchaPanel);
+
+  const acciones = useAccionesReserva();
 
   // Sin permiso para ver la agenda, no hay nada que mostrar acá — se
   // redirige a Clientes si al menos ese lo tiene, así no queda
@@ -85,34 +94,43 @@ export default function PanelAgenda() {
   }, [puedeVerAgenda, puedeVerClientes, router]);
 
   const dias = diasVisibles(fecha, vista);
-  const canchaSeleccionada = PANEL_CANCHAS.find((c) => c.id === canchaSemana) ?? PANEL_CANCHAS[0];
+  const canchaSeleccionada = canchas.find((c) => c.id === canchaSemana) ?? canchas[0];
 
-  // La clave identifica "qué pedido" corresponde al estado visible.
-  // Comparándola contra la del último pedido resuelto derivamos si
-  // estamos cargando, sin necesitar un setState síncrono al arrancar
-  // el efecto (el compiler de React no lo permite: dispara renders
-  // en cascada).
-  const clave = `${fecha}|${vista}|${mockError}|${mockVacio}|${reintento}`;
-  const [resuelto, setResuelto] = useState<{ clave: string; error: boolean } | null>(null);
-  const estadoCarga: EstadoCarga = resuelto?.clave !== clave ? "cargando" : resuelto.error ? "error" : "listo";
+  /**
+   * El backend expone la agenda por DÍA: `fecha` es un único día y obligatorio.
+   * La vista semanal necesita entonces 7 requests, que useQueries emite en
+   * paralelo (ver useAgenda).
+   */
+  const { turnosPorFecha, bloqueosPorFecha, cargando, error, refetch } = useAgenda(
+    establecimientoId,
+    dias,
+  );
 
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (mockError) {
-        setResuelto({ clave, error: true });
-        return;
-      }
-      setTurnosPorFecha((prev) => {
-        const mapa = { ...prev };
-        for (const d of diasVisibles(fecha, vista)) mapa[d] = mockVacio ? [] : turnosDelDia(d);
-        return mapa;
-      });
-      setResuelto({ clave, error: false });
-    }, 500);
-    return () => clearTimeout(id);
-  }, [clave, fecha, vista, mockError, mockVacio]);
+  const estadoCarga: EstadoCarga =
+    cargando || consultaCanchas.isPending ? "cargando" : error ? "error" : "listo";
 
   if (bloqueadoPorCaja || !puedeVerAgenda) return <div className="min-h-dvh bg-humo" />;
+
+  /** Los mensajes de negocio del backend son mostrables: no se traducen por status. */
+  function alFallar(e: unknown, porDefecto: string) {
+    setErrorAccion(e instanceof ApiError ? mensajeVisible(e) : porDefecto);
+  }
+
+  /**
+   * Destinos válidos para "Mover a otra cancha": físicas activas, distintas de
+   * la actual, que compartan algún deporte. El backend además valida que la
+   * cancha destino sea del mismo establecimiento y que el estado lo permita.
+   */
+  function canchasCompatibles(cancha: Cancha | undefined): Cancha[] {
+    if (!cancha) return [];
+    return canchas.filter(
+      (c) =>
+        c.id !== cancha.id &&
+        c.isActive &&
+        c.canchasFisicas.length === 0 &&
+        c.deportes.some((d) => cancha.deportes.includes(d)),
+    );
+  }
 
   function irAnterior() {
     setFecha((f) => sumarDias(f, vista === "dia" ? -1 : -7));
@@ -130,72 +148,96 @@ export default function PanelAgenda() {
   }
 
   function abrirNuevoGenerico() {
-    const canchaId = vista === "dia" ? PANEL_CANCHAS[0].id : canchaSeleccionada.id;
+    const canchaId = vista === "dia" ? (canchas[0]?.id ?? 0) : canchaSeleccionada.id;
     setPanelAbierto({ tipo: "nuevo", canchaId, fecha: dias[0] });
   }
 
-  function agregarTurno(nuevo: Turno) {
-    setTurnosPorFecha((prev) => ({ ...prev, [nuevo.fecha]: [...(prev[nuevo.fecha] ?? []), nuevo] }));
-    setPanelAbierto(null);
+  /**
+   * Alta de mostrador: POST /reservas/manual, que nace en CONFIRMADA (no pasa
+   * por el hold de 10 minutos). El formulario emite un `Turno` con fecha y
+   * horas separadas; el backend quiere dos LocalDateTime.
+   */
+  async function agregarTurno(nuevo: Turno) {
+    const cancha = canchas.find((c) => c.id === nuevo.canchaId);
+    setErrorAccion(null);
+    try {
+      await acciones.crearManual.mutateAsync({
+        canchaId: nuevo.canchaId,
+        fechaHoraInicio: aFechaHora(nuevo.fecha, nuevo.horaInicio),
+        fechaHoraFin: aFechaHora(nuevo.fecha, nuevo.horaFin),
+        deporteSeleccionado: (cancha?.deportes[0] ?? "FUTBOL") as never,
+        nombreCliente: nuevo.cliente.nombre,
+        telefonoCliente: nuevo.cliente.telefono || undefined,
+      });
+      setPanelAbierto(null);
+    } catch (e) {
+      alFallar(e, "No pudimos crear el turno.");
+    }
   }
 
-  function marcarPagado(turno: Turno) {
-    setTurnosPorFecha((prev) => ({
-      ...prev,
-      [turno.fecha]: (prev[turno.fecha] ?? []).map((t) => (t.id === turno.id ? { ...t, estado: "ocupado", seniaPagada: true } : t)),
-    }));
-    setPanelAbierto(null);
+  async function accionSobreTurno(promesa: Promise<unknown>, porDefecto: string) {
+    setErrorAccion(null);
+    try {
+      await promesa;
+      setPanelAbierto(null);
+    } catch (e) {
+      alFallar(e, porDefecto);
+    }
   }
 
-  function cancelarTurno(turno: Turno) {
-    setTurnosPorFecha((prev) => ({
-      ...prev,
-      [turno.fecha]: (prev[turno.fecha] ?? []).map((t) => (t.id === turno.id ? { ...t, estado: "cancelado" } : t)),
-    }));
-    setPanelAbierto(null);
+  function marcarPagado(turno: TurnoConReserva, metodoPago: MetodoPago) {
+    accionSobreTurno(
+      acciones.finalizar.mutateAsync({ id: Number(turno.id), metodoPago }),
+      "No pudimos registrar el cobro.",
+    );
   }
 
-  function marcarAusente(turno: Turno) {
-    setTurnosPorFecha((prev) => ({
-      ...prev,
-      [turno.fecha]: (prev[turno.fecha] ?? []).map((t) => (t.id === turno.id ? { ...t, estado: "ausente" } : t)),
-    }));
-    setPanelAbierto(null);
+  function cancelarTurno(turno: TurnoConReserva) {
+    accionSobreTurno(
+      acciones.cancelar.mutateAsync(Number(turno.id)),
+      "No pudimos cancelar el turno.",
+    );
   }
 
-  function deshacerAusencia(turno: Turno) {
-    setTurnosPorFecha((prev) => ({
-      ...prev,
-      [turno.fecha]: (prev[turno.fecha] ?? []).map((t) =>
-        t.id === turno.id ? { ...t, estado: t.senia > 0 && !t.seniaPagada ? "pendiente" : "ocupado" } : t,
-      ),
-    }));
-    setPanelAbierto(null);
+  function marcarAusente(turno: TurnoConReserva) {
+    accionSobreTurno(
+      acciones.marcarAusente.mutateAsync(Number(turno.id)),
+      "No pudimos marcar la ausencia.",
+    );
   }
 
-  function moverTurno(turno: Turno, canchaDestinoId: number) {
-    setTurnosPorFecha((prev) => ({
-      ...prev,
-      [turno.fecha]: (prev[turno.fecha] ?? []).map((t) => (t.id === turno.id ? { ...t, canchaId: canchaDestinoId } : t)),
-    }));
-    setPanelAbierto(null);
+  function deshacerAusencia(turno: TurnoConReserva) {
+    accionSobreTurno(
+      acciones.revertirAusencia.mutateAsync(Number(turno.id)),
+      "No pudimos deshacer la ausencia.",
+    );
+  }
+
+  function moverTurno(turno: TurnoConReserva, canchaDestinoId: number) {
+    accionSobreTurno(
+      acciones.moverCancha.mutateAsync({
+        id: Number(turno.id),
+        nuevaCanchaId: canchaDestinoId,
+      }),
+      "No pudimos mover el turno.",
+    );
   }
 
   const columnas: ColumnaTimeline[] =
     vista === "dia"
-      ? PANEL_CANCHAS.map((cancha) => ({
+      ? canchas.map((cancha) => ({
           id: cancha.id,
           titulo: cancha.nombre,
           subtitulo: etiquetaDeportes(cancha),
           turnos: (turnosPorFecha[fecha] ?? []).filter((t) => t.canchaId === cancha.id),
-          bloqueos: bloqueosDelDia(cancha, fecha),
+          bloqueos: (bloqueosPorFecha[fecha] ?? []).filter((b) => b.canchaId === cancha.id),
         }))
       : dias.map((d) => ({
           id: d,
           titulo: `${diaCorto(d)} ${Number(d.slice(-2))}`,
           subtitulo: d === hoyISO() ? "Hoy" : undefined,
           turnos: (turnosPorFecha[d] ?? []).filter((t) => t.canchaId === canchaSeleccionada.id),
-          bloqueos: bloqueosDelDia(canchaSeleccionada, d),
+          bloqueos: (bloqueosPorFecha[d] ?? []).filter((b) => b.canchaId === canchaSeleccionada.id),
         }));
 
   const diaVacio = vista === "dia" && estadoCarga === "listo" && (turnosPorFecha[fecha] ?? []).length === 0;
@@ -205,7 +247,7 @@ export default function PanelAgenda() {
       <SidebarPanel />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <HeaderPanel nombre={PANEL_COMPLEJO.nombre} estado={PANEL_COMPLEJO.estado} diasRestantesTrial={PANEL_COMPLEJO.diasRestantesTrial} />
+        <HeaderPanel />
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -234,12 +276,12 @@ export default function PanelAgenda() {
             <div className="flex flex-wrap items-center gap-3">
               {vista === "semana" && (
                 <select
-                  value={canchaSemana}
+                  value={canchaSemana ?? canchaSeleccionada?.id ?? ""}
                   onChange={(e) => setCanchaSemana(Number(e.target.value))}
                   aria-label="Cancha a mostrar"
                   className="h-10 rounded-full bg-humo px-3.5 text-sm font-semibold text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
                 >
-                  {PANEL_CANCHAS.map((c) => (
+                  {canchas.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.nombre}
                     </option>
@@ -281,7 +323,20 @@ export default function PanelAgenda() {
             </div>
           </div>
 
-          {estadoCarga === "cargando" && <SkeletonAgenda columnas={vista === "dia" ? PANEL_CANCHAS.length : 7} />}
+          {/*
+            Los errores de las acciones se muestran acá y no dentro del drawer
+            porque varias reglas del backend recién se conocen al intentar:
+            marcar ausente antes de que el turno empiece, finalizar una reserva
+            que sigue en PENDIENTE_SENA, o mover a una cancha ocupada. El
+            mensaje del backend explica cuál fue.
+          */}
+          {errorAccion && (
+            <p role="alert" className="mb-4 rounded-card bg-white p-4 text-sm text-cancelado shadow-card">
+              {errorAccion}
+            </p>
+          )}
+
+          {estadoCarga === "cargando" && <SkeletonAgenda columnas={vista === "dia" ? Math.max(canchas.length, 1) : 7} />}
 
           {estadoCarga === "error" && (
             <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center shadow-card">
@@ -289,7 +344,7 @@ export default function PanelAgenda() {
               <p className="font-semibold text-tinta">No pudimos cargar la agenda.</p>
               <button
                 type="button"
-                onClick={() => setReintento((r) => r + 1)}
+                onClick={() => refetch()}
                 className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Reintentar
@@ -312,7 +367,7 @@ export default function PanelAgenda() {
                 horaActual={horaActual}
                 mostrarLineaAhora={dias.includes(hoyISO())}
                 onClickLibre={abrirLibre}
-                onClickTurno={(turno) => setPanelAbierto({ tipo: "detalle", turno })}
+                onClickTurno={(turno) => setPanelAbierto({ tipo: "detalle", turno: turno as TurnoConReserva })}
               />
             </div>
           )}
@@ -352,11 +407,11 @@ export default function PanelAgenda() {
       {panelAbierto?.tipo === "nuevo" && (
         <DrawerPanel
           titulo="Nuevo turno"
-          subtitulo={`${PANEL_CANCHAS.find((c) => c.id === panelAbierto.canchaId)?.nombre} · ${fechaLarga(panelAbierto.fecha)}`}
+          subtitulo={`${canchas.find((c) => c.id === panelAbierto.canchaId)?.nombre ?? ""} · ${fechaLarga(panelAbierto.fecha)}`}
           onClose={() => setPanelAbierto(null)}
         >
           <FormTurnoRapido
-            canchas={PANEL_CANCHAS}
+            canchas={canchas}
             canchaId={panelAbierto.canchaId}
             fecha={panelAbierto.fecha}
             horaInicial={panelAbierto.hora}
@@ -371,18 +426,18 @@ export default function PanelAgenda() {
 
       {panelAbierto?.tipo === "detalle" && (
         <DrawerPanel
-          titulo={PANEL_CANCHAS.find((c) => c.id === panelAbierto.turno.canchaId)?.nombre ?? ""}
+          titulo={canchas.find((c) => c.id === panelAbierto.turno.canchaId)?.nombre ?? ""}
           subtitulo={`${panelAbierto.turno.horaInicio}–${panelAbierto.turno.horaFin} · ${fechaLarga(panelAbierto.turno.fecha)}`}
           onClose={() => setPanelAbierto(null)}
         >
           <DetalleTurno
             turno={panelAbierto.turno}
-            cancha={PANEL_CANCHAS.find((c) => c.id === panelAbierto.turno.canchaId)!}
-            canchasCompatibles={canchasCompatibles(PANEL_CANCHAS.find((c) => c.id === panelAbierto.turno.canchaId))}
+            cancha={canchas.find((c) => c.id === panelAbierto.turno.canchaId)!}
+            canchasCompatibles={canchasCompatibles(canchas.find((c) => c.id === panelAbierto.turno.canchaId))}
             puedeCobrar={puedeCobrarTurnos}
             puedeCancelar={puedeCancelarTurnos}
             esDueno={rol === "dueno"}
-            onMarcarPagado={() => marcarPagado(panelAbierto.turno)}
+            onMarcarPagado={(metodoPago) => marcarPagado(panelAbierto.turno, metodoPago)}
             onCancelar={() => cancelarTurno(panelAbierto.turno)}
             onMover={(destinoId) => moverTurno(panelAbierto.turno, destinoId)}
             onMarcarAusente={() => marcarAusente(panelAbierto.turno)}
