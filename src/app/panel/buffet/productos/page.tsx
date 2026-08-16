@@ -75,6 +75,7 @@ export default function PanelProductosBuffet() {
         descripcion: datos.descripcion || undefined,
         precio: datos.precio,
         stock: datos.stock ?? 0,
+        umbralAlerta: datos.umbralAlerta,
       };
       return id === null
         ? productosBuffet.crear(establecimientoId!, body)
@@ -109,8 +110,8 @@ export default function PanelProductosBuffet() {
     ajustar.mutate({ id, cantidad });
   }
 
-  const conStockBajo = productos.filter((p) => estadoStock(p.stock) === "bajo").length;
-  const agotados = productos.filter((p) => estadoStock(p.stock) === "agotado").length;
+  const conStockBajo = productos.filter((p) => estadoStock(p.stock, p.umbralAlerta) === "bajo").length;
+  const agotados = productos.filter((p) => estadoStock(p.stock, p.umbralAlerta) === "agotado").length;
 
   return (
     <div className="flex h-dvh bg-humo">
