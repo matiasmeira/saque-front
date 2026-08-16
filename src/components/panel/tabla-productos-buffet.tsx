@@ -1,6 +1,7 @@
 import { PackagePlus, Pencil } from "lucide-react";
 import { formatearPrecio } from "@/lib/formato";
-import { estadoStock, type EstadoStock, type ProductoBuffet } from "@/mocks/buffet";
+import { estadoStock, type EstadoStock } from "@/lib/stock";
+import type { ProductoBuffetResponse as ProductoBuffet } from "@/lib/api/tipos/buffet";
 
 const ESTILO_ESTADO: Record<EstadoStock, string> = {
   ok: "bg-disponible-suave text-disponible",
@@ -40,7 +41,7 @@ export function TablaProductosBuffet({
 
       <div className="divide-y divide-borde/60">
         {productos.map((producto) => {
-          const estado = estadoStock(producto);
+          const estado = estadoStock(producto.stock);
           return (
             <div
               key={producto.id}

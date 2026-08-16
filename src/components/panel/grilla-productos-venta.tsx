@@ -1,5 +1,5 @@
 import { formatearPrecio } from "@/lib/formato";
-import type { ProductoBuffet } from "@/mocks/buffet";
+import type { ProductoBuffetResponse as ProductoBuffet } from "@/lib/api/tipos/buffet";
 
 /**
  * Botones grandes, tocables — este es el punto de venta que el
