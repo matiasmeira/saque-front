@@ -1,3 +1,4 @@
+import { estadoStock as estadoStockPorCantidad, type EstadoStock } from "@/lib/stock";
 /**
  * C11/C12 — buffet del complejo. Dos entidades del backend
  * (ProductoBuffet, Venta con sus DetalleVenta) más un campo que
@@ -23,31 +24,27 @@ export type ProductoBuffet = {
   descripcion?: string;
   precio: number;
   stock: number;
-  /** cuando stock <= umbralAlerta, "Stock bajo". No existe todavía en la entidad real — ver TODO backend. */
-  umbralAlerta: number;
 };
 
-export type EstadoStock = "ok" | "bajo" | "agotado";
+export type { EstadoStock } from "@/lib/stock";
 
-export function estadoStock(producto: ProductoBuffet): EstadoStock {
-  if (producto.stock <= 0) return "agotado";
-  if (producto.stock <= producto.umbralAlerta) return "bajo";
-  return "ok";
+export function estadoStock(producto: { stock: number }): EstadoStock {
+  return estadoStockPorCantidad(producto.stock);
 }
 
 // TODO backend: agregar campo umbralAlerta a ProductoBuffet — hoy la
 // entidad real no lo tiene, se pidió explícitamente dejarlo marcado.
 export const PANEL_PRODUCTOS_BUFFET: ProductoBuffet[] = [
-  { id: 1, nombre: "Agua mineral 500ml", precio: 1500, stock: 40, umbralAlerta: 10 },
-  { id: 2, nombre: "Gaseosa 500ml", precio: 2200, stock: 32, umbralAlerta: 10 },
-  { id: 3, nombre: "Isotónica 500ml", precio: 2800, stock: 8, umbralAlerta: 10 },
-  { id: 4, nombre: "Cerveza rubia 473ml", precio: 3200, stock: 24, umbralAlerta: 6 },
-  { id: 5, nombre: "Alfajor triple", precio: 1800, stock: 15, umbralAlerta: 5 },
-  { id: 6, nombre: "Papas fritas chicas", precio: 2000, stock: 0, umbralAlerta: 5 },
-  { id: 7, nombre: "Barrita de cereal", precio: 1400, stock: 20, umbralAlerta: 5 },
-  { id: 8, nombre: "Sanguche de miga x3", precio: 3500, stock: 4, umbralAlerta: 4 },
-  { id: 9, nombre: "Café", precio: 1200, stock: 3, umbralAlerta: 5 },
-  { id: 10, nombre: "Energizante 250ml", precio: 3000, stock: 18, umbralAlerta: 6 },
+  { id: 1, nombre: "Agua mineral 500ml", precio: 1500, stock: 40 },
+  { id: 2, nombre: "Gaseosa 500ml", precio: 2200, stock: 32 },
+  { id: 3, nombre: "Isotónica 500ml", precio: 2800, stock: 8 },
+  { id: 4, nombre: "Cerveza rubia 473ml", precio: 3200, stock: 24 },
+  { id: 5, nombre: "Alfajor triple", precio: 1800, stock: 15 },
+  { id: 6, nombre: "Papas fritas chicas", precio: 2000, stock: 0 },
+  { id: 7, nombre: "Barrita de cereal", precio: 1400, stock: 20 },
+  { id: 8, nombre: "Sanguche de miga x3", precio: 3500, stock: 4 },
+  { id: 9, nombre: "Café", precio: 1200, stock: 3 },
+  { id: 10, nombre: "Energizante 250ml", precio: 3000, stock: 18 },
 ];
 
 export type EstadoVenta = "CONFIRMADA" | "CANCELADA";

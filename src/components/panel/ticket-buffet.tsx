@@ -1,7 +1,7 @@
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { formatearPrecio } from "@/lib/formato";
 import { METODOS_PAGO, type MetodoPago } from "@/mocks/pagos";
-import type { ProductoBuffet } from "@/mocks/buffet";
+import type { ProductoBuffetResponse as ProductoBuffet } from "@/lib/api/tipos/buffet";
 
 export type LineaTicket = { producto: ProductoBuffet; cantidad: number; subtotal: number };
 

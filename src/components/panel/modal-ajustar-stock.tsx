@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import type { ProductoBuffet } from "@/mocks/buffet";
+import type { ProductoBuffetResponse as ProductoBuffet } from "@/lib/api/tipos/buffet";
 
 /** "Llegó mercadería" — siempre suma, nunca reemplaza el número (eso evita que alguien borre stock por accidente tipeando de más). */
 export function ModalAjustarStock({ producto, onGuardar, onCancelar }: { producto: ProductoBuffet; onGuardar: (cantidad: number) => void; onCancelar: () => void }) {

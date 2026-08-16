@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { AlertTriangle, Package } from "lucide-react";
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
@@ -10,9 +10,14 @@ import { TicketBuffet, type LineaTicket } from "@/components/panel/ticket-buffet
 import { SkeletonVentaBuffet } from "@/components/panel/skeleton-venta-buffet";
 import { useBloqueadoPorCaja, usePermisos } from "@/lib/permisos";
 import { hoyISO } from "@/lib/fecha";
-import { PANEL_COMPLEJO, turnosDelDia } from "@/mocks/agenda";
-import { PANEL_CANCHAS } from "@/mocks/canchas";
-import { PANEL_PRODUCTOS_BUFFET, type DetalleVenta, type ProductoBuffet, type Venta } from "@/mocks/buffet";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { productosBuffet, ventasBuffet } from "@/lib/api/endpoints/buffet";
+import { keys } from "@/lib/api/keys";
+import { ApiError, mensajeVisible } from "@/lib/api/errores";
+import { useAgenda } from "@/hooks/api/use-agenda";
+import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
+import type { ProductoBuffetResponse as ProductoBuffet } from "@/lib/api/tipos/buffet";
 import { type MetodoPago } from "@/mocks/pagos";
 
 type EstadoCarga = "cargando" | "error" | "listo";
@@ -23,44 +28,73 @@ type EstadoCarga = "cargando" | "error" | "listo";
 // estados, mismo patrón que el resto del panel.
 export default function PanelVenderBuffet() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const tienePermiso = usePermisos();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
 
   const puedeVender = tienePermiso("vender_buffet");
   const destinoAlternativo = tienePermiso("ver_stock_buffet") ? "/panel/buffet/productos" : tienePermiso("ver_agenda") ? "/panel/agenda" : null;
 
-  const mockError = searchParams.get("mockError") === "1";
-  const mockVacio = searchParams.get("mockVacio") === "1";
 
-  const [productos, setProductos] = useState<ProductoBuffet[]>([]);
+  const queryClient = useQueryClient();
+  const { establecimientoId } = useEstablecimientoActivo();
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
   const [ticket, setTicket] = useState<{ productoId: number; cantidad: number }[]>([]);
   const [turnoId, setTurnoId] = useState("");
   const [metodoPago, setMetodoPago] = useState<MetodoPago | null>(null);
   const [avisoUltimaVenta, setAvisoUltimaVenta] = useState<number | null>(null);
-  const [reintento, setReintento] = useState(0);
 
   useEffect(() => {
     if (!puedeVender && destinoAlternativo) router.replace(destinoAlternativo);
   }, [puedeVender, destinoAlternativo, router]);
 
-  const clave = `${mockError}|${mockVacio}|${reintento}`;
-  const [resuelto, setResuelto] = useState<{ clave: string; error: boolean } | null>(null);
-  const estadoCarga: EstadoCarga = resuelto?.clave !== clave ? "cargando" : resuelto.error ? "error" : "listo";
+  const consulta = useQuery({
+    queryKey: keys.buffet.productos(establecimientoId ?? 0),
+    queryFn: () => productosBuffet.listar(establecimientoId!),
+    enabled: establecimientoId !== null,
+  });
 
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (mockError) {
-        setResuelto({ clave, error: true });
-        return;
-      }
-      setProductos(mockVacio ? [] : PANEL_PRODUCTOS_BUFFET.map((p) => ({ ...p })));
-      setResuelto({ clave, error: false });
-    }, 500);
-    return () => clearTimeout(id);
-  }, [clave, mockError, mockVacio]);
+  // Turnos de hoy, para poder cargarle el consumo a una reserva.
+  const { turnosPorFecha } = useAgenda(establecimientoId, [hoyISO()]);
+
+  const estadoCarga: EstadoCarga = consulta.isPending
+    ? "cargando"
+    : consulta.isError
+      ? "error"
+      : "listo";
+
+  /**
+   * POST /api/v1/buffet/ventas. El backend descuenta el stock, calcula el
+   * total y protege el POST con Idempotency-Key, así que un doble tap en un
+   * mostrador no cobra dos veces.
+   */
+  const vender = useMutation({
+    mutationFn: () =>
+      ventasBuffet.crear({
+        establecimientoId: establecimientoId!,
+        reservaId: turnoId ? Number(turnoId) : undefined,
+        metodoPago: metodoPago!,
+        detalles: ticket.map((l) => ({ productoId: l.productoId, cantidad: l.cantidad })),
+      }),
+    onSuccess: (venta) => {
+      // El stock ya no se descuenta en el cliente: lo hizo el backend.
+      queryClient.invalidateQueries({ queryKey: ["buffet"] });
+      setTicket([]);
+      setTurnoId("");
+      setMetodoPago(null);
+      setErrorAccion(null);
+      setAvisoUltimaVenta(venta.total);
+      setTimeout(() => setAvisoUltimaVenta(null), 2500);
+    },
+    onError: (e) => {
+      setErrorAccion(
+        e instanceof ApiError ? mensajeVisible(e) : "No pudimos registrar la venta.",
+      );
+    },
+  });
 
   if (bloqueadoPorCaja || !puedeVender) return <div className="min-h-dvh bg-humo" />;
+
+  const productos: ProductoBuffet[] = consulta.data ?? [];
 
   function agregarUnidad(producto: ProductoBuffet) {
     setTicket((prev) => {
@@ -91,27 +125,7 @@ export default function PanelVenderBuffet() {
 
   function confirmarVenta() {
     if (lineas.length === 0 || !metodoPago) return;
-    const ahora = new Date();
-    const hora = `${String(ahora.getHours()).padStart(2, "0")}:${String(ahora.getMinutes()).padStart(2, "0")}`;
-    const detalles: DetalleVenta[] = lineas.map((l, i) => ({
-      id: ahora.getTime() + i,
-      cantidad: l.cantidad,
-      subtotal: l.subtotal,
-      productoBuffetId: l.producto.id,
-      productoNombre: l.producto.nombre,
-    }));
-    const venta: Venta = { id: ahora.getTime(), fechaHora: `${hoyISO()}T${hora}`, total, estado: "CONFIRMADA", reservaId: turnoId || null, metodoPago, detalles };
-    void venta; // TODO backend: POST de la venta — acá el mock solo descuenta stock y limpia el ticket.
-
-    setProductos((prev) => prev.map((p) => {
-      const linea = ticket.find((l) => l.productoId === p.id);
-      return linea ? { ...p, stock: p.stock - linea.cantidad } : p;
-    }));
-    setTicket([]);
-    setTurnoId("");
-    setMetodoPago(null);
-    setAvisoUltimaVenta(total);
-    setTimeout(() => setAvisoUltimaVenta(null), 2500);
+    vender.mutate();
   }
 
   const cantidadesEnTicket = Object.fromEntries(ticket.map((l) => [l.productoId, l.cantidad]));
@@ -121,11 +135,11 @@ export default function PanelVenderBuffet() {
   });
   const total = lineas.reduce((acc, l) => acc + l.subtotal, 0);
 
-  const turnosDeHoy = turnosDelDia(hoyISO())
+  const turnosDeHoy = (turnosPorFecha[hoyISO()] ?? [])
     .filter((t) => t.estado !== "cancelado")
     .map((t) => ({
       id: t.id,
-      label: `${t.horaInicio} · ${PANEL_CANCHAS.find((c) => c.id === t.canchaId)?.nombre ?? "Cancha"} · ${t.cliente.nombre}`,
+      label: `${t.horaInicio} · ${t.cliente.nombre}`,
     }));
 
   return (
@@ -133,10 +147,16 @@ export default function PanelVenderBuffet() {
       <SidebarPanel />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <HeaderPanel nombre={PANEL_COMPLEJO.nombre} estado={PANEL_COMPLEJO.estado} diasRestantesTrial={PANEL_COMPLEJO.diasRestantesTrial} />
+        <HeaderPanel />
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
           <h1 className="mb-6 font-display text-2xl font-extrabold tracking-tight text-tinta">Vender en el buffet</h1>
+
+          {errorAccion && (
+            <p role="alert" className="mb-4 rounded-card bg-white p-4 text-sm text-cancelado shadow-card">
+              {errorAccion}
+            </p>
+          )}
 
           {estadoCarga === "cargando" && <SkeletonVentaBuffet />}
 
@@ -146,7 +166,7 @@ export default function PanelVenderBuffet() {
               <p className="font-semibold text-tinta">No pudimos cargar los productos.</p>
               <button
                 type="button"
-                onClick={() => setReintento((r) => r + 1)}
+                onClick={() => consulta.refetch()}
                 className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Reintentar
