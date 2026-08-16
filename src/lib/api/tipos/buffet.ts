@@ -3,12 +3,14 @@ import type { EstadoVenta, FechaHoraISO, FechaISO, MetodoPago } from "./comunes"
 /**
  * Productos y ventas de buffet.
  *
- * Dos cosas del mock que NO existen en el backend:
- *  - `umbralAlerta` en el producto: el badge de "stock bajo" es una heurística
- *    del front, no un dato del negocio.
- *  - un endpoint que devuelva UNA venta por id: sólo hay listado y métricas.
+ * Lo que NO existe en el backend: un endpoint que devuelva UNA venta por id
+ * (sólo hay listado y métricas).
  *
- * Y una que el mock creía que faltaba y sí está: `metodoPago` en la venta.
+ * Y dos que el mock creía que faltaban y sí están: `metodoPago` en la venta, y
+ * `umbralAlerta` en el producto (agregado en V16).
+ *
+ * El stock PUEDE ser negativo: es informativo y no bloquea una venta real ya
+ * cobrada en el mostrador.
  */
 export type ProductoBuffetRequest = {
   nombre: string;
@@ -16,6 +18,8 @@ export type ProductoBuffetRequest = {
   precio: number;
   /** @Min(0). Se IGNORA en el PUT: para mover stock está PATCH /stock. */
   stock: number;
+  /** Opcional: si no se manda, el backend deja 5. */
+  umbralAlerta?: number;
 };
 
 export type ProductoBuffetResponse = {
@@ -23,7 +27,10 @@ export type ProductoBuffetResponse = {
   nombre: string;
   descripcion: string | null;
   precio: number;
+  /** Puede ser negativo. */
   stock: number;
+  /** Con stock igual o menor a este número, se marca "stock bajo". */
+  umbralAlerta: number;
   establecimientoId: number;
 };
 

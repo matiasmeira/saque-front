@@ -28,8 +28,8 @@ export type ProductoBuffet = {
 
 export type { EstadoStock } from "@/lib/stock";
 
-export function estadoStock(producto: { stock: number }): EstadoStock {
-  return estadoStockPorCantidad(producto.stock);
+export function estadoStock(producto: { stock: number; umbralAlerta?: number }): EstadoStock {
+  return estadoStockPorCantidad(producto.stock, producto.umbralAlerta);
 }
 
 // TODO backend: agregar campo umbralAlerta a ProductoBuffet — hoy la

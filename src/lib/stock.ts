@@ -1,17 +1,22 @@
 export type EstadoStock = "ok" | "bajo" | "agotado";
 
-/**
- * Umbral para el aviso de "stock bajo".
- *
- * Es una heurística de PRESENTACIÓN, no un dato del negocio: ProductoBuffet no
- * tiene `umbralAlerta` en el backend, así que no se puede configurar por
- * producto. Si en algún momento hace falta que cada producto tenga el suyo,
- * el campo tiene que existir primero en el DTO.
- */
-export const UMBRAL_STOCK_BAJO = 5;
+/** Se usa cuando un producto todavía no tiene umbral propio. */
+export const UMBRAL_STOCK_BAJO_POR_DEFECTO = 5;
 
-export function estadoStock(stock: number): EstadoStock {
+/**
+ * El umbral es POR PRODUCTO (ProductoBuffet.umbralAlerta): no se repone igual
+ * una caja de agua que rota por decenas que un producto que sale una vez por
+ * semana.
+ *
+ * El stock puede ser negativo — una venta real no se bloquea porque el
+ * inventario del sistema esté desactualizado — y en ese caso cuenta como
+ * agotado.
+ */
+export function estadoStock(
+  stock: number,
+  umbralAlerta: number = UMBRAL_STOCK_BAJO_POR_DEFECTO,
+): EstadoStock {
   if (stock <= 0) return "agotado";
-  if (stock <= UMBRAL_STOCK_BAJO) return "bajo";
+  if (stock <= umbralAlerta) return "bajo";
   return "ok";
 }

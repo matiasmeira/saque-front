@@ -1,14 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { UMBRAL_STOCK_BAJO_POR_DEFECTO } from "@/lib/stock";
 import type { ProductoBuffetResponse as ProductoBuffet } from "@/lib/api/tipos/buffet";
 
-/**
- * `umbralAlerta` se quitó: ProductoBuffet no lo tiene en el backend, así que no
- * se puede configurar por producto. El aviso de stock bajo usa un umbral fijo
- * del front (ver src/lib/stock.ts).
- */
-export type DatosProducto = { nombre: string; descripcion: string; precio: number; stock?: number };
+export type DatosProducto = { nombre: string; descripcion: string; precio: number; stock?: number; umbralAlerta: number };
 
 const campoClase = "w-full rounded-input bg-humo px-3.5 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste";
 
@@ -33,14 +29,16 @@ export function FormFichaProducto({
   const [descripcion, setDescripcion] = useState(producto?.descripcion ?? "");
   const [precio, setPrecio] = useState(producto?.precio ?? 0);
   const [stock, setStock] = useState(0);
+  const [umbralAlerta, setUmbralAlerta] = useState(producto?.umbralAlerta ?? UMBRAL_STOCK_BAJO_POR_DEFECTO);
   const [error, setError] = useState<string | null>(null);
 
   function guardar(e: FormEvent) {
     e.preventDefault();
     if (!nombre.trim()) return setError("Falta el nombre.");
+    if (umbralAlerta < 0) return setError("El umbral de alerta no puede ser negativo.");
     if (precio <= 0) return setError("El precio tiene que ser mayor a 0.");
     setError(null);
-    onGuardar({ nombre: nombre.trim(), descripcion: descripcion.trim(), precio, stock: producto ? undefined : stock });
+    onGuardar({ nombre: nombre.trim(), descripcion: descripcion.trim(), precio, stock: producto ? undefined : stock, umbralAlerta });
   }
 
   return (
@@ -90,6 +88,24 @@ export function FormFichaProducto({
           />
         </div>
       )}
+
+      <div>
+        <label htmlFor="producto-umbral" className="mb-1 block text-xs font-semibold text-grafito">
+          Umbral de alerta
+        </label>
+        <input
+          id="producto-umbral"
+          type="number"
+          min={0}
+          required
+          value={umbralAlerta}
+          onChange={(e) => setUmbralAlerta(Number(e.target.value))}
+          className={campoClase}
+        />
+        <p className="mt-1 text-xs text-grafito">
+          Con stock igual o menor a este número, el producto se marca &ldquo;Stock bajo&rdquo;.
+        </p>
+      </div>
 
       {error && (
         <p className="text-sm text-cancelado" role="alert">

@@ -41,7 +41,7 @@ export function TablaProductosBuffet({
 
       <div className="divide-y divide-borde/60">
         {productos.map((producto) => {
-          const estado = estadoStock(producto.stock);
+          const estado = estadoStock(producto.stock, producto.umbralAlerta);
           return (
             <div
               key={producto.id}
