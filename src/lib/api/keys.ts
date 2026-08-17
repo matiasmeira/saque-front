@@ -86,6 +86,9 @@ export const keys = {
     turnos: (estId: number, page = 0) => ["caja", estId, "turnos", page] as const,
     turno: (estId: number, turnoId: number) =>
       ["caja", estId, "turnos", turnoId] as const,
+    /** Resultado del cierre, sembrado por la mutación: no hay endpoint que lo relea. */
+    cierre: (estId: number, turnoId: number) =>
+      ["caja", estId, "cierre", turnoId] as const,
     dispositivos: (estId: number) => ["caja", estId, "dispositivos"] as const,
   },
 
