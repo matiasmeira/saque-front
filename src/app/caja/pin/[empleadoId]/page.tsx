@@ -2,98 +2,118 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
+
 import { PantallaKiosco } from "@/components/caja/pantalla-kiosco";
 import { TecladoNumerico } from "@/components/caja/teclado-numerico";
-import { iniciarSesionEmpleado, useEmparejado } from "@/lib/sesion-caja";
-import { MAX_INTENTOS_PIN, BLOQUEO_PIN_SEGUNDOS } from "@/mocks/dispositivos";
-import { PANEL_EMPLEADOS, type Empleado, type Permiso } from "@/mocks/empleados";
+import { auth, usuarios } from "@/lib/api/endpoints/auth";
+import { mostrador } from "@/lib/api/endpoints/caja";
+import { ApiError, mensajeVisible } from "@/lib/api/errores";
+import { keys } from "@/lib/api/keys";
+import { guardarToken } from "@/lib/api/sesion";
+import type { PermisoEmpleado } from "@/lib/api/tipos/comunes";
+import { iniciarSesionEmpleado, leerEstablecimientoDispositivo } from "@/lib/sesion-caja";
 
-// A qué pantalla del panel entra según lo primero que pueda ver —
-// mismo espíritu que el fallback de C2/C5 (agenda.tsx, clientes/
-// page.tsx), pero acá elegido una sola vez, al loguearse, no en cada
-// pantalla.
-const RUTA_POR_PERMISO: { permiso: Permiso; ruta: string }[] = [
-  { permiso: "ver_agenda", ruta: "/panel/agenda" },
-  { permiso: "ver_clientes", ruta: "/panel/clientes" },
-  { permiso: "vender_buffet", ruta: "/panel/buffet/vender" },
-  { permiso: "ver_stock_buffet", ruta: "/panel/buffet/productos" },
+/**
+ * A qué pantalla del panel entra según lo primero que pueda hacer. Se elige una
+ * sola vez, al loguearse, con los permisos que devuelve /me — no en cada
+ * pantalla. Un empleado sin ninguno de estos igual ve la agenda: es de lectura
+ * y el back la deja ver a cualquier miembro del establecimiento.
+ */
+const RUTA_POR_PERMISO: { permiso: PermisoEmpleado; ruta: string }[] = [
+  { permiso: "CREAR_RESERVA_MANUAL", ruta: "/panel/agenda" },
+  { permiso: "FINALIZAR_RESERVA", ruta: "/panel/agenda" },
+  { permiso: "REGISTRAR_VENTA_BUFFET", ruta: "/panel/buffet/vender" },
+  { permiso: "OPERAR_CAJA", ruta: "/panel/caja" },
 ];
 
-function primeraRutaPermitida(empleado: Empleado): string {
-  return RUTA_POR_PERMISO.find((r) => empleado.permisos.includes(r.permiso))?.ruta ?? "/panel/agenda";
-}
-
-// El PIN se valida contra el empleado ya elegido en /caja (nombres) —
-// por eso un PIN incorrecto solo dice "incorrecto", nunca distingue
-// "esta persona no existe" de "existe pero el PIN está mal": mismo
-// mensaje neutro para las dos, y entrar directo con un id inválido
-// (o sin la PC emparejada) redirige en silencio, sin pistas.
-// TODO backend: validar el PIN y el rate limit vienen de la API —
-// acá el bloqueo tras varios intentos es una simulación de 20s fija.
+/**
+ * Segundo factor del mostrador: la cookie del dispositivo ya dijo que esta PC
+ * es de confianza; el PIN dice QUIÉN es.
+ *
+ * El PIN se valida en el SERVER (POST /auth/empleados/login). Antes esto
+ * comparaba contra un array en texto plano en el bundle, y el rate limit era un
+ * setTimeout de 20s: cualquiera con las devtools abiertas leía los cuatro
+ * dígitos de todo el personal. Ahora el back impone 30 intentos/5min por IP y
+ * 5/5min por (establecimiento, nombre), y responde 429 — no hay contador acá.
+ *
+ * El backend pide el NOMBRE, no el id. El id es lo que viaja en la URL (es lo
+ * estable), y el nombre sale de la lista de /caja, que ya está en cache.
+ */
 export default function PinCaja({ params }: { params: Promise<{ empleadoId: string }> }) {
   const { empleadoId } = use(params);
   const router = useRouter();
-  const emparejado = useEmparejado();
-  const empleado = PANEL_EMPLEADOS.find((e) => e.id === empleadoId && e.estado === "activo") ?? null;
+  const queryClient = useQueryClient();
+  const establecimientoId = leerEstablecimientoDispositivo();
+
+  const empleados = useQuery({
+    queryKey: keys.caja.mostrador(establecimientoId ?? 0),
+    queryFn: () => mostrador.empleadosActivos(establecimientoId!),
+    enabled: establecimientoId !== null,
+    retry: false,
+  });
+
+  const empleado = empleados.data?.find((e) => String(e.id) === empleadoId) ?? null;
 
   const [pin, setPin] = useState("");
-  const [error, setError] = useState(false);
-  const [intentos, setIntentos] = useState(0);
-  const [segundosRestantes, setSegundosRestantes] = useState(0);
 
-  // Ojo acá: "!emparejado" NUNCA dispara una navegación por su cuenta
-  // — solo decide qué se renderiza más abajo. useEmparejado() lee
-  // localStorage con useSyncExternalStore, que en una navegación dura
-  // (recarga, o entrar directo por URL) puede devolver el valor
-  // neutro "false" en el primer render antes de reconciliar con el
-  // real; si esa lectura transitoria disparara un router.replace acá,
-  // la redirección ya salió y no hay reconciliación que la deshaga.
-  // "!empleado" sí puede navegar: sale de PANEL_EMPLEADOS, nunca del
-  // navegador, así que no tiene ese problema.
+  const login = useMutation({
+    mutationFn: async (pinIngresado: string) => {
+      const { token } = await auth.loginEmpleado({
+        establecimientoId: establecimientoId!,
+        nombre: empleado!.nombre,
+        pin: pinIngresado,
+      });
+      guardarToken(token);
+      // Se pide el perfil acá adentro para conocer los permisos antes de
+      // navegar, y entrar directo a una pantalla que la persona pueda usar.
+      return usuarios.me();
+    },
+    onSuccess: (perfil) => {
+      queryClient.setQueryData(keys.perfil(), perfil);
+      iniciarSesionEmpleado(empleadoId);
+      const ruta =
+        RUTA_POR_PERMISO.find((r) => perfil.permisos.includes(r.permiso))?.ruta ?? "/panel/agenda";
+      router.push(ruta);
+    },
+    onError: (e) => {
+      setPin("");
+      // 403 no es un PIN mal tipeado: es "Dispositivo no autorizado", o sea que
+      // el dueño revocó esta PC mientras alguien la estaba usando. Volver a la
+      // entrada, que sabe explicar eso.
+      if (e instanceof ApiError && e.status === 403) router.replace("/caja");
+    },
+  });
+
+  // El id de la URL no corresponde a ningún empleado activo de este local: se
+  // vuelve a la lista sin decir por qué. Sólo se decide cuando la lista YA
+  // llegó — antes de eso `empleado` es null nada más que porque no hay datos.
   useEffect(() => {
-    if (!empleado) router.replace("/caja");
-  }, [empleado, router]);
+    if (empleados.isSuccess && !empleado) router.replace("/caja");
+  }, [empleados.isSuccess, empleado, router]);
 
   useEffect(() => {
-    if (segundosRestantes <= 0) return;
-    const id = setTimeout(() => {
-      setSegundosRestantes(segundosRestantes - 1);
-      if (segundosRestantes === 1) setIntentos(0);
-    }, 1000);
-    return () => clearTimeout(id);
-  }, [segundosRestantes]);
-
-  const bloqueado = segundosRestantes > 0;
-
-  function verificar(intento: string, empleadoActual: Empleado) {
-    if (intento === empleadoActual.pin) {
-      iniciarSesionEmpleado(empleadoActual.id);
-      router.push(primeraRutaPermitida(empleadoActual));
-      return;
-    }
-    const nuevosIntentos = intentos + 1;
-    setIntentos(nuevosIntentos);
-    setError(true);
-    setPin("");
-    if (nuevosIntentos >= MAX_INTENTOS_PIN) setSegundosRestantes(BLOQUEO_PIN_SEGUNDOS);
-  }
+    if (establecimientoId === null) router.replace("/caja");
+  }, [establecimientoId, router]);
 
   function agregarDigito(digito: string) {
-    if (bloqueado || !empleado || pin.length >= 4) return;
+    if (login.isPending || pin.length >= 4 || !empleado) return;
     const nuevo = pin + digito;
     setPin(nuevo);
-    setError(false);
-    if (nuevo.length === 4) verificar(nuevo, empleado);
+    if (nuevo.length === 4) login.mutate(nuevo);
   }
 
   function borrarDigito() {
-    if (bloqueado) return;
+    if (login.isPending) return;
     setPin((p) => p.slice(0, -1));
-    setError(false);
+    login.reset();
   }
 
-  if (!emparejado || !empleado) return <div className="min-h-dvh bg-tinta" />;
+  if (!empleado) return <div className="min-h-dvh bg-tinta" />;
+
+  const primerNombre = empleado.nombre.split(" ")[0];
+  const bloqueadoPorIntentos = login.error instanceof ApiError && login.error.status === 429;
 
   return (
     <PantallaKiosco>
@@ -103,21 +123,25 @@ export default function PinCaja({ params }: { params: Promise<{ empleadoId: stri
         className="mb-6 flex items-center gap-1.5 text-sm font-semibold text-[#9DB6D6] transition-colors hover:text-white"
       >
         <ArrowLeft className="size-4" aria-hidden />
-        No soy {empleado.nombre.split(" ")[0]}
+        No soy {primerNombre}
       </button>
 
-      <h1 className="mb-1 text-center font-display text-2xl font-bold text-white">Hola, {empleado.nombre.split(" ")[0]}</h1>
+      <h1 className="mb-1 text-center font-display text-2xl font-bold text-white">
+        Hola, {primerNombre}
+      </h1>
       <p className="mb-8 text-center text-sm text-[#9DB6D6]">Ingresá tu PIN</p>
 
-      {bloqueado ? (
+      {bloqueadoPorIntentos ? (
         <div className="rounded-card bg-white/10 p-6 text-center">
           <p className="font-display text-lg font-bold text-white">Demasiados intentos</p>
-          <p className="mt-1 text-sm text-[#9DB6D6]">Probá en unos minutos — quedan {segundosRestantes}s.</p>
+          <p className="mt-1 text-sm text-[#9DB6D6]">{mensajeVisible(login.error as ApiError)}</p>
         </div>
       ) : (
         <>
-          {error && (
+          {login.isError && (
             <p className="mb-4 text-center text-sm font-semibold text-cancelado" role="alert">
+              {/* Mensaje neutro a propósito: nunca distingue "esta persona no
+                  existe" de "existe pero el PIN está mal". */}
               PIN incorrecto. Probá de nuevo.
             </p>
           )}

@@ -33,6 +33,7 @@ const CLAVE_FECHA_EMPAREJAMIENTO = "saque_caja_fecha_emparejamiento";
 const CLAVE_FECHA_ULTIMO_USO = "saque_caja_fecha_ultimo_uso";
 const CLAVE_REVOCADO = "saque_caja_revocado";
 const CLAVE_EMPLEADO = "saque_caja_empleado";
+const CLAVE_ESTABLECIMIENTO = "saque_caja_establecimiento";
 const CLAVE_TOKENS_GENERADOS = "saque_caja_tokens_generados";
 
 // El evento nativo "storage" del navegador solo avisa a OTRAS
@@ -51,6 +52,25 @@ function notificarCambio() {
 
 const NOMBRE_DISPOSITIVO_POR_DEFECTO = "Caja mostrador";
 
+/**
+ * Guarda a qué establecimiento quedó atada esta PC tras emparejarla.
+ *
+ * El TOKEN del dispositivo NO se guarda acá: vive en la cookie saque_caja_device,
+ * que es HttpOnly y el JS no puede leer. Lo único que necesita el kiosco de este
+ * lado es el establecimientoId, para saber a quién pedirle los empleados.
+ */
+export function guardarDispositivo(establecimientoId: number, nombreLocal: string) {
+  window.localStorage.setItem(CLAVE_ESTABLECIMIENTO, String(establecimientoId));
+  emparejarDispositivo(nombreLocal);
+}
+
+/** `null` si esta PC nunca se emparejó. */
+export function leerEstablecimientoDispositivo(): number | null {
+  if (typeof window === "undefined") return null;
+  const crudo = window.localStorage.getItem(CLAVE_ESTABLECIMIENTO);
+  return crudo === null ? null : Number(crudo);
+}
+
 export function emparejarDispositivo(nombreLocal: string) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(CLAVE_EMPAREJADO, "1");
@@ -68,6 +88,7 @@ export function emparejarDispositivo(nombreLocal: string) {
 }
 
 export function desemparejarDispositivo() {
+  window.localStorage.removeItem(CLAVE_ESTABLECIMIENTO);
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(CLAVE_EMPAREJADO);
   window.localStorage.removeItem(CLAVE_NOMBRE_LOCAL);

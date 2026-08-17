@@ -1,21 +1,22 @@
 import { ShieldOff } from "lucide-react";
 import { fechaLarga } from "@/lib/formato";
-import type { Dispositivo } from "@/mocks/dispositivos";
+import type { DispositivoCajaResponse } from "@/lib/api/tipos/caja";
 
 /**
- * Nombre editable in situ — sin modo "editar" aparte: es un input
- * siempre, con look de texto hasta que se lo toca. Revocar es la
- * herramienta de seguridad principal de esta sección (ver C9): un
- * ícono a la vista en cada fila, no escondido en un menú.
+ * Revocar es la herramienta de seguridad principal de esta sección: un botón a
+ * la vista en cada fila, no escondido en un menú.
+ *
+ * El nombre NO se edita acá: el backend fija el `label` al emparejar y no expone
+ * ningún endpoint para cambiarlo después (DispositivoCajaController tiene POST,
+ * GET y DELETE, nada más). Antes esto era un input editable in situ que sólo
+ * mutaba estado local — prometía algo que no se guardaba en ningún lado.
  */
 export function TablaDispositivos({
   dispositivos,
-  onRenombrar,
   onRevocar,
 }: {
-  dispositivos: Dispositivo[];
-  onRenombrar: (id: string, nombre: string) => void;
-  onRevocar: (dispositivo: Dispositivo) => void;
+  dispositivos: DispositivoCajaResponse[];
+  onRevocar: (dispositivo: DispositivoCajaResponse) => void;
 }) {
   return (
     <div className="overflow-hidden rounded-card bg-white shadow-card">
@@ -32,18 +33,15 @@ export function TablaDispositivos({
             key={dispositivo.id}
             className="grid grid-cols-[1.4fr_1fr_1fr_auto] items-center gap-3 px-6 py-3.5 transition-colors hover:bg-humo/60"
           >
-            <input
-              value={dispositivo.nombre}
-              onChange={(e) => onRenombrar(dispositivo.id, e.target.value)}
-              aria-label={`Nombre del dispositivo ${dispositivo.nombre}`}
-              className="w-full truncate rounded-input border border-transparent bg-transparent px-2 py-1.5 text-sm font-semibold text-tinta transition-colors hover:border-borde focus:bg-white focus:outline-none focus:ring-2 focus:ring-celeste"
-            />
-            <span className="text-sm text-grafito">{fechaLarga(dispositivo.fechaEmparejamiento)}</span>
-            <span className="text-sm text-grafito">{fechaLarga(dispositivo.fechaUltimoUso)}</span>
+            <span className="truncate px-2 text-sm font-semibold text-tinta">{dispositivo.label}</span>
+            <span className="text-sm text-grafito">{fechaLarga(dispositivo.createdAt.slice(0, 10))}</span>
+            <span className="text-sm text-grafito">
+              {dispositivo.lastUsedAt ? fechaLarga(dispositivo.lastUsedAt.slice(0, 10)) : "Nunca"}
+            </span>
             <button
               type="button"
               onClick={() => onRevocar(dispositivo)}
-              aria-label={`Revocar ${dispositivo.nombre}`}
+              aria-label={`Revocar ${dispositivo.label}`}
               title="Revocar"
               className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-cancelado transition-colors hover:bg-cancelado-suave"
             >

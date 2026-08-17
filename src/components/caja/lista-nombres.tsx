@@ -1,8 +1,15 @@
 import { User } from "lucide-react";
-import type { Empleado } from "@/mocks/empleados";
+
+/**
+ * Lo único que el mostrador sabe de un empleado antes de que se identifique:
+ * EmpleadoNombreResponse del backend es exactamente {id, nombre}. Ni permisos,
+ * ni PIN, ni si está activo — la lista ya viene filtrada a los activos.
+ */
+export type EmpleadoMostrador = { id: number; nombre: string };
+
 
 /** Grande y táctil: cada nombre es un botón entero, no una fila de lista para leer con precisión de mouse. */
-export function ListaNombres({ empleados, onElegir }: { empleados: Empleado[]; onElegir: (empleado: Empleado) => void }) {
+export function ListaNombres({ empleados, onElegir }: { empleados: EmpleadoMostrador[]; onElegir: (empleado: EmpleadoMostrador) => void }) {
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
       {empleados.map((empleado) => (

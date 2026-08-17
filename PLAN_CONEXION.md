@@ -1254,9 +1254,10 @@ Hoy la pantalla vive en el panel del complejo, gateada por `esDueno` → un OWNE
 - [ ] `/baja-mails` — `POST /api/v1/mails/baja`
 
 ### Kiosco de caja
-- [ ] `/caja/emparejar/[token]` — `POST /api/v1/caja/emparejar` · ⚠️ **requiere HTTPS**
-- [ ] `/caja` — `GET …/empleados/activos` (con cookie)
-- [ ] `/caja/pin/[empleadoId]` — `POST /auth/empleados/login` · **el PIN se valida en el server**
+- [x] `/caja/emparejar?codigo=` — `POST /api/v1/caja/emparejar` · la ruta pasó de path param a QUERY param (el back arma el link así) · la cookie `Secure` SÍ se acepta en `http://localhost`, verificado
+- [x] `/caja` — `GET …/empleados/activos` (con cookie) · el estado "emparejado" se infiere del 200/403, no de localStorage
+- [x] `/caja/pin/[empleadoId]` — `POST /auth/empleados/login` · **el PIN se valida en el server**; el rate limit simulado se borró
+- [x] `/panel/configuracion` → sección Dispositivos — `POST /emparejar`, `POST /activar-local`, `GET`, `DELETE` · el resto de esa pantalla sigue en Fase 6
 
 ### Panel — gestión
 - [ ] `/panel/agenda` — 8 endpoints · ⚠️ **agregar selector de método de pago** · 7 requests en vista semanal

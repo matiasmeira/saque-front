@@ -15,10 +15,16 @@ function formatearCuentaRegresiva(segundos: number): string {
  * Nunca se renderiza en el servidor — solo se monta dentro de un
  * modal que abre un click, así que leer window acá adentro es
  * seguro (no hay hidratación de la que preocuparse).
+ *
+ * El link se arma acá y NO se usa `urlEmparejamiento` de la respuesta: el
+ * backend lo construye con su property `app.frontend-url`, que apunta a
+ * localhost:5173 (Vite) y no a este front. `window.location.origin` es el
+ * origen desde el que el dueño está mirando, que es exactamente donde después
+ * se va a abrir el link.
  */
-export function GenerarLinkCaja({ token, expiraEn }: { token: string; expiraEn: string }) {
+export function GenerarLinkCaja({ codigo, expiraEn }: { codigo: string; expiraEn: string }) {
   const [origen] = useState(() => window.location.origin);
-  const link = `${origen}/caja/emparejar/${token}`;
+  const link = `${origen}/caja/emparejar?codigo=${encodeURIComponent(codigo)}`;
 
   const [segundosRestantes, setSegundosRestantes] = useState(() => Math.max(0, Math.round((new Date(expiraEn).getTime() - Date.now()) / 1000)));
   const [copiado, setCopiado] = useState(false);
@@ -60,7 +66,7 @@ export function GenerarLinkCaja({ token, expiraEn }: { token: string; expiraEn: 
         {vencido ? "Link vencido" : `Vence en ${formatearCuentaRegresiva(segundosRestantes)}`}
       </p>
 
-      <p className="text-xs text-grafito">Un solo uso — caduca en 10 minutos si nadie lo abre antes.</p>
+      <p className="text-xs text-grafito">Un solo uso — caduca si nadie lo abre antes.</p>
     </div>
   );
 }
