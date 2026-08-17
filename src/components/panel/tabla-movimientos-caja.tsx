@@ -1,5 +1,7 @@
 import { formatearPrecio } from "@/lib/formato";
-import { ETIQUETA_ORIGEN, type MovimientoCaja } from "@/mocks/caja";
+import { ETIQUETA_ORIGEN } from "@/lib/caja";
+import { partirFechaHora } from "@/lib/api/fechas";
+import type { MovimientoCajaResponse as MovimientoCaja } from "@/lib/api/tipos/caja";
 
 const COLUMNAS = "grid-cols-[auto_1fr_2fr_auto]";
 
@@ -22,7 +24,7 @@ export function TablaMovimientosCaja({ movimientos }: { movimientos: MovimientoC
       <div className="divide-y divide-borde/60">
         {[...movimientos].reverse().map((mov) => (
           <div key={mov.id} className={`grid ${COLUMNAS} items-center gap-3 px-6 py-4`}>
-            <span className="text-sm tabular-nums text-grafito">{mov.hora}</span>
+            <span className="text-sm tabular-nums text-grafito">{partirFechaHora(mov.fechaHora).hora}</span>
             <span className="text-sm text-tinta">{ETIQUETA_ORIGEN[mov.origen]}</span>
             <span className="min-w-0 truncate text-sm text-tinta">{mov.descripcion}</span>
             <span className={`text-right text-sm font-semibold tabular-nums ${mov.tipo === "INGRESO" ? "text-disponible" : "text-cancelado"}`}>

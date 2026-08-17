@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowDownCircle, ArrowUpCircle, History, Lock } from "lucide-react";
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
@@ -12,11 +12,13 @@ import { TablaMovimientosCaja } from "@/components/panel/tabla-movimientos-caja"
 import { FormMovimientoCaja, type DatosMovimientoCaja } from "@/components/panel/form-movimiento-caja";
 import { SkeletonCaja } from "@/components/panel/skeleton-caja";
 import { DrawerPanel } from "@/components/panel/drawer-panel";
-import { useBloqueadoPorCaja, useEmpleadoActual, usePermisos } from "@/lib/permisos";
+import {useBloqueadoPorCaja, usePermisos } from "@/lib/permisos";
 import { useRolPanel } from "@/lib/rol-panel";
-import { abrirCaja, registrarMovimiento, useTurnoAbierto, vaciarCajaAbiertaDemo } from "@/lib/estado-caja";
-import { calcularSaldoTeorico, calcularTotalesPorMetodo } from "@/mocks/caja";
-import { PANEL_COMPLEJO } from "@/mocks/agenda";
+import { useAccionesCaja, useCajaAbierta } from "@/hooks/api/use-caja";
+import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
+import { ApiError, mensajeVisible } from "@/lib/api/errores";
+import { METODOS_PAGO } from "@/mocks/pagos";
+import type { MetodoPago } from "@/lib/api/tipos/comunes";
 import type { TipoMovimiento } from "@/mocks/caja";
 
 type EstadoCarga = "cargando" | "error" | "listo";
@@ -24,49 +26,56 @@ type PanelAbierto = { tipo: "movimiento"; movimiento: TipoMovimiento } | null;
 
 export default function PanelCaja() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const rol = useRolPanel();
   const tienePermiso = usePermisos();
-  const empleadoActual = useEmpleadoActual();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
   const puedeGestionarCaja = tienePermiso("gestionar_caja");
 
-  const mockError = searchParams.get("mockError") === "1";
-  const mockVacio = searchParams.get("mockVacio") === "1";
-
+  const { establecimientoId } = useEstablecimientoActivo();
   const [panelAbierto, setPanelAbierto] = useState<PanelAbierto>(null);
-  const [reintento, setReintento] = useState(0);
-
-  const nombreActual = rol === "dueno" ? "Dueño" : (empleadoActual?.nombre ?? "Dueño");
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
 
   useEffect(() => {
     if (!bloqueadoPorCaja && !puedeGestionarCaja) router.replace("/panel/agenda");
   }, [bloqueadoPorCaja, puedeGestionarCaja, router]);
 
-  useEffect(() => {
-    if (mockVacio) vaciarCajaAbiertaDemo();
-  }, [mockVacio]);
+  const { caja, movimientos, puedeVerMovimientos, cargando, error, refetch } =
+    useCajaAbierta(establecimientoId);
+  const acciones = useAccionesCaja(establecimientoId);
 
-  const clave = `${mockError}|${mockVacio}|${reintento}`;
-  const [resuelto, setResuelto] = useState<{ clave: string; error: boolean } | null>(null);
-  const estadoCarga: EstadoCarga = resuelto?.clave !== clave ? "cargando" : resuelto.error ? "error" : "listo";
-
-  useEffect(() => {
-    const id = setTimeout(() => setResuelto({ clave, error: mockError }), 500);
-    return () => clearTimeout(id);
-  }, [clave, mockError]);
-
-  const turno = useTurnoAbierto();
+  const estadoCarga: EstadoCarga = cargando ? "cargando" : error ? "error" : "listo";
 
   if (bloqueadoPorCaja || !puedeGestionarCaja) return <div className="min-h-dvh bg-humo" />;
 
-  const saldoTeorico = turno ? calcularSaldoTeorico(turno.fondoInicial, turno.movimientos) : 0;
-  const totalesPorMetodo = turno ? calcularTotalesPorMetodo(turno.movimientos) : null;
+  // El saldo teórico y los totales por método los calcula el BACKEND: dejaron de
+  // derivarse en el cliente a partir de la lista de movimientos.
+  const turno = caja?.turno ?? null;
+  const saldoTeorico = caja?.saldoTeoricoEfectivo ?? 0;
+  // El backend sólo incluye los métodos que TUVIERON movimiento; el panel de
+  // totales espera los cinco, así que se completan en cero.
+  const totalesPorMetodo = caja
+    ? (Object.fromEntries(
+        METODOS_PAGO.map((m) => [m.valor, caja.totalIngresosPorMetodoPago[m.valor] ?? 0]),
+      ) as Record<MetodoPago, number>)
+    : null;
 
-  function confirmarMovimiento(datos: DatosMovimientoCaja) {
+  function alFallar(e: unknown, porDefecto: string) {
+    setErrorAccion(e instanceof ApiError ? mensajeVisible(e) : porDefecto);
+  }
+
+  async function confirmarMovimiento(datos: DatosMovimientoCaja) {
     if (panelAbierto?.tipo !== "movimiento") return;
-    registrarMovimiento(panelAbierto.movimiento, datos.monto, datos.descripcion);
-    setPanelAbierto(null);
+    setErrorAccion(null);
+    try {
+      await acciones.registrarMovimiento.mutateAsync({
+        tipo: panelAbierto.movimiento,
+        monto: datos.monto,
+        descripcion: datos.descripcion,
+      });
+      setPanelAbierto(null);
+    } catch (e) {
+      alFallar(e, "No pudimos registrar el movimiento.");
+    }
   }
 
   return (
@@ -74,7 +83,7 @@ export default function PanelCaja() {
       <SidebarPanel />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <HeaderPanel nombre={PANEL_COMPLEJO.nombre} estado={PANEL_COMPLEJO.estado} diasRestantesTrial={PANEL_COMPLEJO.diasRestantesTrial} />
+        <HeaderPanel />
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -91,6 +100,12 @@ export default function PanelCaja() {
             )}
           </div>
 
+          {errorAccion && (
+            <p role="alert" className="mb-4 rounded-card bg-white p-4 text-sm text-cancelado shadow-card">
+              {errorAccion}
+            </p>
+          )}
+
           {estadoCarga === "cargando" && <SkeletonCaja />}
 
           {estadoCarga === "error" && (
@@ -99,7 +114,7 @@ export default function PanelCaja() {
               <p className="font-semibold text-tinta">No pudimos cargar la caja.</p>
               <button
                 type="button"
-                onClick={() => setReintento((r) => r + 1)}
+                onClick={() => refetch()}
                 className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Reintentar
@@ -109,7 +124,7 @@ export default function PanelCaja() {
 
           {estadoCarga === "listo" && !turno && (
             <div className="py-8">
-              <FormAbrirCaja onAbrir={(fondoInicial) => abrirCaja(fondoInicial, nombreActual)} />
+              <FormAbrirCaja onAbrir={(fondoInicial) => acciones.abrir.mutate({ fondoInicial })} />
             </div>
           )}
 
@@ -153,7 +168,16 @@ export default function PanelCaja() {
 
               <div>
                 <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-grafito">Movimientos del turno</p>
-                <TablaMovimientosCaja movimientos={turno.movimientos} />
+                {puedeVerMovimientos ? (
+                  <TablaMovimientosCaja movimientos={movimientos} />
+                ) : (
+                  /* El detalle con los movimientos sólo lo devuelve
+                     GET /caja/turnos/{id}, que es OWNER/ADMIN. */
+                  <p className="rounded-card bg-white p-6 text-sm text-grafito shadow-card">
+                    El detalle de movimientos lo ve el dueño. Podés seguir operando la caja
+                    normalmente.
+                  </p>
+                )}
               </div>
             </div>
           )}

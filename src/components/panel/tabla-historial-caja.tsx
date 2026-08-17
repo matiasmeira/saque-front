@@ -1,29 +1,32 @@
 import Link from "next/link";
 import { formatearPrecio } from "@/lib/formato";
-import { calcularDiferencia, calcularSaldoTeorico, type TurnoCaja } from "@/mocks/caja";
+import type { TurnoCajaResumenResponse } from "@/lib/api/tipos/caja";
 
-const COLUMNAS = "grid-cols-[1fr_1.4fr_1fr_1fr_1fr_1fr]";
+const COLUMNAS = "grid-cols-[1fr_1.4fr_1fr_1fr_1fr]";
 
 function fechaCorta(fechaISO: string): string {
   return `${fechaISO.slice(8, 10)}/${fechaISO.slice(5, 7)}`;
 }
 
-export function TablaHistorialCaja({ turnos }: { turnos: TurnoCaja[] }) {
+/**
+ * El resumen del backend ya trae `diferencia` calculada; el saldo teórico no
+ * viene en el listado (está en el detalle del turno). Se muestra el real y la
+ * diferencia, que es lo que importa para escanear el historial.
+ */
+export function TablaHistorialCaja({ turnos }: { turnos: TurnoCajaResumenResponse[] }) {
   return (
     <div className="overflow-hidden rounded-card bg-white shadow-card">
       <div className={`grid ${COLUMNAS} gap-3 bg-humo px-6 py-3 text-xs font-semibold uppercase tracking-wide text-grafito`}>
         <span>Fecha</span>
-        <span>Abrió / cerró</span>
+        <span>Abrió</span>
         <span>Fondo</span>
-        <span>Teórico</span>
         <span>Real</span>
         <span>Diferencia</span>
       </div>
 
       <div className="divide-y divide-borde/60">
         {turnos.map((turno) => {
-          const saldoTeorico = calcularSaldoTeorico(turno.fondoInicial, turno.movimientos);
-          const diferencia = turno.saldoReal !== undefined ? calcularDiferencia(saldoTeorico, turno.saldoReal) : 0;
+          const diferencia = turno.diferencia ?? 0;
           const colorDiferencia = diferencia > 0 ? "text-disponible" : diferencia < 0 ? "text-cancelado" : "text-grafito";
           return (
             <Link
@@ -33,12 +36,10 @@ export function TablaHistorialCaja({ turnos }: { turnos: TurnoCaja[] }) {
             >
               <span className="text-sm text-tinta">{fechaCorta(turno.fechaApertura)}</span>
               <span className="min-w-0 truncate text-sm text-grafito">
-                {turno.abiertoPor}
-                {turno.cerradoPor && turno.cerradoPor !== turno.abiertoPor ? ` / ${turno.cerradoPor}` : ""}
+                {turno.usuarioAperturaNombre}
               </span>
               <span className="text-sm text-tinta">{formatearPrecio(turno.fondoInicial)}</span>
-              <span className="text-sm text-tinta">{formatearPrecio(saldoTeorico)}</span>
-              <span className="text-sm text-tinta">{formatearPrecio(turno.saldoReal ?? 0)}</span>
+              <span className="text-sm text-tinta">{formatearPrecio(turno.saldoRealContado ?? 0)}</span>
               <span className={`text-sm font-semibold tabular-nums ${colorDiferencia}`}>
                 {diferencia > 0 ? "+" : ""}
                 {formatearPrecio(diferencia)}

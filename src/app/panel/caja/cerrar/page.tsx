@@ -6,23 +6,27 @@ import { ArrowLeft } from "lucide-react";
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
 import { ModalPanel } from "@/components/panel/modal-panel";
-import { useBloqueadoPorCaja, useEmpleadoActual, usePermisos } from "@/lib/permisos";
-import { useRolPanel } from "@/lib/rol-panel";
-import { cerrarCaja, useTurnoAbierto } from "@/lib/estado-caja";
-import { calcularDiferencia, calcularSaldoTeorico } from "@/mocks/caja";
-import { PANEL_COMPLEJO } from "@/mocks/agenda";
+import {useBloqueadoPorCaja, usePermisos } from "@/lib/permisos";
+import { useAccionesCaja, useCajaAbierta } from "@/hooks/api/use-caja";
+import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
+import { useQueryClient } from "@tanstack/react-query";
+import { keys } from "@/lib/api/keys";
+import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { formatearPrecio } from "@/lib/formato";
 
 const campoClase = "w-full rounded-input bg-humo px-3.5 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste";
 
 export default function CerrarCaja() {
   const router = useRouter();
-  const rol = useRolPanel();
   const tienePermiso = usePermisos();
-  const empleadoActual = useEmpleadoActual();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
   const puedeGestionarCaja = tienePermiso("gestionar_caja");
-  const turno = useTurnoAbierto();
+  const { establecimientoId } = useEstablecimientoActivo();
+  const { caja } = useCajaAbierta(establecimientoId);
+  const acciones = useAccionesCaja(establecimientoId);
+  const queryClient = useQueryClient();
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
+  const turno = caja?.turno ?? null;
 
   const [efectivoReal, setEfectivoReal] = useState(0);
   const [observaciones, setObservaciones] = useState("");
@@ -34,7 +38,6 @@ export default function CerrarCaja() {
   // navegación intencional.
   const cerrandoRef = useRef(false);
 
-  const nombreActual = rol === "dueno" ? "Dueño" : (empleadoActual?.nombre ?? "Dueño");
 
   useEffect(() => {
     if (!bloqueadoPorCaja && !puedeGestionarCaja) router.replace("/panel/agenda");
@@ -46,16 +49,33 @@ export default function CerrarCaja() {
 
   if (bloqueadoPorCaja || !puedeGestionarCaja || !turno) return <div className="min-h-dvh bg-humo" />;
 
-  const saldoTeorico = calcularSaldoTeorico(turno.fondoInicial, turno.movimientos);
-  const diferencia = calcularDiferencia(saldoTeorico, efectivoReal);
+  // El saldo teórico lo calcula el backend, no el cliente.
+  const saldoTeorico = caja?.saldoTeoricoEfectivo ?? 0;
+  const diferencia = efectivoReal - saldoTeorico;
   const colorDiferencia = diferencia > 0 ? "text-disponible" : diferencia < 0 ? "text-cancelado" : "text-grafito";
   const etiquetaDiferencia = diferencia > 0 ? "Sobrante" : diferencia < 0 ? "Faltante" : "Sin diferencia";
 
-  function confirmarCierre() {
+  /**
+   * El ticket se dibuja con la respuesta de ESTA mutación, que se deja en el
+   * cache: releerlo es GET /caja/turnos/{id}, que es OWNER/ADMIN, así que un
+   * empleado que cierre la caja no podría volver a verlo.
+   */
+  async function confirmarCierre() {
     cerrandoRef.current = true;
-    const cerrado = cerrarCaja(efectivoReal, observaciones, nombreActual);
-    setConfirmando(false);
-    if (cerrado) router.push(`/panel/caja/cerrado/${cerrado.id}`);
+    setErrorAccion(null);
+    try {
+      const cierre = await acciones.cerrar.mutateAsync({
+        turnoId: turno!.id,
+        body: { saldoRealContado: efectivoReal, observaciones: observaciones || undefined },
+      });
+      queryClient.setQueryData(keys.caja.cierre(establecimientoId ?? 0, cierre.turnoId), cierre);
+      setConfirmando(false);
+      router.push(`/panel/caja/cerrado/${cierre.turnoId}`);
+    } catch (e) {
+      cerrandoRef.current = false;
+      setConfirmando(false);
+      setErrorAccion(e instanceof ApiError ? mensajeVisible(e) : "No pudimos cerrar la caja.");
+    }
   }
 
   return (
@@ -63,7 +83,7 @@ export default function CerrarCaja() {
       <SidebarPanel />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <HeaderPanel nombre={PANEL_COMPLEJO.nombre} estado={PANEL_COMPLEJO.estado} diasRestantesTrial={PANEL_COMPLEJO.diasRestantesTrial} />
+        <HeaderPanel />
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
           <button
@@ -76,6 +96,11 @@ export default function CerrarCaja() {
           </button>
 
           <div className="mx-auto max-w-lg space-y-6">
+            {errorAccion && (
+              <p role="alert" className="rounded-card bg-white p-4 text-sm text-cancelado shadow-card">
+                {errorAccion}
+              </p>
+            )}
             <h1 className="font-display text-2xl font-extrabold tracking-tight text-tinta">Arqueo de caja</h1>
 
             <div className="rounded-card bg-white p-6 shadow-card">
