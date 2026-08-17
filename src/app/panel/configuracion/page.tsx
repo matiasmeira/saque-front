@@ -15,22 +15,17 @@ import { TablaDispositivos } from "@/components/panel/tabla-dispositivos";
 import { GenerarLinkCaja } from "@/components/panel/generar-link-caja";
 import { SkeletonConfig } from "@/components/panel/skeleton-config";
 import { ModalPanel } from "@/components/panel/modal-panel";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { dispositivos as endpointDispositivos } from "@/lib/api/endpoints/caja";
+import { keys } from "@/lib/api/keys";
+import { borrarToken } from "@/lib/api/sesion";
+import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
+import type { DispositivoCajaResponse } from "@/lib/api/tipos/caja";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useBloqueadoPorCaja } from "@/lib/permisos";
-import { hoyISO } from "@/lib/fecha";
-import {
-  emparejarDispositivo,
-  generarTokenEmparejamiento,
-  renombrarDispositivo,
-  revocarDispositivo,
-  useEmparejado,
-  useFechaEmparejamientoDispositivo,
-  useFechaUltimoUsoDispositivo,
-  useNombreDispositivo,
-} from "@/lib/sesion-caja";
+import { guardarDispositivo, useEmparejado } from "@/lib/sesion-caja";
 import { PANEL_COMPLEJO } from "@/mocks/agenda";
 import { PANEL_EMPLEADOS } from "@/mocks/empleados";
-import { PANEL_DISPOSITIVOS_MOCK, type Dispositivo } from "@/mocks/dispositivos";
 import {
   PANEL_DATOS_COMPLEJO,
   PANEL_FOTOS,
@@ -73,29 +68,73 @@ export default function PanelConfiguracion() {
   const bloqueadoPorCaja = useBloqueadoPorCaja();
 
   const mockError = searchParams.get("mockError") === "1";
-  const mockVacioDispositivos = searchParams.get("mockVacio") === "1";
 
   const [datos, setDatos] = useState<DatosComplejo | null>(null);
   const [fotos, setFotos] = useState<FotoComplejo[]>([]);
   const [horarios, setHorarios] = useState<HorarioDia[]>([]);
   const [politica, setPolitica] = useState<PoliticaCancelacion | null>(null);
   const [mercadoPago, setMercadoPago] = useState<CuentaMercadoPago | null>(null);
-  const [dispositivosMock, setDispositivosMock] = useState<Dispositivo[]>([]);
   const [proximoFotoId, setProximoFotoId] = useState(1000);
   const [reintento, setReintento] = useState(0);
 
-  // "Este dispositivo" (el navegador que está usando el dueño ahora)
-  // sale en vivo de @/lib/sesion-caja, no del mock — si YA lo usó
-  // para emparejar una caja alguna vez, tiene que aparecer en la
-  // lista como cualquier otro. El resto de la lista (ej. "Bar") es
-  // puramente de ejemplo.
-  const emparejadoAqui = useEmparejado();
-  const nombreDispositivoAqui = useNombreDispositivo();
-  const fechaEmparejamientoAqui = useFechaEmparejamientoDispositivo();
-  const fechaUltimoUsoAqui = useFechaUltimoUsoDispositivo();
+  // La lista de dispositivos SÍ es real (es la única parte de esta pantalla que
+  // el backend cubre entera: POST /emparejar, POST /activar-local, GET, DELETE).
+  // El resto de las secciones sigue mockeado hasta la Fase 6 — ver B4 del plan:
+  // EstablecimientoRequest no acepta fotos, servicios ni política de
+  // cancelación.
+  const { establecimientoId } = useEstablecimientoActivo();
+  const queryClient = useQueryClient();
 
-  const [linkGenerado, setLinkGenerado] = useState<{ token: string; expiraEn: string } | null>(null);
-  const [dispositivoARevocar, setDispositivoARevocar] = useState<Dispositivo | null>(null);
+  // "Emparejado acá" es una marca local: la cookie saque_caja_device es HttpOnly
+  // y el JS no puede leerla, así que este navegador no puede saber por sí mismo
+  // si ES uno de los dispositivos de la lista.
+  const emparejadoAqui = useEmparejado();
+
+  const listaDispositivos = useQuery({
+    queryKey: keys.caja.dispositivos(establecimientoId ?? 0),
+    queryFn: () => endpointDispositivos.listar(establecimientoId!),
+    enabled: establecimientoId !== null,
+  });
+
+  const invalidarDispositivos = () =>
+    queryClient.invalidateQueries({ queryKey: keys.caja.dispositivos(establecimientoId ?? 0) });
+
+  const generarCodigo = useMutation({
+    mutationFn: () => endpointDispositivos.generarCodigo(establecimientoId!, "Caja mostrador"),
+    onSuccess: invalidarDispositivos,
+  });
+
+  const revocarDispositivo = useMutation({
+    mutationFn: (dispositivoId: number) =>
+      endpointDispositivos.revocar(establecimientoId!, dispositivoId),
+    onSuccess: () => {
+      invalidarDispositivos();
+      setDispositivoARevocar(null);
+    },
+  });
+
+  /**
+   * Emparejar ESTA computadora (sin generar un link para otra) es entregarla al
+   * mostrador: queda la cookie de dispositivo, y la sesión de dueño se corta acá
+   * mismo para que nadie siga operando con ella.
+   *
+   * Se borra el token LOCAL a mano en vez de llamar a POST /auth/logout: ese
+   * endpoint incrementa tokenVersion e invalida los JWT del dueño en TODOS sus
+   * dispositivos — entregar la PC del mostrador no tiene por qué desloguearlo
+   * del teléfono.
+   */
+  const activarLocal = useMutation({
+    mutationFn: () => endpointDispositivos.activarLocal(establecimientoId!, "Caja mostrador"),
+    onSuccess: (activado) => {
+      guardarDispositivo(establecimientoId!, activado.label);
+      borrarToken();
+      queryClient.clear();
+      setConfirmandoActivarCaja(false);
+      router.push("/caja");
+    },
+  });
+
+  const [dispositivoARevocar, setDispositivoARevocar] = useState<DispositivoCajaResponse | null>(null);
   const [confirmandoActivarCaja, setConfirmandoActivarCaja] = useState(false);
 
   // "!bloqueadoPorCaja &&" evita una carrera: "Activar esta
@@ -108,7 +147,7 @@ export default function PanelConfiguracion() {
     if (!bloqueadoPorCaja && rol === "empleado") router.replace("/panel/agenda");
   }, [bloqueadoPorCaja, rol, router]);
 
-  const clave = `${mockError}|${mockVacioDispositivos}|${reintento}`;
+  const clave = `${mockError}|${reintento}`;
   const [resuelto, setResuelto] = useState<{ clave: string; error: boolean } | null>(null);
   const estadoCarga: EstadoCarga = resuelto?.clave !== clave ? "cargando" : resuelto.error ? "error" : "listo";
 
@@ -123,11 +162,10 @@ export default function PanelConfiguracion() {
       setHorarios(PANEL_HORARIOS_ATENCION.map((h) => ({ ...h })));
       setPolitica({ ...PANEL_POLITICA_CANCELACION });
       setMercadoPago({ ...PANEL_MERCADOPAGO });
-      setDispositivosMock(mockVacioDispositivos ? [] : PANEL_DISPOSITIVOS_MOCK.map((d) => ({ ...d })));
       setResuelto({ clave, error: false });
     }, 500);
     return () => clearTimeout(id);
-  }, [clave, mockError, mockVacioDispositivos]);
+  }, [clave, mockError]);
 
   if (bloqueadoPorCaja || rol === "empleado") return <div className="min-h-dvh bg-humo" />;
 
@@ -155,56 +193,9 @@ export default function PanelConfiguracion() {
     setMercadoPago((prev) => (prev ? { ...prev, estado: "pendiente", emailConectado: undefined, fechaConexion: undefined } : prev));
   }
 
-  function renombrarFila(id: string, nombre: string) {
-    if (id === "este-dispositivo") {
-      renombrarDispositivo(nombre);
-      return;
-    }
-    setDispositivosMock((prev) => prev.map((d) => (d.id === id ? { ...d, nombre } : d)));
-  }
-
-  function confirmarRevocar(dispositivo: Dispositivo) {
-    if (dispositivo.id === "este-dispositivo") {
-      revocarDispositivo();
-    } else {
-      setDispositivosMock((prev) => prev.filter((d) => d.id !== dispositivo.id));
-    }
-    setDispositivoARevocar(null);
-  }
-
-  function generarLink() {
-    setLinkGenerado(generarTokenEmparejamiento());
-  }
-
-  // Emparejar ESTA computadora directamente (sin generar un link para
-  // otra) es precisamente lo que cierra el acceso implícito de dueño
-  // acá — no queda ninguna sesión de dueño que limpiar por separado,
-  // porque nunca existió como token: era solo "no hay empleado
-  // logueado" (useRolPanel). Emparejar hace que esa ausencia deje de
-  // significar "entonces sos dueño" — por eso la redirección a /caja
-  // inmediatamente después, mismo destino que deja "la pantalla de
-  // nombres de la caja, esperando un PIN".
-  function activarEstaComputadoraComoCaja() {
-    emparejarDispositivo(PANEL_COMPLEJO.nombre);
-    setConfirmandoActivarCaja(false);
-    router.push("/caja");
-  }
-
   const empleadosActivos = PANEL_EMPLEADOS.filter((e) => e.estado === "activo").length;
 
-  const dispositivos: Dispositivo[] = [
-    ...(emparejadoAqui
-      ? [
-          {
-            id: "este-dispositivo",
-            nombre: nombreDispositivoAqui,
-            fechaEmparejamiento: fechaEmparejamientoAqui ?? hoyISO(),
-            fechaUltimoUso: fechaUltimoUsoAqui ?? fechaEmparejamientoAqui ?? hoyISO(),
-          },
-        ]
-      : []),
-    ...dispositivosMock,
-  ];
+  const dispositivos = listaDispositivos.data ?? [];
 
   return (
     <div className="flex h-dvh bg-humo">
@@ -259,7 +250,20 @@ export default function PanelConfiguracion() {
                 titulo="Dispositivos"
                 descripcion="Las PCs de mostrador emparejadas con el kiosco de caja (zona /caja) — desde acá generás el link para vincular una nueva y revocás las que ya no usás."
               >
-                {dispositivos.length === 0 ? (
+                {listaDispositivos.isPending ? (
+                  <div className="h-24 animate-pulse rounded-card bg-humo" />
+                ) : listaDispositivos.isError ? (
+                  <div className="rounded-input bg-cancelado-suave p-5 text-center">
+                    <p className="text-sm font-semibold text-tinta">No pudimos cargar los dispositivos.</p>
+                    <button
+                      type="button"
+                      onClick={() => listaDispositivos.refetch()}
+                      className="mt-2 text-sm font-semibold text-azul hover:underline"
+                    >
+                      Reintentar
+                    </button>
+                  </div>
+                ) : dispositivos.length === 0 ? (
                   <div className="rounded-input bg-humo p-5 text-center">
                     <p className="text-sm font-semibold text-tinta">Todavía no emparejaste ninguna caja</p>
                     <p className="mt-1 text-sm text-grafito">
@@ -268,16 +272,17 @@ export default function PanelConfiguracion() {
                     </p>
                   </div>
                 ) : (
-                  <TablaDispositivos dispositivos={dispositivos} onRenombrar={renombrarFila} onRevocar={setDispositivoARevocar} />
+                  <TablaDispositivos dispositivos={dispositivos} onRevocar={setDispositivoARevocar} />
                 )}
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   <button
                     type="button"
-                    onClick={generarLink}
-                    className="flex h-10 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
+                    onClick={() => generarCodigo.mutate()}
+                    disabled={establecimientoId === null || generarCodigo.isPending}
+                    className="flex h-10 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Plus className="size-4" aria-hidden />
-                    Generar link para nueva caja
+                    {generarCodigo.isPending ? "Generando..." : "Generar link para nueva caja"}
                   </button>
                   {!emparejadoAqui && (
                     <button
@@ -310,17 +315,21 @@ export default function PanelConfiguracion() {
         </main>
       </div>
 
-      {linkGenerado && (
-        <ModalPanel titulo="Nueva caja" subtitulo="Escaneá o compartí este link desde la PC del mostrador" onClose={() => setLinkGenerado(null)}>
-          <GenerarLinkCaja token={linkGenerado.token} expiraEn={linkGenerado.expiraEn} />
+      {generarCodigo.data && (
+        <ModalPanel
+          titulo="Nueva caja"
+          subtitulo="Escaneá o compartí este link desde la PC del mostrador"
+          onClose={() => generarCodigo.reset()}
+        >
+          <GenerarLinkCaja codigo={generarCodigo.data.codigo} expiraEn={generarCodigo.data.expiraEn} />
         </ModalPanel>
       )}
 
       {dispositivoARevocar && (
-        <ModalPanel titulo="Revocar dispositivo" subtitulo={dispositivoARevocar.nombre} onClose={() => setDispositivoARevocar(null)}>
+        <ModalPanel titulo="Revocar dispositivo" subtitulo={dispositivoARevocar.label} onClose={() => setDispositivoARevocar(null)}>
           <div className="space-y-4">
             <p className="text-sm text-tinta">
-              <span className="font-semibold">{dispositivoARevocar.nombre}</span> pierde el acceso de inmediato. En su próximo intento va a caer
+              <span className="font-semibold">{dispositivoARevocar.label}</span> pierde el acceso de inmediato. En su próximo intento va a caer
               a la pantalla de &ldquo;no emparejado&rdquo; — para volver a usarla hace falta un link nuevo.
             </p>
             <div className="flex gap-2">
@@ -333,10 +342,11 @@ export default function PanelConfiguracion() {
               </button>
               <button
                 type="button"
-                onClick={() => confirmarRevocar(dispositivoARevocar)}
-                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-cancelado font-display text-sm font-bold text-white transition-colors hover:bg-cancelado/90 focus:outline-none focus:ring-2 focus:ring-celeste"
+                onClick={() => revocarDispositivo.mutate(dispositivoARevocar.id)}
+                disabled={revocarDispositivo.isPending}
+                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-cancelado font-display text-sm font-bold text-white transition-colors hover:bg-cancelado/90 focus:outline-none focus:ring-2 focus:ring-celeste disabled:opacity-60"
               >
-                Revocar
+                {revocarDispositivo.isPending ? "Revocando..." : "Revocar"}
               </button>
             </div>
           </div>
@@ -347,8 +357,8 @@ export default function PanelConfiguracion() {
         <ModalPanel titulo="Activar como caja" onClose={() => setConfirmandoActivarCaja(false)}>
           <div className="space-y-4">
             <p className="text-sm text-tinta">
-              Al activar esta caja vas a cerrar tu sesión en esta computadora. Para volver a entrar como dueño vas a tener que iniciar sesión de
-              nuevo — desde otra computadora, o cuando exista el login real del panel.
+              Al activar esta caja se cierra tu sesión en esta computadora. Para volver a entrar como dueño vas a tener que iniciar sesión de
+              nuevo. Tus otras sesiones (teléfono, otra PC) no se tocan.
             </p>
             <p className="text-sm text-grafito">Esta PC va a quedar en la pantalla de nombres del kiosco, lista para que un empleado entre con su PIN.</p>
             <div className="flex gap-2">
@@ -361,10 +371,11 @@ export default function PanelConfiguracion() {
               </button>
               <button
                 type="button"
-                onClick={activarEstaComputadoraComoCaja}
-                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
+                onClick={() => activarLocal.mutate()}
+                disabled={establecimientoId === null || activarLocal.isPending}
+                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste disabled:opacity-60"
               >
-                Activar
+                {activarLocal.isPending ? "Activando..." : "Activar"}
               </button>
             </div>
           </div>

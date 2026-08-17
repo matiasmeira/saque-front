@@ -90,6 +90,8 @@ export const keys = {
     cierre: (estId: number, turnoId: number) =>
       ["caja", estId, "cierre", turnoId] as const,
     dispositivos: (estId: number) => ["caja", estId, "dispositivos"] as const,
+    /** Nombres del mostrador: se pide con la cookie del dispositivo, sin sesión. */
+    mostrador: (estId: number) => ["caja", estId, "mostrador"] as const,
   },
 
   gastos: (estId: number, desde?: string, hasta?: string, categoria?: string, page = 0) =>

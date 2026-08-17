@@ -6,6 +6,9 @@ import { BarChart3, Calendar, CreditCard, History, LayoutGrid, LogOut, Mail, Rec
 import { Isotipo } from "@/components/saque/logo";
 import { useRolPanel } from "@/lib/rol-panel";
 import { usePermisos, useEmpleadoActual } from "@/lib/permisos";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePerfil } from "@/hooks/api/use-perfil";
+import { borrarToken } from "@/lib/api/sesion";
 import { cerrarSesionEmpleado, useEmpleadoIdSesion } from "@/lib/sesion-caja";
 import type { Permiso } from "@/mocks/empleados";
 
@@ -73,9 +76,24 @@ export function SidebarPanel() {
   const tienePermiso = usePermisos();
   const empleadoIdSesion = useEmpleadoIdSesion();
   const empleadoActual = useEmpleadoActual();
+  const { data: perfil } = usePerfil();
+  const queryClient = useQueryClient();
 
+  /**
+   * Devuelve el mostrador a la pantalla de nombres. Tiene que soltar el JWT del
+   * empleado además de la marca de sesión: si sólo se limpiara sessionStorage,
+   * el token seguiría en localStorage y el próximo que tocara su nombre entraría
+   * con los permisos del anterior.
+   *
+   * No llama a POST /auth/logout a propósito — ese endpoint incrementa
+   * tokenVersion e invalidaría la sesión de esa persona en todos lados. Acá sólo
+   * se termina el turno en ESTA caja; el token de empleado dura 15 minutos y
+   * caduca solo.
+   */
   function salirDeLaCaja() {
     cerrarSesionEmpleado();
+    borrarToken();
+    queryClient.clear();
     router.push("/caja");
   }
 
@@ -115,7 +133,9 @@ export function SidebarPanel() {
           que cerrar. Nunca desvincula el dispositivo, solo la persona. */}
       {empleadoIdSesion && (
         <div className="border-t border-white/10 p-3">
-          {empleadoActual && <p className="truncate px-2.5 pb-2 text-xs text-[#9DB6D6]">{empleadoActual.nombre}</p>}
+          {(perfil?.nombre ?? empleadoActual?.nombre) && (
+            <p className="truncate px-2.5 pb-2 text-xs text-[#9DB6D6]">{perfil?.nombre ?? empleadoActual?.nombre}</p>
+          )}
           <button
             type="button"
             onClick={salirDeLaCaja}
