@@ -1,6 +1,6 @@
 import { Pencil, Plus, Tag, Trash2 } from "lucide-react";
 import { formatearPrecio } from "@/lib/formato";
-import { etiquetaDias, type Tarifa } from "@/mocks/tarifas";
+import { etiquetaDias, type Tarifa } from "@/lib/panel/tarifas";
 
 /**
  * Reglas de excepción sobre el precio base de UNA cancha (nunca se

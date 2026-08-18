@@ -2,8 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import { Wrench } from "lucide-react";
-import { DEPORTES } from "@/mocks/deportes";
-import { DURACIONES_DISPONIBLES, esCompuesta, type Bloqueo, type Cancha, type PrecioPorDuracion } from "@/mocks/canchas";
+import { DEPORTES } from "@/lib/deportes";
+import { DURACIONES_DISPONIBLES, esCompuesta, type Bloqueo, type Cancha, type PrecioPorDuracion } from "@/lib/panel/canchas";
 import { fechaLarga } from "@/lib/formato";
 
 type DatosCancha = {

@@ -10,8 +10,10 @@ import {
   TITULOS_REGISTRO,
   type PasoRegistro,
 } from "@/components/saque/completar-registro";
-import { COMPLEJOS } from "@/mocks/complejos";
 import { guardarBooking, urlCheckout, useIntencion } from "@/lib/reserva-intencion";
+import { useQuery } from "@tanstack/react-query";
+import { publico } from "@/lib/api/endpoints/publico";
+import { keys } from "@/lib/api/keys";
 import { useLogin } from "@/hooks/api/use-perfil";
 import { useReenviarCodigo, useSondearEmail, useVerificarCodigo } from "@/hooks/api/use-auth";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
@@ -72,9 +74,16 @@ export default function Ingresar() {
   const modoReserva = Boolean(
     intencion?.complejo && intencion?.cancha && intencion?.fecha && intencion?.hora,
   );
-  const complejoNombre = intencion?.complejo
-    ? COMPLEJOS.find((c) => c.id === intencion.complejo)?.nombre
-    : null;
+  // El nombre del complejo es sólo copy de contexto ("estás entrando para
+  // reservar en tal lado"): sale de la ficha pública, que no pide sesión, y si
+  // falla la línea simplemente no aparece.
+  const { data: complejoIntencion } = useQuery({
+    queryKey: keys.publico.detalle(intencion?.complejo ?? ""),
+    queryFn: () => publico.detalle(intencion!.complejo!),
+    enabled: Boolean(intencion?.complejo),
+    staleTime: 5 * 60_000,
+  });
+  const complejoNombre = complejoIntencion?.nombre ?? null;
   const cerrarHacia =
     modoReserva && intencion?.complejo && intencion.cancha && intencion.fecha && intencion.hora
       ? urlCheckout({

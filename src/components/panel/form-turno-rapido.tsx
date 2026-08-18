@@ -1,19 +1,45 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { aHHMM, aMinutos, horariosLibres } from "@/lib/disponibilidad";
+import { useQuery } from "@tanstack/react-query";
 import { formatearPrecio } from "@/lib/formato";
-import type { Cancha } from "@/mocks/canchas";
-import { bloqueosDelDia, PANEL_HORARIO, type Turno } from "@/mocks/agenda";
-import { calcularPrecio, diaSemanaDeFecha, PANEL_TARIFAS } from "@/mocks/tarifas";
+import { establecimientos } from "@/lib/api/endpoints/establecimientos";
+import { keys } from "@/lib/api/keys";
+import type { Cancha } from "@/lib/panel/canchas";
+
+export type DatosTurnoManual = {
+  canchaId: number;
+  /** Los dos vienen del slot, tal cual los devolvió el backend. */
+  fechaHoraInicio: string;
+  fechaHoraFin: string;
+  nombre: string;
+  telefono: string;
+  /** Si ya pagó en el mostrador, el backend le asienta la seña de la cancha. */
+  senaFisicaRecibida: boolean;
+};
+
+/** "2026-08-18T20:00:00" → "20:00" */
+const hhmm = (fechaHora: string) => fechaHora.slice(11, 16);
+
+const campoClase = "w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste";
 
 /**
- * Carga rápida desde una celda libre (o desde "+ Nuevo turno"):
- * nombre, teléfono, seña sí/no, repetición semanal — nada más
- * (Parte 9, C1 y C2). Cancha, duración y horario quedan editables
- * porque "+ Nuevo turno" no viene con una celda de contexto, y cada
- * cancha admite sus propias duraciones (60/90/120) y su propio paso
- * de inicio (hora en punto o también media hora).
+ * Carga rápida desde una celda libre (o desde "+ Nuevo turno").
+ *
+ * Los horarios que ofrece salen de `GET /establecimientos/{id}/disponibilidad`,
+ * no de una cuenta local. Antes se calculaban acá con `horariosLibres()` contra
+ * un horario de atención fijo (09 a 24, del mock) y los bloqueos del mock: en un
+ * complejo que abre a otra hora, o con la cancha bloqueada por mantenimiento, el
+ * form ofrecía horarios que el backend iba a rechazar con un 400.
+ *
+ * El endpoint ya cruza horarios de atención, días no laborables, bloqueos y
+ * reservas, y descarta los slots pasados. Y cada slot trae `inicio` y `fin`,
+ * que son exactamente los dos campos que pide `ReservaManualRequest`: se pasan
+ * tal cual, sin rearmar la fecha-hora ni recalcular el fin con la duración.
+ *
+ * Tampoco calcula el precio: lo fija el backend y vuelve en
+ * `ReservaResponse.precioTotal`. El número que mostraba antes salía de
+ * `calcularPrecio()` sobre las tarifas del mock y ni siquiera se enviaba.
  */
 export function FormTurnoRapido({
   canchas,
@@ -22,7 +48,8 @@ export function FormTurnoRapido({
   horaInicial,
   nombreInicial,
   telefonoInicial,
-  turnosDelDia,
+  establecimientoId,
+  guardando,
   onGuardar,
   onCancelar,
 }: {
@@ -33,59 +60,50 @@ export function FormTurnoRapido({
   /** llega precargado desde la ficha de un cliente (C6) → "Nueva reserva" */
   nombreInicial?: string;
   telefonoInicial?: string;
-  turnosDelDia: Turno[];
-  onGuardar: (turno: Turno) => void;
+  establecimientoId: number;
+  guardando?: boolean;
+  onGuardar: (datos: DatosTurnoManual) => void;
   onCancelar: () => void;
 }) {
   const [canchaSel, setCanchaSel] = useState(canchaId);
-  const cancha = canchas.find((c) => c.id === canchaSel) ?? canchas[0];
-
-  const [duracionSel, setDuracionSel] = useState(cancha.duracionesPermitidas[0]);
-  const duracion = cancha.duracionesPermitidas.includes(duracionSel) ? duracionSel : cancha.duracionesPermitidas[0];
-
-  const ocupado = [
-    ...turnosDelDia.filter((t) => t.canchaId === cancha.id && t.estado !== "cancelado").map((t) => ({ desde: t.horaInicio, hasta: t.horaFin })),
-    ...bloqueosDelDia(cancha, fecha).map((b) => ({ desde: b.horaInicio, hasta: b.horaFin })),
-  ];
-  const paso = cancha.permiteInicioMediaHora ? 30 : 60;
-  const horas = horariosLibres(ocupado, duracion, PANEL_HORARIO.abre, PANEL_HORARIO.cierra, paso);
-
-  const [horaSel, setHoraSel] = useState(horaInicial && horas.includes(horaInicial) ? horaInicial : (horas[0] ?? ""));
+  const [duracionSel, setDuracionSel] = useState<number | null>(null);
+  const [inicioSel, setInicioSel] = useState<string | null>(null);
   const [nombre, setNombre] = useState(nombreInicial ?? "");
   const [telefono, setTelefono] = useState(telefonoInicial ?? "");
-  const [conSenia, setConSenia] = useState(cancha.montoSena > 0);
-  const [repiteSemanal, setRepiteSemanal] = useState(false);
+  const [senaCobrada, setSenaCobrada] = useState(false);
 
-  function cambiarCancha(id: number) {
-    const nuevaCancha = canchas.find((c) => c.id === id) ?? canchas[0];
-    setCanchaSel(id);
-    setDuracionSel(nuevaCancha.duracionesPermitidas[0]);
-    setConSenia(nuevaCancha.montoSena > 0);
-    setHoraSel("");
-  }
+  const cancha = canchas.find((c) => c.id === canchaSel) ?? canchas[0];
 
-  function cambiarDuracion(min: number) {
-    setDuracionSel(min);
-    setHoraSel("");
-  }
+  const consulta = useQuery({
+    queryKey: keys.disponibilidad(establecimientoId, fecha),
+    queryFn: () => establecimientos.disponibilidad(establecimientoId, fecha),
+    enabled: establecimientoId > 0,
+  });
+
+  const dia = consulta.data?.dias[0];
+  const opciones = dia?.canchas.find((c) => c.canchaId === canchaSel)?.opcionesDuracion ?? [];
+
+  // Nada de esto se guarda en estado "corregido": si lo elegido dejó de estar
+  // disponible (cambió la cancha, la duración, o alguien reservó mientras
+  // tanto), se cae al primero que sí está. Evita un useEffect de reseteo por
+  // cada selector.
+  const opcion = opciones.find((o) => o.duracionMinutos === duracionSel) ?? opciones[0];
+  const slots = opcion?.slotsLibres ?? [];
+  const slot =
+    slots.find((s) => s.inicio === inicioSel) ??
+    (horaInicial ? slots.find((s) => hhmm(s.inicio) === horaInicial) : undefined) ??
+    slots[0];
 
   function guardar(e: FormEvent) {
     e.preventDefault();
-    if (!nombre.trim() || !telefono.trim() || !horaSel) return;
-    const inicioMin = aMinutos(horaSel);
-    const { precio } = calcularPrecio(cancha, PANEL_TARIFAS, diaSemanaDeFecha(fecha), horaSel, duracion);
+    if (!nombre.trim() || !telefono.trim() || !slot) return;
     onGuardar({
-      id: `manual-${fecha}-${cancha.id}-${horaSel}-${Date.now()}`,
       canchaId: cancha.id,
-      fecha,
-      horaInicio: horaSel,
-      horaFin: aHHMM(inicioMin + duracion),
-      estado: conSenia && cancha.montoSena > 0 ? "pendiente" : "ocupado",
-      cliente: { nombre: nombre.trim(), telefono: telefono.trim() },
-      monto: precio,
-      senia: conSenia ? cancha.montoSena : 0,
-      seniaPagada: false,
-      repiteSemanal,
+      fechaHoraInicio: slot.inicio,
+      fechaHoraFin: slot.fin,
+      nombre: nombre.trim(),
+      telefono: telefono.trim(),
+      senaFisicaRecibida: senaCobrada && cancha.montoSena > 0,
     });
   }
 
@@ -98,8 +116,12 @@ export function FormTurnoRapido({
         <select
           id="turno-cancha"
           value={canchaSel}
-          onChange={(e) => cambiarCancha(Number(e.target.value))}
-          className="w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
+          onChange={(e) => {
+            setCanchaSel(Number(e.target.value));
+            setDuracionSel(null);
+            setInicioSel(null);
+          }}
+          className={campoClase}
         >
           {canchas.map((c) => (
             <option key={c.id} value={c.id}>
@@ -109,20 +131,23 @@ export function FormTurnoRapido({
         </select>
       </div>
 
-      {cancha.duracionesPermitidas.length > 1 && (
+      {opciones.length > 1 && (
         <div>
           <label htmlFor="turno-duracion" className="mb-1 block text-xs font-semibold text-grafito">
             Duración
           </label>
           <select
             id="turno-duracion"
-            value={duracion}
-            onChange={(e) => cambiarDuracion(Number(e.target.value))}
-            className="w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
+            value={opcion?.duracionMinutos ?? ""}
+            onChange={(e) => {
+              setDuracionSel(Number(e.target.value));
+              setInicioSel(null);
+            }}
+            className={campoClase}
           >
-            {cancha.duracionesPermitidas.map((min) => (
-              <option key={min} value={min}>
-                {min} min
+            {opciones.map((o) => (
+              <option key={o.duracionMinutos} value={o.duracionMinutos}>
+                {o.duracionMinutos} min
               </option>
             ))}
           </select>
@@ -133,18 +158,24 @@ export function FormTurnoRapido({
         <label htmlFor="turno-hora" className="mb-1 block text-xs font-semibold text-grafito">
           Horario
         </label>
-        {horas.length === 0 ? (
+        {consulta.isPending && <p className="text-sm text-grafito">Buscando horarios libres…</p>}
+        {consulta.isError && <p className="text-sm text-cancelado">No pudimos cargar los horarios libres.</p>}
+        {consulta.isSuccess && dia?.abierto === false && (
+          <p className="text-sm text-grafito">{dia.motivoCierre ?? "El complejo está cerrado este día."}</p>
+        )}
+        {consulta.isSuccess && dia?.abierto !== false && slots.length === 0 && (
           <p className="text-sm text-grafito">No quedan horarios libres para esta cancha este día.</p>
-        ) : (
+        )}
+        {slots.length > 0 && (
           <select
             id="turno-hora"
-            value={horaSel}
-            onChange={(e) => setHoraSel(e.target.value)}
-            className="w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
+            value={slot?.inicio ?? ""}
+            onChange={(e) => setInicioSel(e.target.value)}
+            className={campoClase}
           >
-            {horas.map((h) => (
-              <option key={h} value={h}>
-                {h} – {aHHMM(aMinutos(h) + duracion)}
+            {slots.map((s) => (
+              <option key={s.inicio} value={s.inicio}>
+                {hhmm(s.inicio)} – {hhmm(s.fin)}
               </option>
             ))}
           </select>
@@ -162,7 +193,7 @@ export function FormTurnoRapido({
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
           placeholder="Ej: Grupo del Colo"
-          className="w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
+          className={campoClase}
         />
       </div>
 
@@ -177,32 +208,21 @@ export function FormTurnoRapido({
           value={telefono}
           onChange={(e) => setTelefono(e.target.value)}
           placeholder="11 5555-4444"
-          className="w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
+          className={campoClase}
         />
       </div>
 
-      <div className="space-y-2 pt-1">
-        {cancha.montoSena > 0 && (
-          <label className="flex items-center gap-2 text-sm text-tinta">
-            <input
-              type="checkbox"
-              checked={conSenia}
-              onChange={(e) => setConSenia(e.target.checked)}
-              className="size-4 rounded border-borde accent-azul"
-            />
-            Cobrar seña ({formatearPrecio(cancha.montoSena)})
-          </label>
-        )}
-        <label className="flex items-center gap-2 text-sm text-tinta">
+      {cancha.montoSena > 0 && (
+        <label className="flex items-center gap-2 pt-1 text-sm text-tinta">
           <input
             type="checkbox"
-            checked={repiteSemanal}
-            onChange={(e) => setRepiteSemanal(e.target.checked)}
+            checked={senaCobrada}
+            onChange={(e) => setSenaCobrada(e.target.checked)}
             className="size-4 rounded border-borde accent-azul"
           />
-          Se repite todas las semanas
+          Ya pagó la seña ({formatearPrecio(cancha.montoSena)})
         </label>
-      </div>
+      )}
 
       <div className="flex gap-2 pt-2">
         <button
@@ -214,10 +234,10 @@ export function FormTurnoRapido({
         </button>
         <button
           type="submit"
-          disabled={horas.length === 0}
+          disabled={!slot || guardando}
           className="flex h-11 flex-1 items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste disabled:cursor-not-allowed disabled:bg-borde disabled:text-grafito"
         >
-          Guardar turno
+          {guardando ? "Guardando…" : "Guardar turno"}
         </button>
       </div>
     </form>

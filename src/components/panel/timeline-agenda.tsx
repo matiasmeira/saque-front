@@ -2,7 +2,7 @@
 
 import { CheckCircle2, Clock, UserX, Wrench, XCircle } from "lucide-react";
 import { aHHMM, aMinutos } from "@/lib/disponibilidad";
-import { PANEL_HORARIO, type BloqueoDelDia, type EstadoTurno, type Turno } from "@/mocks/agenda";
+import type { BloqueoDelDia, EstadoTurno, Turno } from "@/lib/panel/agenda";
 
 /**
  * La grilla de C2: canchas u días en columnas (según la vista), horas
@@ -26,13 +26,31 @@ export type ColumnaTimeline = {
   bloqueos?: BloqueoDelDia[];
 };
 
-const abreMin = aMinutos(PANEL_HORARIO.abre);
-const cierraMin = aMinutos(PANEL_HORARIO.cierra);
-const totalFilas = Math.round((cierraMin - abreMin) / ROW_MIN);
-const horasEnPunto = Array.from({ length: Math.ceil((cierraMin - abreMin) / 60) }, (_, i) => abreMin + i * 60);
+/**
+ * Las coordenadas de la grilla dependen del horario de atención real del
+ * complejo, así que se calculan por render y no son constantes del módulo como
+ * cuando salían de un `PANEL_HORARIO` fijo del mock.
+ */
+type Grilla = {
+  abreMin: number;
+  totalFilas: number;
+  horasEnPunto: number[];
+  fila: (min: number) => number;
+  /** Un turno que termina a medianoche cierra en 1440, no en 0. */
+  filaFin: (inicioMin: number, finMin: number) => number;
+};
 
-function filaDeMinutos(min: number): number {
-  return (min - abreMin) / ROW_MIN;
+function armarGrilla(abre: string, cierra: string): Grilla {
+  const abreMin = aMinutos(abre);
+  const cierraMin = Math.max(aMinutos(cierra), abreMin + 60);
+  const fila = (min: number) => (min - abreMin) / ROW_MIN;
+  return {
+    abreMin,
+    totalFilas: Math.round((cierraMin - abreMin) / ROW_MIN),
+    horasEnPunto: Array.from({ length: Math.ceil((cierraMin - abreMin) / 60) }, (_, i) => abreMin + i * 60),
+    fila,
+    filaFin: (inicioMin, finMin) => fila(finMin <= inicioMin ? finMin + 1440 : finMin),
+  };
 }
 
 const ICONO_ESTADO: Record<EstadoTurno, typeof CheckCircle2> = {
@@ -53,18 +71,25 @@ export function TimelineAgenda({
   columnas,
   horaActual,
   mostrarLineaAhora,
+  abre,
+  cierra,
   onClickLibre,
   onClickTurno,
 }: {
   columnas: ColumnaTimeline[];
   horaActual: Date;
   mostrarLineaAhora: boolean;
+  /** Extremos de la grilla, "HH:mm". `cierra` puede pasar de 24 (ver rangoDeAgenda). */
+  abre: string;
+  cierra: string;
   onClickLibre: (columnaId: string | number, hora: string) => void;
   onClickTurno: (turno: Turno) => void;
 }) {
+  const grilla = armarGrilla(abre, cierra);
   const minutosAhora = horaActual.getHours() * 60 + horaActual.getMinutes();
-  const dentroDeHorario = minutosAhora >= abreMin && minutosAhora <= cierraMin;
-  const lineaTop = filaDeMinutos(minutosAhora) * ROW_H;
+  const finMin = grilla.abreMin + grilla.totalFilas * ROW_MIN;
+  const dentroDeHorario = minutosAhora >= grilla.abreMin && minutosAhora <= finMin;
+  const lineaTop = grilla.fila(minutosAhora) * ROW_H;
 
   return (
     <div className="overflow-hidden rounded-card bg-white shadow-card">
@@ -81,11 +106,11 @@ export function TimelineAgenda({
       </div>
 
       <div className="relative flex">
-        <div className="w-16 shrink-0" style={{ height: totalFilas * ROW_H }}>
-          {horasEnPunto.map((m) => (
+        <div className="w-16 shrink-0" style={{ height: grilla.totalFilas * ROW_H }}>
+          {grilla.horasEnPunto.map((m) => (
             <div key={m} className="relative" style={{ height: ROW_H * 2 }}>
               <span className="absolute -top-2 right-2 text-[10px] text-grafito">
-                {String(Math.floor(m / 60)).padStart(2, "0")}:00
+                {String(Math.floor(m / 60) % 24).padStart(2, "0")}:00
               </span>
             </div>
           ))}
@@ -96,6 +121,7 @@ export function TimelineAgenda({
             <ColumnaAgenda
               key={col.id}
               columna={col}
+              grilla={grilla}
               onClickLibre={(hora) => onClickLibre(col.id, hora)}
               onClickTurno={onClickTurno}
             />
@@ -116,35 +142,40 @@ export function TimelineAgenda({
 
 function ColumnaAgenda({
   columna,
+  grilla,
   onClickLibre,
   onClickTurno,
 }: {
   columna: ColumnaTimeline;
+  grilla: Grilla;
   onClickLibre: (hora: string) => void;
   onClickTurno: (turno: Turno) => void;
 }) {
+  const tramo = (desde: string, hasta: string) => {
+    const inicioMin = aMinutos(desde);
+    return { inicio: grilla.fila(inicioMin), fin: grilla.filaFin(inicioMin, aMinutos(hasta)) };
+  };
+
   const cubiertas = new Set<number>();
   for (const turno of columna.turnos) {
-    const inicio = filaDeMinutos(aMinutos(turno.horaInicio));
-    const fin = filaDeMinutos(aMinutos(turno.horaFin));
+    const { inicio, fin } = tramo(turno.horaInicio, turno.horaFin);
     for (let f = inicio; f < fin; f++) cubiertas.add(f);
   }
   for (const bloqueo of columna.bloqueos ?? []) {
-    const inicio = filaDeMinutos(aMinutos(bloqueo.horaInicio));
-    const fin = filaDeMinutos(aMinutos(bloqueo.horaFin));
+    const { inicio, fin } = tramo(bloqueo.horaInicio, bloqueo.horaFin);
     for (let f = inicio; f < fin; f++) cubiertas.add(f);
   }
 
-  const filasLibres = Array.from({ length: totalFilas }, (_, f) => f).filter((f) => !cubiertas.has(f));
+  const filasLibres = Array.from({ length: grilla.totalFilas }, (_, f) => f).filter((f) => !cubiertas.has(f));
 
   return (
-    <div className="relative min-w-0 border-l border-borde" style={{ height: totalFilas * ROW_H }}>
+    <div className="relative min-w-0 border-l border-borde" style={{ height: grilla.totalFilas * ROW_H }}>
       {filasLibres.map((f) => (
         <button
           key={f}
           type="button"
-          onClick={() => onClickLibre(aHHMM(abreMin + f * ROW_MIN))}
-          aria-label={`Cargar turno a las ${aHHMM(abreMin + f * ROW_MIN)}`}
+          onClick={() => onClickLibre(aHHMM(grilla.abreMin + f * ROW_MIN))}
+          aria-label={`Cargar turno a las ${aHHMM(grilla.abreMin + f * ROW_MIN)}`}
           className={`absolute inset-x-0 bg-disponible-suave transition-colors hover:bg-disponible/25 ${
             f % 2 === 0 ? "border-t border-borde" : ""
           }`}
@@ -153,8 +184,7 @@ function ColumnaAgenda({
       ))}
 
       {columna.turnos.map((turno) => {
-        const inicio = filaDeMinutos(aMinutos(turno.horaInicio));
-        const fin = filaDeMinutos(aMinutos(turno.horaFin));
+        const { inicio, fin } = tramo(turno.horaInicio, turno.horaFin);
         const Icono = ICONO_ESTADO[turno.estado];
         return (
           <button
@@ -177,8 +207,7 @@ function ColumnaAgenda({
       })}
 
       {(columna.bloqueos ?? []).map((bloqueo, indice) => {
-        const inicio = filaDeMinutos(aMinutos(bloqueo.horaInicio));
-        const fin = filaDeMinutos(aMinutos(bloqueo.horaFin));
+        const { inicio, fin } = tramo(bloqueo.horaInicio, bloqueo.horaFin);
         return (
           <div
             key={indice}

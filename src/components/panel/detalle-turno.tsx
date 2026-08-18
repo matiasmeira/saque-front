@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRightLeft, Calendar, Clock, Phone, Repeat, User } from "lucide-react";
+import { ArrowRightLeft, Calendar, Clock, Phone, User } from "lucide-react";
 import { StatusBadge } from "@/components/saque/status-badge";
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { useHoraActual } from "@/lib/hora-actual";
 import { fechaLarga, formatearPrecio } from "@/lib/formato";
 import { METODOS_PAGO } from "@/lib/metodos-pago";
 import type { MetodoPago } from "@/lib/api/tipos/comunes";
-import type { Cancha } from "@/mocks/canchas";
-import type { Turno } from "@/mocks/agenda";
+import type { Cancha } from "@/lib/panel/canchas";
+import type { Turno } from "@/lib/panel/agenda";
 
 /**
  * Detalle del turno ocupado: quién, teléfono, cuánto pagó, cancelar,
@@ -91,12 +91,6 @@ export function DetalleTurno({
             {turno.horaInicio}–{turno.horaFin} · {cancha.nombre}
           </span>
         </div>
-        {turno.repiteSemanal && (
-          <div className="flex items-center gap-3">
-            <Repeat className="size-4 shrink-0 text-grafito" aria-hidden />
-            <span>Se repite todas las semanas</span>
-          </div>
-        )}
       </dl>
 
       <div className="rounded-card bg-humo p-4">

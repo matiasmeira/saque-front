@@ -1,7 +1,7 @@
 import { partirFechaHora } from "@/lib/api/fechas";
 import type { EstadoReserva } from "@/lib/api/tipos/comunes";
 import type { ReservaResponse } from "@/lib/api/tipos/reservas";
-import type { EstadoTurno, Turno } from "@/mocks/agenda";
+import type { EstadoTurno, Turno } from "@/lib/panel/agenda";
 
 /**
  * Traducción de ReservaResponse a la forma `Turno` que usan el timeline y el
@@ -19,8 +19,9 @@ import type { EstadoTurno, Turno } from "@/mocks/agenda";
  *  - Una reserva de JUGADOR no trae teléfono: ReservaResponse no lo expone.
  *  - `senia` (el monto de la seña) no existe en la reserva: vive en la cancha
  *    (montoSena). Lo que sí viene es senaPagada, cuánto se pagó.
- *  - `repiteSemanal` no existe. POST /reservas/semanal crea N reservas sueltas,
- *    sin marca de pertenencia a la serie.
+ *  - `repiteSemanal` no existe y por eso tampoco está en `Turno`: POST
+ *    /reservas/semanal crea N reservas sueltas, sin marca de pertenencia a la
+ *    serie, así que no hay forma de saber si un turno es parte de una.
  */
 
 /**
@@ -74,7 +75,6 @@ export function aTurno(reserva: ReservaResponse): TurnoConReserva {
     // viene es cuánto se pagó.
     senia: reserva.senaPagada,
     seniaPagada: reserva.senaPagada > 0,
-    repiteSemanal: false,
     estadoReserva: reserva.estado,
     esDeJugador: reserva.jugadorId !== null,
   };

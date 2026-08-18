@@ -16,7 +16,7 @@ import { useBloqueadoPorCaja } from "@/lib/permisos";
 import { finMes, finSemana, hoyISO, inicioMes, inicioSemana } from "@/lib/fecha";
 import { formatearPrecio } from "@/lib/formato";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CATEGORIAS_GASTO, gastosPorCategoria, totalGastos, type CategoriaGasto, type Gasto } from "@/mocks/gastos";
+import { CATEGORIAS_GASTO, gastosPorCategoria, totalGastos, type CategoriaGasto, type Gasto } from "@/lib/panel/gastos";
 import { gastos as endpointGastos } from "@/lib/api/endpoints/gastos";
 import { keys } from "@/lib/api/keys";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";

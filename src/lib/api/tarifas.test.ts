@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { aTarifasDto, aTarifasPanel } from "./tarifas";
-import type { DiaSemana } from "@/mocks/tarifas";
+import type { DiaSemana } from "@/lib/panel/tarifas";
 
 /**
  * El front modela una tarifa como "estos días, en esta franja, a este precio"

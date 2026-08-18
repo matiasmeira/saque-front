@@ -3,7 +3,7 @@
 import { AlertTriangle, Clock } from "lucide-react";
 
 import { usePerfil, useEstablecimientoActivo } from "@/hooks/api/use-perfil";
-import type { EstadoComplejo } from "@/mocks/agenda";
+import type { EstadoComplejo } from "@/lib/panel/agenda";
 
 /**
  * Header del panel: nombre del complejo + cartel de estado, sólo cuando

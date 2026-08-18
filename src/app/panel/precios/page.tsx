@@ -8,13 +8,12 @@ import { HeaderPanel } from "@/components/panel/header-panel";
 import { PrecioBaseCancha } from "@/components/panel/precio-base-cancha";
 import { ListaTarifas } from "@/components/panel/lista-tarifas";
 import { FormTarifa } from "@/components/panel/form-tarifa";
-import { VistaPreviaPrecio } from "@/components/panel/vista-previa-precio";
 import { SkeletonPrecios } from "@/components/panel/skeleton-precios";
 import { DrawerPanel } from "@/components/panel/drawer-panel";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useBloqueadoPorCaja } from "@/lib/permisos";
-import { type PrecioPorDuracion } from "@/mocks/canchas";
-import { etiquetaDias, type DiaSemana, type Tarifa } from "@/mocks/tarifas";
+import { type PrecioPorDuracion } from "@/lib/panel/canchas";
+import { etiquetaDias, type DiaSemana, type Tarifa } from "@/lib/panel/tarifas";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { canchas as endpointCanchas } from "@/lib/api/endpoints/canchas";
 import { keys } from "@/lib/api/keys";
@@ -31,11 +30,16 @@ type DatosTarifa = { dias: DiaSemana[]; horaDesde: string; horaHasta: string; pr
 // ya una tarifa especial cargada, así la pantalla muestra el caso
 // completo (precio base + tarifa) sin tener que cambiar de cancha.
 
-// ?mockError=1 fuerza el error; ?mockVacio=1 fuerza el caso "cancha
-// sin tarifas especiales, solo base" vaciando todas las tarifas —
-// mismo patrón que /panel/agenda y /panel/canchas.
-// TODO backend: precios y tarifas vienen de la API — la entidad
-// Tarifa ya existe en el backend Spring Boot, asociada a Cancha.
+// Las tarifas viajan DENTRO de CanchaRequest: no hay endpoint granular, así
+// que editar una es un PUT completo de la cancha (leer, mutar el array,
+// reenviar entera). Y una tarifa del front con 5 días son 5 TarifaDto — la
+// expansión está en src/lib/api/tarifas.ts.
+//
+// Ya no hay calculadora de "qué precio le queda a este turno": el backend no
+// expone un endpoint de cálculo y la versión que corría acá no reproducía
+// PrecioReservaCalculator (le faltaba el proporcional precioPorHora × horas
+// cuando no hay precio exacto para esa duración), así que mostraba $0 donde el
+// backend iba a cobrar.
 export default function PanelPrecios() {
   const router = useRouter();
   const rol = useRolPanel();
@@ -191,8 +195,6 @@ export default function PanelPrecios() {
                 onEditar={(tarifa) => setPanelAbierto({ tipo: "editar", tarifaId: tarifa.id })}
                 onQuitar={quitarTarifa}
               />
-
-              <VistaPreviaPrecio key={`vista-previa-${cancha.id}`} cancha={cancha} tarifas={tarifasDeCancha} />
             </div>
           )}
         </main>

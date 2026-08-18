@@ -1,7 +1,7 @@
 import { DIA_SEMANA_A_BACK, DIA_SEMANA_DESDE_BACK, aHoraBack } from "./fechas";
 import type { TarifaDto } from "./tipos/canchas";
-import type { PrecioPorDuracion } from "@/mocks/canchas";
-import type { DiaSemana, Tarifa } from "@/mocks/tarifas";
+import type { PrecioPorDuracion } from "@/lib/panel/canchas";
+import type { DiaSemana, Tarifa } from "@/lib/panel/tarifas";
 
 /**
  * Traducción entre los dos modelos de tarifa.

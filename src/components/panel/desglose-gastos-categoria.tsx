@@ -1,5 +1,5 @@
 import { formatearPrecio } from "@/lib/formato";
-import { etiquetaCategoriaGasto, type CategoriaGasto } from "@/mocks/gastos";
+import { etiquetaCategoriaGasto, type CategoriaGasto } from "@/lib/panel/gastos";
 
 /** Bar-list manual, mismo patrón que DesglosePorMetodo (facturación). */
 export function DesgloseGastosCategoria({ datos }: { datos: { categoria: CategoriaGasto; monto: number }[] }) {

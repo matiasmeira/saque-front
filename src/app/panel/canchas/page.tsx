@@ -24,7 +24,7 @@ import {
 import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useBloqueadoPorCaja } from "@/lib/permisos";
-import type { Bloqueo, Cancha } from "@/mocks/canchas";
+import type { Bloqueo, Cancha } from "@/lib/panel/canchas";
 
 type PanelAbierto = { tipo: "nueva" } | { tipo: "editar"; canchaId: number } | null;
 

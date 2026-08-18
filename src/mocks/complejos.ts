@@ -1,14 +1,15 @@
 /**
- * Complejos que devuelve el buscador para José C. Paz, y su ficha
- * completa (A3). Mismo tipo para las dos pantallas: A2 usa los
- * campos de nivel complejo (horarios/desde/senia agregados), A3
- * además necesita el detalle por cancha.
+ * ÚNICO mock que queda en pie, y no alimenta ninguna pantalla de producto: es
+ * el fixture de `/estilo`, la guía de estilo interna, que necesita datos de
+ * ejemplo para mostrar cómo se ven los componentes.
+ *
+ * El buscador y la ficha del complejo consumen `/publico/complejos` y
+ * `/publico/complejos/{slug}` desde la Fase 3. Esta forma NO es la del backend
+ * —tiene `superficie`, `techada` y `reglas`, que no existen en ningún DTO—, así
+ * que no sirve como referencia de contrato: para eso están los tipos de
+ * `src/lib/api/tipos/`.
  */
 
-// TODO backend: hoy es una lista fija para una sola zona. El
-// backend tiene que devolver disponibilidad ya resuelta en el
-// listado (no solo en el detalle) — es la ventaja competitiva
-// central del producto, según la spec.
 export type Cancha = {
   id: string;
   nombre: string;

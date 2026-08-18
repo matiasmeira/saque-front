@@ -7,7 +7,7 @@ import { reservas as endpointReservas } from "@/lib/api/endpoints/reservas";
 import { keys } from "@/lib/api/keys";
 import { aTurno, type TurnoConReserva } from "@/lib/api/adaptadores/agenda";
 import { partirFechaHora } from "@/lib/api/fechas";
-import type { BloqueoDelDia } from "@/mocks/agenda";
+import type { BloqueoDelDia } from "@/lib/panel/agenda";
 import type { MetodoPago } from "@/lib/api/tipos/comunes";
 import type { ReservaManualRequest } from "@/lib/api/tipos/reservas";
 
@@ -85,6 +85,9 @@ export function useAccionesReserva() {
     queryClient.invalidateQueries({ queryKey: keys.reservas.todas() });
     // Finalizar mueve la caja: si hay un turno abierto, su saldo cambió.
     queryClient.invalidateQueries({ queryKey: ["caja"] });
+    // Cualquiera de estas acciones ocupa o libera un slot, y el form de carga
+    // rápida ofrece horarios leídos de la grilla de disponibilidad.
+    queryClient.invalidateQueries({ queryKey: ["disponibilidad"] });
   };
 
   return {

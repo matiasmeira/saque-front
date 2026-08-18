@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/saque/empty-state";
 import { LineasDeCancha } from "@/components/saque/lineas-de-cancha";
 import { proximosDias, etiquetaDeFecha } from "@/components/saque/selector-fecha";
 import { DEPORTES, esDeporte, etiquetaDeporte } from "@/lib/deportes";
-import { FRANJAS } from "@/mocks/franjas";
+import { FRANJAS } from "@/lib/franjas";
 import { publico } from "@/lib/api/endpoints/publico";
 import { aHoraBack } from "@/lib/api/fechas";
 import type { ComplejoCardResponse } from "@/lib/api/tipos/publico";
