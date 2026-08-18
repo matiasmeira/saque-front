@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/saque/status-badge";
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { useHoraActual } from "@/lib/hora-actual";
 import { fechaLarga, formatearPrecio } from "@/lib/formato";
-import { METODOS_PAGO } from "@/mocks/pagos";
+import { METODOS_PAGO } from "@/lib/metodos-pago";
 import type { MetodoPago } from "@/lib/api/tipos/comunes";
 import type { Cancha } from "@/mocks/canchas";
 import type { Turno } from "@/mocks/agenda";

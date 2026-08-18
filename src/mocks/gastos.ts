@@ -10,7 +10,8 @@
  */
 import { crearRand, hashSeed } from "@/lib/prng";
 import { hoyISO, sumarDias } from "@/lib/fecha";
-import { METODOS_PAGO, type MetodoPago } from "@/mocks/pagos";
+import { METODOS_PAGO } from "@/lib/metodos-pago";
+import type { MetodoPago } from "@/lib/api/tipos/comunes";
 
 export type CategoriaGasto = "ALQUILER" | "SERVICIOS" | "SUELDOS" | "INSUMOS" | "MANTENIMIENTO" | "IMPUESTOS" | "MARKETING" | "OTROS";
 
