@@ -1,45 +1,33 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { AlertTriangle, Building2, CalendarClock, ChevronRight, Clock, Images, Plus, Smartphone, Users, Wallet } from "lucide-react";
+import { AlertTriangle, Building2, CalendarClock, Check, ChevronRight, Clock, Images, Plus, Smartphone, Sparkles, Users, Wallet } from "lucide-react";
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
-import { FormDatosComplejo } from "@/components/panel/form-datos-complejo";
-import { GaleriaConfig } from "@/components/panel/galeria-config";
+import { FormDatosComplejo, type DatosEstablecimiento } from "@/components/panel/form-datos-complejo";
 import { FormHorariosAtencion } from "@/components/panel/form-horarios-atencion";
-import { FormPoliticaCancelacion } from "@/components/panel/form-politica-cancelacion";
-import { PanelMercadoPago } from "@/components/panel/panel-mercadopago";
+import { FormServicios } from "@/components/panel/form-servicios";
 import { TablaDispositivos } from "@/components/panel/tabla-dispositivos";
 import { GenerarLinkCaja } from "@/components/panel/generar-link-caja";
 import { SkeletonConfig } from "@/components/panel/skeleton-config";
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { dispositivos as endpointDispositivos } from "@/lib/api/endpoints/caja";
+import { establecimientos as endpointEstablecimientos } from "@/lib/api/endpoints/establecimientos";
+import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { keys } from "@/lib/api/keys";
 import { borrarToken } from "@/lib/api/sesion";
-import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
+import { usePerfil, useEstablecimientoActivo } from "@/hooks/api/use-perfil";
 import type { DispositivoCajaResponse } from "@/lib/api/tipos/caja";
+import type { EstablecimientoRequest } from "@/lib/api/tipos/establecimientos";
+import type { HorarioAtencionDto, Servicio } from "@/lib/api/tipos/comunes";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useBloqueadoPorCaja } from "@/lib/permisos";
 import { guardarDispositivo, useEmparejado } from "@/lib/sesion-caja";
-import { PANEL_COMPLEJO } from "@/mocks/agenda";
-import { PANEL_EMPLEADOS } from "@/mocks/empleados";
-import {
-  PANEL_DATOS_COMPLEJO,
-  PANEL_FOTOS,
-  PANEL_HORARIOS_ATENCION,
-  PANEL_MERCADOPAGO,
-  PANEL_POLITICA_CANCELACION,
-  type CuentaMercadoPago,
-  type DatosComplejo,
-  type FotoComplejo,
-  type HorarioDia,
-  type PoliticaCancelacion,
-} from "@/mocks/config";
 
-type EstadoCarga = "cargando" | "error" | "listo";
+type SeccionGuardable = "datos" | "horarios" | "servicios";
 
 function Seccion({ icono: Icono, titulo, descripcion, children }: { icono: typeof Building2; titulo: string; descripcion: string; children: ReactNode }) {
   return (
@@ -56,34 +44,43 @@ function Seccion({ icono: Icono, titulo, descripcion, children }: { icono: typeo
   );
 }
 
-// Solo dueño — el sidebar ya le oculta el ítem al empleado, pero acá
-// además se redirige si entra por URL directa. ?mockError=1 fuerza
-// el estado de error, mismo patrón que el resto del panel. No hay
-// estado "vacío": la configuración del establecimiento siempre existe,
-// a diferencia de una lista que puede no tener elementos.
+/** Sección cuyo dato existe en la entidad pero que ningún endpoint expone todavía. */
+function SeccionSinEndpoint({ icono, titulo, descripcion, falta }: { icono: typeof Building2; titulo: string; descripcion: string; falta: string }) {
+  return (
+    <Seccion icono={icono} titulo={titulo} descripcion={descripcion}>
+      <div className="rounded-input bg-humo p-5">
+        <p className="text-sm font-semibold text-tinta">Todavía no se puede editar desde acá</p>
+        <p className="mt-1 text-sm text-grafito">{falta}</p>
+      </div>
+    </Seccion>
+  );
+}
+
+/**
+ * Configuración del establecimiento.
+ *
+ * El PUT es del OBJETO ENTERO: `EstablecimientoRequest` exige nombre,
+ * dirección, latitud, longitud y requiereSena siempre. Además —y esto es lo
+ * que muerde— `horariosAtencion` NO tiene semántica de "no modificar": el
+ * service hace `getHorariosAtencion().clear()` y vuelve a cargar lo que venga
+ * en el request, así que un PUT sin horarios los BORRA. Por eso cada sección
+ * manda el establecimiento completo con su parte cambiada, y no sólo su parte.
+ *
+ * `servicios` sí distingue: null = no modificar, [] = borrar todos. Sólo la
+ * sección de servicios manda ese campo.
+ */
 export default function PanelConfiguracion() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const rol = useRolPanel();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
-
-  const mockError = searchParams.get("mockError") === "1";
-
-  const [datos, setDatos] = useState<DatosComplejo | null>(null);
-  const [fotos, setFotos] = useState<FotoComplejo[]>([]);
-  const [horarios, setHorarios] = useState<HorarioDia[]>([]);
-  const [politica, setPolitica] = useState<PoliticaCancelacion | null>(null);
-  const [mercadoPago, setMercadoPago] = useState<CuentaMercadoPago | null>(null);
-  const [proximoFotoId, setProximoFotoId] = useState(1000);
-  const [reintento, setReintento] = useState(0);
-
-  // La lista de dispositivos SÍ es real (es la única parte de esta pantalla que
-  // el backend cubre entera: POST /emparejar, POST /activar-local, GET, DELETE).
-  // El resto de las secciones sigue mockeado hasta la Fase 6 — ver B4 del plan:
-  // EstablecimientoRequest no acepta fotos, servicios ni política de
-  // cancelación.
-  const { establecimientoId } = useEstablecimientoActivo();
   const queryClient = useQueryClient();
+  const { data: perfil } = usePerfil();
+  const { establecimientoId, establecimiento, cargando } = useEstablecimientoActivo();
+
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
+  const [guardado, setGuardado] = useState<SeccionGuardable | null>(null);
+  const [dispositivoARevocar, setDispositivoARevocar] = useState<DispositivoCajaResponse | null>(null);
+  const [confirmandoActivarCaja, setConfirmandoActivarCaja] = useState(false);
 
   // "Emparejado acá" es una marca local: la cookie saque_caja_device es HttpOnly
   // y el JS no puede leerla, así que este navegador no puede saber por sí mismo
@@ -105,8 +102,7 @@ export default function PanelConfiguracion() {
   });
 
   const revocarDispositivo = useMutation({
-    mutationFn: (dispositivoId: number) =>
-      endpointDispositivos.revocar(establecimientoId!, dispositivoId),
+    mutationFn: (dispositivoId: number) => endpointDispositivos.revocar(establecimientoId!, dispositivoId),
     onSuccess: () => {
       invalidarDispositivos();
       setDispositivoARevocar(null);
@@ -134,66 +130,55 @@ export default function PanelConfiguracion() {
     },
   });
 
-  const [dispositivoARevocar, setDispositivoARevocar] = useState<DispositivoCajaResponse | null>(null);
-  const [confirmandoActivarCaja, setConfirmandoActivarCaja] = useState(false);
+  const guardar = useMutation({
+    mutationFn: ({ cambios }: { seccion: SeccionGuardable; cambios: Partial<EstablecimientoRequest> }) => {
+      const actual = establecimiento!;
+      return endpointEstablecimientos.actualizar(actual.id, {
+        nombre: actual.nombre,
+        direccion: actual.direccion,
+        latitud: actual.latitud,
+        longitud: actual.longitud,
+        requiereSena: actual.requiereSena,
+        // Va SIEMPRE: omitirlo borra los horarios del establecimiento.
+        horariosAtencion: actual.horariosAtencion,
+        ...cambios,
+      });
+    },
+    onSuccess: (_, { seccion }) => {
+      queryClient.invalidateQueries({ queryKey: keys.establecimientos.mios() });
+      setErrorAccion(null);
+      setGuardado(seccion);
+    },
+    onError: (e) => {
+      setGuardado(null);
+      setErrorAccion(e instanceof ApiError ? mensajeVisible(e) : "No pudimos guardar los cambios.");
+    },
+  });
 
-  // "!bloqueadoPorCaja &&" evita una carrera: "Activar esta
-  // computadora como caja" (más abajo) cambia "rol" a "empleado" en
-  // el mismo render en el que se dispara, y sin este chequeo este
-  // efecto pisaba el router.replace("/caja") de useBloqueadoPorCaja
-  // con uno a /panel/agenda — dejando al dueño viendo un panel que
-  // ya no le correspondía en vez de la pantalla de nombres del kiosco.
+  const guardandoSeccion = guardar.isPending ? guardar.variables.seccion : null;
+
+  // "!bloqueadoPorCaja &&" evita una carrera: "Activar esta computadora como
+  // caja" cambia "rol" a "empleado" en el mismo render en el que se dispara, y
+  // sin este chequeo este efecto pisaba el router.replace("/caja") de
+  // useBloqueadoPorCaja con uno a /panel/agenda — dejando al dueño viendo un
+  // panel que ya no le correspondía en vez de la pantalla de nombres del kiosco.
   useEffect(() => {
     if (!bloqueadoPorCaja && rol === "empleado") router.replace("/panel/agenda");
   }, [bloqueadoPorCaja, rol, router]);
 
-  const clave = `${mockError}|${reintento}`;
-  const [resuelto, setResuelto] = useState<{ clave: string; error: boolean } | null>(null);
-  const estadoCarga: EstadoCarga = resuelto?.clave !== clave ? "cargando" : resuelto.error ? "error" : "listo";
-
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (mockError) {
-        setResuelto({ clave, error: true });
-        return;
-      }
-      setDatos({ ...PANEL_DATOS_COMPLEJO });
-      setFotos(PANEL_FOTOS.map((f) => ({ ...f })));
-      setHorarios(PANEL_HORARIOS_ATENCION.map((h) => ({ ...h })));
-      setPolitica({ ...PANEL_POLITICA_CANCELACION });
-      setMercadoPago({ ...PANEL_MERCADOPAGO });
-      setResuelto({ clave, error: false });
-    }, 500);
-    return () => clearTimeout(id);
-  }, [clave, mockError]);
-
   if (bloqueadoPorCaja || rol === "empleado") return <div className="min-h-dvh bg-humo" />;
 
-  function agregarFoto(etiqueta: string) {
-    setFotos((prev) => [...prev, { id: `foto-${proximoFotoId}`, etiqueta }]);
-    setProximoFotoId((id) => id + 1);
+  function guardarDatos(datos: DatosEstablecimiento) {
+    guardar.mutate({ seccion: "datos", cambios: datos });
   }
 
-  function eliminarFoto(id: string) {
-    setFotos((prev) => prev.filter((f) => f.id !== id));
+  function guardarHorarios(horariosAtencion: HorarioAtencionDto[]) {
+    guardar.mutate({ seccion: "horarios", cambios: { horariosAtencion } });
   }
 
-  function moverFoto(id: string, direccion: -1 | 1) {
-    setFotos((prev) => {
-      const indice = prev.findIndex((f) => f.id === id);
-      const destino = indice + direccion;
-      if (destino < 0 || destino >= prev.length) return prev;
-      const copia = [...prev];
-      [copia[indice], copia[destino]] = [copia[destino], copia[indice]];
-      return copia;
-    });
+  function guardarServicios(servicios: Servicio[]) {
+    guardar.mutate({ seccion: "servicios", cambios: { servicios } });
   }
-
-  function conectarMercadoPago() {
-    setMercadoPago((prev) => (prev ? { ...prev, estado: "pendiente", emailConectado: undefined, fechaConexion: undefined } : prev));
-  }
-
-  const empleadosActivos = PANEL_EMPLEADOS.filter((e) => e.estado === "activo").length;
 
   const dispositivos = listaDispositivos.data ?? [];
 
@@ -202,48 +187,79 @@ export default function PanelConfiguracion() {
       <SidebarPanel />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <HeaderPanel nombre={PANEL_COMPLEJO.nombre} estado={PANEL_COMPLEJO.estado} diasRestantesTrial={PANEL_COMPLEJO.diasRestantesTrial} />
+        <HeaderPanel />
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
           <h1 className="mb-6 font-display text-2xl font-extrabold tracking-tight text-tinta">Configuración</h1>
 
-          {estadoCarga === "cargando" && <SkeletonConfig />}
+          {errorAccion && (
+            <p role="alert" className="mb-4 rounded-card bg-white p-4 text-sm text-cancelado shadow-card">
+              {errorAccion}
+            </p>
+          )}
 
-          {estadoCarga === "error" && (
+          {cargando && <SkeletonConfig />}
+
+          {!cargando && !establecimiento && (
             <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center shadow-card">
               <AlertTriangle className="size-8 text-cancelado" aria-hidden />
               <p className="font-semibold text-tinta">No pudimos cargar la configuración.</p>
-              <button
-                type="button"
-                onClick={() => setReintento((r) => r + 1)}
-                className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
-              >
-                Reintentar
-              </button>
+              <p className="max-w-sm text-sm text-grafito">
+                No encontramos ningún complejo asociado a tu cuenta.
+              </p>
             </div>
           )}
 
-          {estadoCarga === "listo" && datos && politica && mercadoPago && (
+          {establecimiento && (
             <div className="space-y-6">
-              <Seccion icono={Building2} titulo="Datos del complejo" descripcion="Nombre, dirección y deportes que se ven en el marketplace.">
-                <FormDatosComplejo datos={datos} onGuardar={setDatos} />
-              </Seccion>
-
-              <Seccion icono={Images} titulo="Fotos" descripcion="Las que ve el jugador al entrar a la ficha del complejo.">
-                <GaleriaConfig fotos={fotos} onAgregar={agregarFoto} onEliminar={eliminarFoto} onMover={moverFoto} />
+              <Seccion icono={Building2} titulo="Datos del complejo" descripcion="Nombre, dirección y ubicación con la que aparecés en el marketplace.">
+                <FormDatosComplejo
+                  establecimiento={establecimiento}
+                  plan={perfil?.planSuscripcion}
+                  guardando={guardandoSeccion === "datos"}
+                  onGuardar={guardarDatos}
+                />
+                {guardado === "datos" && <Guardado />}
               </Seccion>
 
               <Seccion icono={Clock} titulo="Horarios de atención" descripcion="Alimentan la disponibilidad y el % de ocupación de Reportes.">
-                <FormHorariosAtencion horarios={horarios} onGuardar={setHorarios} />
+                <FormHorariosAtencion
+                  horarios={establecimiento.horariosAtencion}
+                  guardando={guardandoSeccion === "horarios"}
+                  onGuardar={guardarHorarios}
+                />
+                {guardado === "horarios" && <Guardado />}
               </Seccion>
 
-              <Seccion icono={CalendarClock} titulo="Política de cancelación" descripcion="Hasta cuándo se reembolsa la seña — el jugador la ve en el checkout.">
-                <FormPoliticaCancelacion politica={politica} onGuardar={setPolitica} />
+              <Seccion icono={Sparkles} titulo="Servicios" descripcion="Lo que el jugador ve en la ficha del complejo: parrilla, duchas, estacionamiento.">
+                <FormServicios
+                  servicios={establecimiento.servicios}
+                  guardando={guardandoSeccion === "servicios"}
+                  onGuardar={guardarServicios}
+                />
+                {guardado === "servicios" && <Guardado />}
               </Seccion>
 
-              <Seccion icono={Wallet} titulo="MercadoPago" descripcion="Define si el complejo puede cobrar señas online.">
-                <PanelMercadoPago cuenta={mercadoPago} onConectar={conectarMercadoPago} />
-              </Seccion>
+              <SeccionSinEndpoint
+                icono={Images}
+                titulo="Fotos"
+                descripcion="Las que ve el jugador al entrar a la ficha del complejo."
+                falta="El complejo guarda sus fotos y la zona pública las muestra, pero no hay endpoint para subirlas ni para cambiarlas: EstablecimientoRequest no acepta el campo."
+              />
+
+              <SeccionSinEndpoint
+                icono={CalendarClock}
+                titulo="Política de cancelación"
+                descripcion="Hasta cuándo se puede cancelar sin perder la seña."
+                falta="Rige el valor por defecto: 24 horas de anticipación, con 30 minutos de gracia desde que se creó la reserva. Está en la entidad pero no se expone ni para leerlo ni para cambiarlo."
+              />
+
+              <SeccionSinEndpoint
+                icono={Wallet}
+                titulo="MercadoPago"
+                descripcion="Define si el complejo puede cobrar señas online."
+                falta="Todavía no hay integración de pagos en el backend, así que no hay cuenta que conectar."
+              />
 
               <Seccion
                 icono={Smartphone}
@@ -304,9 +320,7 @@ export default function PanelConfiguracion() {
                 <Users className="size-5 shrink-0 text-azul" aria-hidden />
                 <div className="min-w-0 flex-1">
                   <p className="font-display text-lg font-bold text-tinta">Empleados</p>
-                  <p className="text-sm text-grafito">
-                    {empleadosActivos} {empleadosActivos === 1 ? "empleado activo" : "empleados activos"} — dales de alta con sus permisos o dá de baja accesos.
-                  </p>
+                  <p className="text-sm text-grafito">Dales de alta con sus permisos o dá de baja accesos.</p>
                 </div>
                 <ChevronRight className="size-5 shrink-0 text-grafito" aria-hidden />
               </Link>
@@ -382,5 +396,14 @@ export default function PanelConfiguracion() {
         </ModalPanel>
       )}
     </div>
+  );
+}
+
+function Guardado() {
+  return (
+    <p className="mt-3 flex items-center gap-1.5 text-sm font-semibold text-disponible">
+      <Check className="size-4 shrink-0" aria-hidden />
+      Guardado.
+    </p>
   );
 }

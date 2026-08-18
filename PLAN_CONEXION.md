@@ -1143,6 +1143,15 @@ Sin cobertura: `Pago.generoComision`, `comision` (`COMISION_FIJA = 450`), `Estad
 
 > Fuera de alcance por decisión del dueño del producto: fotos se aborda más adelante.
 
+**Hecho** — datos, horarios, servicios y dispositivos conectados; fotos, política y MercadoPago quedan como secciones que explican qué falta en vez de simular un formulario. Lo que salió de la verificación en vivo:
+
+- **`horariosAtencion` NO tiene semántica de "no modificar": un PUT que lo omita BORRA los horarios.** El service hace `getHorariosAtencion().clear()` y recarga lo que venga en el request. `servicios`, en cambio, sí distingue (`null` = no tocar, `[]` = borrar todos). Verificado: un PUT sin ninguno de los dos campos dejó los horarios en 0 y los servicios intactos. Por eso **cada sección manda el establecimiento completo** con su parte cambiada — un formulario por sección que mande sólo lo suyo se lleva puesta la disponibilidad del complejo.
+- **`requiereSena` se fuerza a `true` en TRIAL y FREE**: `esPlanLimitado(plan) || request.requiereSena()`. Verificado mandando `false` con plan TRIAL: vuelve `true`. El checkbox se deshabilita y lo explica, en vez de dejar que alguien lo destilde, guarde, y lo vea encenderse solo.
+- **`latitud`/`longitud` son `@NotNull`**: el PUT no pasa sin ellas, así que la sección de datos tuvo que ganar un selector de ubicación. Reutiliza el `SelectorUbicacion` de `/buscar` (georef-ar-api + "usar mi ubicación"). La dirección es texto libre y el backend no la geocodifica.
+- **Se fueron `telefono`, `cuit` y `deportes`** del formulario: los dos primeros no existen en ningún lado, y los deportes son de la cancha (`CanchaRequest.deportes`), no del establecimiento — el marketplace los deriva de las canchas activas.
+- Validaciones confirmadas: día duplicado → 400 `"No puede haber más de un horario de atención para el MONDAY"`; apertura == cierre → 400; nombre vacío → 400 en **forma B** (`{"nombre":"El nombre es obligatorio"}`); servicio fuera del enum → 400 `"Cuerpo de la petición inválido o mal formado"`.
+- El catálogo de los 7 `Servicio` se movió a `src/lib/servicios.ts`: lo usan las dos puntas (el dueño los tilda, el jugador los ve en la ficha) y definirlo dos veces era arriesgar que el chip no fuera el mismo.
+
 ### 🔀 B5 — `/panel/configuracion/ofertas` — **no es un gap del back, la pantalla está mal ubicada**
 
 `POST /api/v1/admin/mails/oferta` funciona correctamente. El problema es de qué producto es esta pantalla.
@@ -1240,7 +1249,7 @@ Hoy la pantalla vive en el panel del complejo, gateada por `esDueno` → un OWNE
 - Se borraron los dos botones que no se guardaban en ningún lado: "Marcar como frecuente" (`esFrecuente` no existe en el back) y "Registrar ausencia" (las ausencias se marcan sobre UNA reserva desde la agenda, no a mano sobre el cliente).
 - El gate pasó de `ver_clientes` al **rol**: el `ClienteController` entero es OWNER/ADMIN y no hay ningún `PermisoEmpleado` que lo habilite. El ítem del sidebar también.
 28. ~~`/panel/reportes` — 5 queries en paralelo y reestructuración del `Comparativo` (§4.5).~~ ✅
-29. `/panel/configuracion` — datos básicos + horarios + **servicios** + dispositivos; fotos, política y MercadoPago deshabilitados (B4).
+29. ~~`/panel/configuracion` — datos básicos + horarios + **servicios** + dispositivos; fotos, política y MercadoPago deshabilitados (B4).~~ ✅
 30. `/panel/configuracion/empleados` — **remapeo completo de permisos** (§5.7) y actualización del sidebar.
 31. `/panel/pagos` — solo la tabla de ventas de buffet (`GET /buffet/ventas`); el bloque de pagos/comisiones queda deshabilitado (B3).
 32. **Mover Ofertas a `/admin/ofertas`** con gate de ADMIN y sacarla del sidebar del panel (B5).
@@ -1302,7 +1311,7 @@ Hoy la pantalla vive en el panel del complejo, gateada por `esDueno` → un OWNE
 - [ ] `/panel/pagos` — ventas ✅ `GET /buffet/ventas` · pagos ⛔ **B3: sin comisiones ni liquidación**
 - [ ] `/panel/gastos` — CRUD completo · ✅ match 1:1
 - [x] `/panel/reportes` — 5 endpoints en paralelo · `Comparativo` por métrica · ausencias sin comparativo · clientes sólo registrados
-- [ ] `/panel/configuracion` — datos + horarios + **servicios** ✅ + dispositivos ✅ · ⛔ **B4**: fotos, política y MercadoPago
+- [x] `/panel/configuracion` — datos + horarios + **servicios** + dispositivos · ⚠️ el PUT va SIEMPRE con los horarios (omitirlos los borra) · `requiereSena` forzada en TRIAL/FREE · ⛔ **B4**: fotos, política y MercadoPago
 - [ ] `/panel/configuracion/empleados` — CRUD · ⚠️ **remapeo completo de permisos**
 - [ ] `/panel/configuracion/ofertas` — 🔀 **B5: mover a `/admin/ofertas` con gate ADMIN** (post Fase 2)
 

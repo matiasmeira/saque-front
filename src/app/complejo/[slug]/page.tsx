@@ -1,16 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import {
-  MapPin,
-  Navigation,
-  ShowerHead,
-  Flame,
-  ParkingCircle,
-  UtensilsCrossed,
-  Wifi,
-  Store,
-  DoorOpen,
-} from "lucide-react";
+import { MapPin, Navigation } from "lucide-react";
 import { HeaderPublico } from "@/components/saque/header-publico";
 import { FooterPublico } from "@/components/saque/footer-publico";
 import { GaleriaFotos } from "@/components/saque/galeria-fotos";
@@ -18,21 +8,10 @@ import { GrillaDisponibilidad } from "@/components/saque/grilla-disponibilidad";
 import { ReservaBlock } from "@/components/saque/reserva-block";
 import { LineasDeCancha } from "@/components/saque/lineas-de-cancha";
 import { etiquetaDeporte } from "@/lib/deportes";
+import { servicio as buscarServicio } from "@/lib/servicios";
 import { publico } from "@/lib/api/endpoints/publico";
 import { ApiError } from "@/lib/api/errores";
 import type { ComplejoDetalleResponse } from "@/lib/api/tipos/publico";
-import type { Servicio } from "@/lib/api/tipos/comunes";
-
-/** Los 7 valores del enum Servicio del backend. */
-const SERVICIOS: Record<Servicio, { etiqueta: string; Icono: typeof ShowerHead }> = {
-  VESTUARIOS: { etiqueta: "Vestuarios", Icono: DoorOpen },
-  DUCHAS: { etiqueta: "Duchas", Icono: ShowerHead },
-  PARRILLA: { etiqueta: "Parrilla", Icono: Flame },
-  ESTACIONAMIENTO: { etiqueta: "Estacionamiento", Icono: ParkingCircle },
-  BUFFET: { etiqueta: "Buffet", Icono: UtensilsCrossed },
-  KIOSCO: { etiqueta: "Kiosco", Icono: Store },
-  WIFI: { etiqueta: "WiFi", Icono: Wifi },
-};
 
 /** `"MONDAY"` → `"Monday"`, que es lo que espera schema.org. */
 function diaSchema(diaSemana: string): string {
@@ -162,7 +141,7 @@ export default async function FichaComplejo({ params }: { params: Promise<{ slug
                 </h2>
                 <div className="flex flex-wrap gap-2">
                   {complejo.servicios.map((valor) => {
-                    const servicio = SERVICIOS[valor];
+                    const servicio = buscarServicio(valor);
                     const Icono = servicio?.Icono;
                     return (
                       <span

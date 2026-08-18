@@ -1,38 +1,77 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { BadgeCheck } from "lucide-react";
-import { DEPORTES } from "@/mocks/deportes";
-import type { DatosComplejo } from "@/mocks/config";
-
-function chipClase(activo: boolean) {
-  return `h-8 rounded-full px-3 text-xs font-semibold transition-colors ${
-    activo ? "bg-celeste-suave text-tinta" : "border border-borde bg-white text-grafito hover:border-azul hover:text-azul"
-  }`;
-}
+import { MapPin } from "lucide-react";
+import { SelectorUbicacion, type Ubicacion } from "@/components/saque/selector-ubicacion";
+import type { EstablecimientoResponse } from "@/lib/api/tipos/establecimientos";
+import type { PlanSuscripcion } from "@/lib/api/tipos/comunes";
 
 const campoClase = "w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste";
 
-/** Sección 1 de C9: identidad del complejo. El CUIT pasa a solo lectura apenas queda verificado — ya no hay nada que "editar", solo lo que ya confirmó D3. */
-export function FormDatosComplejo({ datos, onGuardar }: { datos: DatosComplejo; onGuardar: (datos: DatosComplejo) => void }) {
-  const [nombre, setNombre] = useState(datos.nombre);
-  const [direccion, setDireccion] = useState(datos.direccion);
-  const [telefono, setTelefono] = useState(datos.telefono);
-  const [deportes, setDeportes] = useState<string[]>(datos.deportes);
+export type DatosEstablecimiento = {
+  nombre: string;
+  direccion: string;
+  latitud: number;
+  longitud: number;
+  requiereSena: boolean;
+};
+
+/**
+ * Identidad del complejo. Todo lo que hay acá existe en
+ * `EstablecimientoRequest`; nada más.
+ *
+ * Lo que se fue, y por qué:
+ *  - **Teléfono y CUIT**: no existen ni en la entidad ni en el DTO. Eran dos
+ *    campos que se tipeaban y no viajaban a ningún lado.
+ *  - **Deportes**: no son del establecimiento sino de cada cancha
+ *    (`CanchaRequest.deportes`). El marketplace los deriva de las canchas
+ *    activas, así que elegirlos acá no habría cambiado nada de lo que ve el
+ *    jugador.
+ *
+ * Lo que se sumó: **latitud/longitud** (son `@NotNull` en el request, o sea que
+ * el PUT ni siquiera pasa sin ellas) y **requiereSena**.
+ */
+export function FormDatosComplejo({
+  establecimiento,
+  plan,
+  guardando,
+  onGuardar,
+}: {
+  establecimiento: EstablecimientoResponse;
+  /** TRIAL y FREE no pueden desactivar la seña: el backend la fuerza. */
+  plan: PlanSuscripcion | undefined;
+  guardando: boolean;
+  onGuardar: (datos: DatosEstablecimiento) => void;
+}) {
+  const [nombre, setNombre] = useState(establecimiento.nombre);
+  const [direccion, setDireccion] = useState(establecimiento.direccion);
+  const [requiereSena, setRequiereSena] = useState(establecimiento.requiereSena);
+  const [ubicacion, setUbicacion] = useState<Ubicacion | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  function alternarDeporte(valor: string) {
-    setDeportes((prev) => (prev.includes(valor) ? prev.filter((v) => v !== valor) : [...prev, valor]));
-  }
+  /**
+   * El backend hace `esPlanLimitado(plan) || request.requiereSena()`: en TRIAL y
+   * FREE la seña queda en true SIEMPRE, mande lo que mande el front. Se
+   * deshabilita el control en vez de dejar que alguien lo destilde, guarde, y
+   * vea que vuelve a encenderse solo sin ninguna explicación.
+   */
+  const senaForzada = plan === "TRIAL" || plan === "FREE";
+
+  const latitud = ubicacion?.lat ?? establecimiento.latitud;
+  const longitud = ubicacion?.lng ?? establecimiento.longitud;
 
   function guardar(e: FormEvent) {
     e.preventDefault();
     if (!nombre.trim()) return setError("Falta el nombre del complejo.");
     if (!direccion.trim()) return setError("Falta la dirección.");
-    if (!telefono.trim()) return setError("Falta el teléfono de contacto.");
-    if (deportes.length === 0) return setError("Elegí al menos un deporte.");
     setError(null);
-    onGuardar({ ...datos, nombre: nombre.trim(), direccion: direccion.trim(), telefono: telefono.trim(), deportes });
+    onGuardar({
+      nombre: nombre.trim(),
+      direccion: direccion.trim(),
+      latitud,
+      longitud,
+      requiereSena: senaForzada ? true : requiereSena,
+    });
   }
 
   return (
@@ -52,43 +91,42 @@ export function FormDatosComplejo({ datos, onGuardar }: { datos: DatosComplejo; 
       </div>
 
       <div>
-        <label htmlFor="config-telefono" className="mb-1 block text-xs font-semibold text-grafito">
-          Teléfono de contacto
+        <label htmlFor="config-ubicacion" className="mb-1 block text-xs font-semibold text-grafito">
+          Localidad
         </label>
-        <input id="config-telefono" required value={telefono} onChange={(e) => setTelefono(e.target.value)} className={campoClase} />
-      </div>
-
-      <div>
-        <p className="mb-1 text-xs font-semibold text-grafito">CUIT</p>
-        {datos.cuitVerificado ? (
-          <div className="flex items-center gap-1.5 rounded-input bg-humo px-3 py-2.5 text-tinta">
-            <span>{datos.cuit}</span>
-            <span className="ml-auto flex items-center gap-1 text-xs font-semibold text-disponible">
-              <BadgeCheck className="size-3.5 shrink-0" aria-hidden />
-              Verificado
-            </span>
-          </div>
-        ) : (
-          <p className="rounded-input bg-humo px-3 py-2.5 text-tinta">{datos.cuit}</p>
-        )}
-        {datos.cuitVerificado && <p className="mt-1 text-xs text-grafito">Ya fue verificado — para corregirlo, contactá a soporte.</p>}
-      </div>
-
-      <div>
-        <p className="mb-1.5 text-xs font-semibold text-grafito">Deportes que ofrece</p>
-        <div className="flex flex-wrap gap-1.5">
-          {DEPORTES.map((d) => (
-            <button
-              key={d.valor}
-              type="button"
-              aria-pressed={deportes.includes(d.valor)}
-              onClick={() => alternarDeporte(d.valor)}
-              className={chipClase(deportes.includes(d.valor))}
-            >
-              {d.etiqueta}
-            </button>
-          ))}
+        <div className="rounded-input bg-humo px-3 py-1.5">
+          <SelectorUbicacion id="config-ubicacion" value={ubicacion} onChange={setUbicacion} />
         </div>
+        {/* La dirección es texto libre y el backend no la geocodifica: las
+            coordenadas se eligen aparte, y son las que deciden si el complejo
+            aparece en una búsqueda "cerca mío". El centroide de la localidad
+            alcanza para eso; "usar mi ubicación", parado en el complejo, es
+            más preciso. */}
+        <p className="mt-1 text-xs text-grafito">
+          {ubicacion
+            ? `Se va a guardar en ${ubicacion.etiqueta} (${latitud.toFixed(4)}, ${longitud.toFixed(4)}).`
+            : `Ubicación actual: ${latitud.toFixed(4)}, ${longitud.toFixed(4)}. Buscá una localidad sólo si querés cambiarla.`}
+        </p>
+      </div>
+
+      <div className="rounded-input bg-humo p-3.5">
+        <label className="flex items-start gap-2.5">
+          <input
+            type="checkbox"
+            checked={senaForzada ? true : requiereSena}
+            disabled={senaForzada}
+            onChange={(e) => setRequiereSena(e.target.checked)}
+            className="mt-0.5 size-4 shrink-0 rounded border-borde accent-azul disabled:opacity-60"
+          />
+          <span>
+            <span className="block text-sm font-semibold text-tinta">Pedir seña para reservar</span>
+            <span className="block text-xs text-grafito">
+              {senaForzada
+                ? "En el plan gratuito la seña es obligatoria y no se puede desactivar."
+                : "El jugador tiene que pagar una seña para que su turno quede confirmado."}
+            </span>
+          </span>
+        </label>
       </div>
 
       {error && (
@@ -97,12 +135,19 @@ export function FormDatosComplejo({ datos, onGuardar }: { datos: DatosComplejo; 
         </p>
       )}
 
-      <button
-        type="submit"
-        className="flex h-10 items-center justify-center rounded-full bg-azul px-5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
-      >
-        Guardar datos
-      </button>
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="submit"
+          disabled={guardando}
+          className="flex h-10 items-center justify-center rounded-full bg-azul px-5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste disabled:opacity-60"
+        >
+          {guardando ? "Guardando..." : "Guardar datos"}
+        </button>
+        <p className="flex items-center gap-1.5 text-xs text-grafito">
+          <MapPin className="size-3.5 shrink-0" aria-hidden />
+          Los deportes salen de tus canchas, no de acá.
+        </p>
+      </div>
     </form>
   );
 }
