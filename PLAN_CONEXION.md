@@ -884,6 +884,16 @@ Corrección en el front: `/ingresar` se convierte en login email+password con un
 - `AusenciasInfo` trae `disponible: boolean` y `motivoNoDisponible` → la UI necesita una rama para "métrica no disponible" que hoy no existe.
 - `calcularVariacion(actual, anterior)` de `metrica-comparada.tsx` se conserva: aplica igual sobre cada `Comparativo`.
 
+**Hecho** (verificado con las cinco requests reales contra el back). Lo que la corrida en vivo agregó al análisis de arriba:
+- **`ausencias` NO es un `Comparativo`** — es un `AusenciasInfo` suelto. La KPI de ausencias pierde el "% vs. período anterior": no hay dato anterior que mostrar. `disponible` hoy llega siempre en `true` (el service lo construye fijo), pero la rama de "no disponible" quedó implementada porque el campo sigue en el contrato.
+- **`clientesNuevos` y `topClientes` cuentan SOLO jugadores registrados**: las dos queries filtran `r.jugador IS NOT NULL` (`ReservaRepository`). Un complejo que carga todo a mano desde el mostrador ve `clientesNuevos: 0` y `topClientes: []` con la agenda llena. Está dicho en la pantalla, en las dos partes donde aparece.
+- **`desglosePorMetodoPago` sólo trae los métodos con movimiento**, no los cinco con ceros.
+- **`diaIndice` es 0-based**; el eje del gráfico muestra `diaIndice + 1`.
+- **`HorarioPedidoDto.hora` es un `int` y agrupa por hora entera**: un turno de 21:30 cae en el bucket `21`. La etiqueta nombra la franja, no el minuto de inicio.
+- Los porcentajes vienen en escala 0–100 con dos decimales. Redondear a entero convertía un 0,46% real en "0%" — dos turnos sobre 434 horas de atención dan exactamente eso. `formatearPorcentaje` en `src/lib/formato.ts` muestra un decimal por debajo de 10.
+- Las cinco requests son independientes: si fallan todas va el error de pantalla completa; si falla una, el resto se muestra y ese bloque avisa solo. Antes un único fallo dejaba la pantalla en blanco.
+- Se borró `src/mocks/reportes.ts` entero (tipos, `generarReporte` y el generador determinístico).
+
 **`/panel/configuracion/empleados`.**
 - **Los dos modelos de permisos son conjuntos distintos**, no un renombre. Ver §5.
 - `EmpleadoRequest` **no tiene contraseña**: solo `nombre` + `pin` (`\d{4}`). Quitar el campo contraseña de `form-ficha-empleado.tsx` (hoy pide mínimo 6 caracteres).
@@ -1218,7 +1228,7 @@ Hoy la pantalla vive en el panel del complejo, gateada por `esDueno` → un OWNE
 
 ### Fase 6 — Panel: administración
 27. `/panel/clientes` + `/panel/clientes/[id]` — `ClienteController`. Borrar `esFrecuente` y `registrarAusencia` (§4.5).
-28. `/panel/reportes` — 5 queries en paralelo y reestructuración del `Comparativo` (§4.5).
+28. ~~`/panel/reportes` — 5 queries en paralelo y reestructuración del `Comparativo` (§4.5).~~ ✅
 29. `/panel/configuracion` — datos básicos + horarios + **servicios** + dispositivos; fotos, política y MercadoPago deshabilitados (B4).
 30. `/panel/configuracion/empleados` — **remapeo completo de permisos** (§5.7) y actualización del sidebar.
 31. `/panel/pagos` — solo la tabla de ventas de buffet (`GET /buffet/ventas`); el bloque de pagos/comisiones queda deshabilitado (B3).
@@ -1280,7 +1290,7 @@ Hoy la pantalla vive en el panel del complejo, gateada por `esDueno` → un OWNE
 ### Panel — administración
 - [ ] `/panel/pagos` — ventas ✅ `GET /buffet/ventas` · pagos ⛔ **B3: sin comisiones ni liquidación**
 - [ ] `/panel/gastos` — CRUD completo · ✅ match 1:1
-- [ ] `/panel/reportes` — 5 endpoints · ⚠️ **reestructurar el `Comparativo`**
+- [x] `/panel/reportes` — 5 endpoints en paralelo · `Comparativo` por métrica · ausencias sin comparativo · clientes sólo registrados
 - [ ] `/panel/configuracion` — datos + horarios + **servicios** ✅ + dispositivos ✅ · ⛔ **B4**: fotos, política y MercadoPago
 - [ ] `/panel/configuracion/empleados` — CRUD · ⚠️ **remapeo completo de permisos**
 - [ ] `/panel/configuracion/ofertas` — 🔀 **B5: mover a `/admin/ofertas` con gate ADMIN** (post Fase 2)
