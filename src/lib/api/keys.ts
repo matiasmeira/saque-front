@@ -1,4 +1,5 @@
 import type { EstadoReserva } from "./tipos/comunes";
+import type { OrdenCliente } from "./tipos/clientes";
 
 /**
  * Todas las query keys del proyecto, en un solo lugar.
@@ -64,8 +65,20 @@ export const keys = {
 
   clientes: {
     todos: () => ["clientes"] as const,
-    lista: (estId: number, buscar?: string, soloBloqueados?: boolean, page = 0) =>
-      ["clientes", estId, buscar ?? null, soloBloqueados ?? null, page] as const,
+    /**
+     * El padron se busca, ordena y pagina en el SERVER, asi que los tres
+     * entran en la key: cada combinacion es una respuesta distinta.
+     */
+    lista: (
+      estId: number,
+      filtros: {
+        buscar?: string;
+        soloBloqueados?: boolean;
+        orden?: OrdenCliente;
+        direccion?: "asc" | "desc";
+        page?: number;
+      } = {},
+    ) => ["clientes", estId, "lista", filtros] as const,
     detalle: (estId: number, jugadorId: number) =>
       ["clientes", estId, jugadorId] as const,
     reservas: (estId: number, jugadorId: number, page = 0) =>

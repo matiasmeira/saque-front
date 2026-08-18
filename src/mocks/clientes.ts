@@ -32,8 +32,9 @@ export type ReservaHistorial = {
   monto: number;
 };
 
-/** A partir de acá, la tabla marca las ausencias como "altas" — señal fija, no es una config del dueño. */
-export const AUSENCIAS_ALTAS = 3;
+// AUSENCIAS_ALTAS se mudó a components/panel/tabla-clientes.tsx: es un umbral
+// de presentación, no un dato, y tenerlo en dos lugares era pedirle a alguien
+// que cambiara uno solo.
 
 const HOY = hoyISO();
 
