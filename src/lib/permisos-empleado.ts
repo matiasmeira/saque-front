@@ -47,31 +47,31 @@ export const PERMISOS_EMPLEADO: {
     valor: "CREAR_RESERVA_MANUAL",
     etiqueta: "Cargar turnos a mano",
     descripcion: "Anotar en la agenda un turno de alguien que vino o llamó.",
-    alcance: "sin_lectura",
+    alcance: "disponible",
   },
   {
     valor: "FINALIZAR_RESERVA",
     etiqueta: "Cobrar turnos",
     descripcion: "Marcar un turno como jugado y registrar con qué se pagó.",
-    alcance: "sin_lectura",
+    alcance: "disponible",
   },
   {
     valor: "CANCELAR_RESERVA",
     etiqueta: "Cancelar turnos",
     descripcion: "Dar de baja una reserva ya cargada.",
-    alcance: "sin_lectura",
+    alcance: "disponible",
   },
   {
     valor: "MARCAR_AUSENTE",
     etiqueta: "Marcar ausencias",
     descripcion: "Registrar que el cliente no se presentó al turno.",
-    alcance: "sin_lectura",
+    alcance: "disponible",
   },
   {
     valor: "REGISTRAR_VENTA_BUFFET",
     etiqueta: "Vender en el buffet",
     descripcion: "Cargar ventas de productos del buffet.",
-    alcance: "sin_lectura",
+    alcance: "disponible",
   },
   {
     valor: "FIJAR_COMENTARIO_DESTACADO",
@@ -79,6 +79,22 @@ export const PERMISOS_EMPLEADO: {
     descripcion: "Elegir qué opinión de un cliente se muestra en la ficha del complejo.",
     alcance: "sin_pantalla",
   },
+];
+
+/**
+ * Los permisos que habilitan a entrar a la agenda.
+ *
+ * Es el mismo conjunto que el backend usa para dejar LEER el listado de
+ * reservas y el de canchas
+ * (`AutorizacionEmpleadoService.PERMISOS_OPERATIVOS_DE_RESERVA`). Si los dos se
+ * desincronizan, el front deja pasar a alguien a una pantalla que devuelve 403,
+ * así que conviene tocarlos juntos.
+ */
+export const PERMISOS_DE_AGENDA: PermisoEmpleado[] = [
+  "CREAR_RESERVA_MANUAL",
+  "FINALIZAR_RESERVA",
+  "CANCELAR_RESERVA",
+  "MARCAR_AUSENTE",
 ];
 
 const POR_VALOR = new Map(PERMISOS_EMPLEADO.map((p) => [p.valor, p]));

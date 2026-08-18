@@ -19,16 +19,19 @@ import { iniciarSesionEmpleado, leerEstablecimientoDispositivo } from "@/lib/ses
  * A qué pantalla del panel entra, según lo primero que pueda hacer. Se elige
  * una sola vez, al loguearse, con los permisos que devuelve /me.
  *
- * Hoy la lista tiene UNA entrada. No es por diseño: es que los listados que
- * alimentan las demás pantallas son OWNER/ADMIN en el backend
- * (`GET /reservas/establecimiento/{id}`, `GET .../productos-buffet`,
- * `GET .../canchas` responden 403 a un EMPLOYEE, verificado). Un empleado
- * puede tener FINALIZAR_RESERVA y aun así no poder abrir la agenda desde donde
- * se cobra. Antes se lo mandaba igual y caía en un 403 sin explicación.
+ * El orden es de mayor a menor frecuencia en el mostrador: la agenda es el día
+ * a día, el buffet es intermitente y la caja se toca al abrir y al cerrar.
  *
- * Cuando el backend abra esos GET a EMPLOYEE, alcanza con sumar las rutas acá.
+ * Cada ruta de acá tiene que corresponderse con un listado que el backend le
+ * deje leer a ese permiso; si no, se lo estaría mandando a un 403. Hoy se
+ * corresponden (ver AutorizacionEmpleadoService).
  */
 const RUTA_POR_PERMISO: { permiso: PermisoEmpleado; ruta: string }[] = [
+  { permiso: "CREAR_RESERVA_MANUAL", ruta: "/panel/agenda" },
+  { permiso: "FINALIZAR_RESERVA", ruta: "/panel/agenda" },
+  { permiso: "CANCELAR_RESERVA", ruta: "/panel/agenda" },
+  { permiso: "MARCAR_AUSENTE", ruta: "/panel/agenda" },
+  { permiso: "REGISTRAR_VENTA_BUFFET", ruta: "/panel/buffet/vender" },
   { permiso: "OPERAR_CAJA", ruta: "/panel/caja" },
 ];
 

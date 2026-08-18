@@ -11,6 +11,7 @@ import { DrawerPanel } from "@/components/panel/drawer-panel";
 import { FormTurnoRapido } from "@/components/panel/form-turno-rapido";
 import { DetalleTurno } from "@/components/panel/detalle-turno";
 import { useBloqueadoPorCaja, usePermisos } from "@/lib/permisos";
+import { PERMISOS_DE_AGENDA } from "@/lib/permisos-empleado";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useHoraActual } from "@/lib/hora-actual";
 import { diaCorto, diasVisibles, hoyISO, inicioSemana, rangoSemanaLabel, sumarDias } from "@/lib/fecha";
@@ -53,11 +54,11 @@ export default function PanelAgenda() {
   const rol = useRolPanel();
   const horaActual = useHoraActual();
 
-  // La agenda pasó a ser solo-dueño: el listado que la alimenta
-  // (GET /reservas/establecimiento/{id}) es @PreAuthorize OWNER/ADMIN, así que
-  // un empleado la abría y recibía 403 aunque tuviera FINALIZAR_RESERVA. Los
-  // permisos de acción se siguen consultando para los botones del detalle.
-  const puedeVerAgenda = rol === "dueno";
+  // El listado que la alimenta (GET /reservas/establecimiento/{id}) y el de
+  // canchas aceptan a un empleado que tenga al menos uno de los permisos que se
+  // ejercen desde esta pantalla. Es el mismo conjunto del lado del backend
+  // (AutorizacionEmpleadoService.PERMISOS_OPERATIVOS_DE_RESERVA).
+  const puedeVerAgenda = rol === "dueno" || PERMISOS_DE_AGENDA.some(tienePermiso);
   const puedeCobrarTurnos = tienePermiso("FINALIZAR_RESERVA");
   const puedeCancelarTurnos = tienePermiso("CANCELAR_RESERVA");
 
