@@ -1023,7 +1023,7 @@ Auditoría campo por campo:
 | `DatosComplejo.telefono`, `cuit`, `cuitVerificado` | `/panel/configuracion` | ❌ No existen en la entidad ni en el DTO | Quitar la sección |
 | `PANEL_COMPLEJO.diasRestantesTrial`, `plan` | Header del panel | ⚠️ `PerfilResponse.planSuscripcion` ✅; `Usuario.fechaFinPrueba` existe en la entidad pero **no se expone** | Mostrar el plan; quitar el contador de días |
 | `Cliente.telefono` / `email` / `ultimaReserva` / `totalGastado` | `/panel/clientes` | ✅ Ahora en `ClienteResponse` | Conecta directo |
-| `Cliente.esFrecuente` | `/panel/clientes` | ❌ No existe el concepto en el back | Derivarlo de `reservasTotales >= N`; borrar el toggle |
+| `Cliente.esFrecuente` | `/panel/clientes` | ❌ No existe el concepto en el back | **Borrado** (estrella incluida). Derivarlo de `reservasTotales >= N` sería inventar un umbral y presentarlo como un dato del dueño; la columna Reservas ya está a la vista y ordena |
 | `Complejo.servicios` | `/panel/configuracion`, `/complejo/[slug]` | ✅ Ahora en `EstablecimientoRequest`/`Response` y en `ComplejoDetalleResponse` | Remapear al enum `Servicio` (7 valores) |
 | `CuentaMercadoPago` | `/panel/configuracion` | ❌ Sin integración | Quitar la sección |
 
@@ -1227,7 +1227,18 @@ Hoy la pantalla vive en el panel del complejo, gateada por `esDueno` → un OWNE
 **Verificación:** abrir caja, registrar una venta de buffet, ver el movimiento reflejado, cerrar caja y ver el ticket.
 
 ### Fase 6 — Panel: administración
-27. `/panel/clientes` + `/panel/clientes/[id]` — `ClienteController`. Borrar `esFrecuente` y `registrarAusencia` (§4.5).
+27. ~~`/panel/clientes` + `/panel/clientes/[id]` — `ClienteController`. Borrar `esFrecuente` y `registrarAusencia` (§4.5).~~ ✅
+
+**Hecho** (verificado en vivo: padrón, ficha, historial, bloqueo y desbloqueo). Lo que agregó la corrida real:
+- **El padrón son jugadores REGISTRADOS**, no la libreta de contactos del complejo: `jugadorIdsDelEstablecimiento` filtra `r.jugador IS NOT NULL`. Un complejo que carga todo a mano desde la agenda ve la pantalla vacía para siempre. El vacío lo explica en vez de decir "todavía no tenés clientes" a secas.
+- **Buscar, ordenar y paginar son del SERVER.** Filtrar en el cliente sólo miraría la página actual: "no encontrado" podría significar "está en la página 3". La búsqueda va con debounce de 400 ms y matchea nombre, teléfono **o email**.
+- **El `sort` sólo acepta cuatro campos** (`nombre`, `ultimaReserva`, `reservasTotales`, `ausencias`); cualquier otro es un **400** (`{"error":"Propiedad de orden no soportada: totalGastado"}`, verificado). Por eso "Total gastado" se muestra pero no es una columna ordenable.
+- **`telefono` puede ser null** — sale del `Usuario` y el registro no lo exige. La tabla cae al email, que sí es obligatorio; la ficha dice "Sin teléfono cargado".
+- **`ultimaReserva` es null** hasta que haya una reserva FINALIZADA. Las tres métricas cuentan sólo `FINALIZADA` (y sólo `AUSENTE` las ausencias), pero el **historial trae todos los estados, canceladas incluidas**: los números no coinciden con el largo de la lista, y la pantalla lo aclara.
+- **Bloquear exige que el target sea PLAYER**: un OWNER que reservó en su propio complejo aparece en el padrón pero bloquearlo da **400** (`"El usuario indicado no corresponde a un jugador (rol PLAYER)"`). El mensaje del back se muestra tal cual.
+- Bloquear funciona de verdad: el jugador bloqueado recibe **403** al intentar reservar. Desbloquear sobre alguien no bloqueado es **404**.
+- Se borraron los dos botones que no se guardaban en ningún lado: "Marcar como frecuente" (`esFrecuente` no existe en el back) y "Registrar ausencia" (las ausencias se marcan sobre UNA reserva desde la agenda, no a mano sobre el cliente).
+- El gate pasó de `ver_clientes` al **rol**: el `ClienteController` entero es OWNER/ADMIN y no hay ningún `PermisoEmpleado` que lo habilite. El ítem del sidebar también.
 28. ~~`/panel/reportes` — 5 queries en paralelo y reestructuración del `Comparativo` (§4.5).~~ ✅
 29. `/panel/configuracion` — datos básicos + horarios + **servicios** + dispositivos; fotos, política y MercadoPago deshabilitados (B4).
 30. `/panel/configuracion/empleados` — **remapeo completo de permisos** (§5.7) y actualización del sidebar.
@@ -1273,8 +1284,8 @@ Hoy la pantalla vive en el panel del complejo, gateada por `esDueno` → un OWNE
 - [ ] `/panel/agenda` — 8 endpoints · ⚠️ **agregar selector de método de pago** · 7 requests en vista semanal
 - [ ] `/panel/canchas` — CRUD de canchas + bloqueos · ⚠️ renombres de campos
 - [ ] `/panel/precios` — `PUT …/canchas/{id}` · ⚠️ 1 tarifa del front = N `TarifaDto`
-- [ ] `/panel/clientes` — `GET …/clientes?buscar&soloBloqueados` · ⚠️ `sort` solo 4 campos · borrar `esFrecuente`
-- [ ] `/panel/clientes/[id]` — `GET …/clientes/{jugadorId}` + `/reservas` · ⚠️ borrar `registrarAusencia`
+- [x] `/panel/clientes` — `GET …/clientes?buscar&soloBloqueados` server-side · `sort` solo 4 campos (el resto es 400) · sin `esFrecuente`
+- [x] `/panel/clientes/[id]` — ficha + historial paginado + bloquear/desbloquear · sin `registrarAusencia`
 
 ### Panel — buffet
 - [ ] `/panel/buffet/productos` — CRUD + `PATCH /stock` · ⚠️ `umbralAlerta` es del front

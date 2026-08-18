@@ -27,7 +27,9 @@ const GRUPOS: Grupo[] = [
       { href: "/panel/agenda", label: "Agenda", icono: Calendar, visible: (tp) => tp("ver_agenda") },
       { href: "/panel/canchas", label: "Canchas", icono: LayoutGrid, visible: (_tp, esDueno) => esDueno },
       { href: "/panel/precios", label: "Precios", icono: Tag, visible: (_tp, esDueno) => esDueno },
-      { href: "/panel/clientes", label: "Clientes", icono: Users, visible: (tp) => tp("ver_clientes") },
+      // El ClienteController entero es OWNER/ADMIN: no hay PermisoEmpleado que
+      // lo habilite, así que `ver_clientes` era un permiso que no abría nada.
+      { href: "/panel/clientes", label: "Clientes", icono: Users, visible: (_tp, esDueno) => esDueno },
     ],
   },
   {
