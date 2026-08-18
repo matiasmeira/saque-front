@@ -8,6 +8,7 @@ import { HeaderPanel } from "@/components/panel/header-panel";
 import { GrillaProductosVenta } from "@/components/panel/grilla-productos-venta";
 import { TicketBuffet, type LineaTicket } from "@/components/panel/ticket-buffet";
 import { SkeletonVentaBuffet } from "@/components/panel/skeleton-venta-buffet";
+import { useRolPanel } from "@/lib/rol-panel";
 import { useBloqueadoPorCaja, usePermisos } from "@/lib/permisos";
 import { hoyISO } from "@/lib/fecha";
 
@@ -22,17 +23,18 @@ import { type MetodoPago } from "@/mocks/pagos";
 
 type EstadoCarga = "cargando" | "error" | "listo";
 
-// vender_buffet lo puede tener el dueño o cualquier empleado — a
-// diferencia de C11, acá no hay un recorte extra por rol: el que
-// puede vender, vende. ?mockError=1 y ?mockVacio=1 fuerzan esos
-// estados, mismo patrón que el resto del panel.
 export default function PanelVenderBuffet() {
   const router = useRouter();
+  const rol = useRolPanel();
   const tienePermiso = usePermisos();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
 
-  const puedeVender = tienePermiso("vender_buffet");
-  const destinoAlternativo = tienePermiso("ver_stock_buffet") ? "/panel/buffet/productos" : tienePermiso("ver_agenda") ? "/panel/agenda" : null;
+  // REGISTRAR_VENTA_BUFFET habilita el POST de la venta, pero la pantalla
+  // necesita ANTES el listado de productos, que es OWNER/ADMIN. Un empleado con
+  // el permiso entraba y no podía cargar el catálogo: queda solo-dueño hasta
+  // que el backend abra ese GET.
+  const puedeVender = rol === "dueno";
+  const destinoAlternativo = tienePermiso("OPERAR_CAJA") ? "/panel/caja" : null;
 
 
   const queryClient = useQueryClient();

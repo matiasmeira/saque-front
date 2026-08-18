@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, ChevronLeft, Plus, UserX, Users } from "lucide-react";
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
@@ -13,83 +14,117 @@ import { DrawerPanel } from "@/components/panel/drawer-panel";
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useBloqueadoPorCaja } from "@/lib/permisos";
-import { hoyISO } from "@/lib/fecha";
-import { PANEL_COMPLEJO } from "@/mocks/agenda";
-import { PANEL_EMPLEADOS, type Empleado } from "@/mocks/empleados";
+import { empleados as endpointEmpleados } from "@/lib/api/endpoints/empleados";
+import { ApiError, mensajeVisible } from "@/lib/api/errores";
+import { keys } from "@/lib/api/keys";
+import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
+import type { EmpleadoResponse } from "@/lib/api/tipos/empleados";
 
 type EstadoCarga = "cargando" | "error" | "listo";
-type PanelAbierto = { tipo: "ficha"; empleado: Empleado | null } | { tipo: "baja"; empleado: Empleado } | null;
+type PanelAbierto =
+  | { tipo: "ficha"; empleado: EmpleadoResponse | null }
+  | { tipo: "pin"; empleado: EmpleadoResponse }
+  | { tipo: "baja"; empleado: EmpleadoResponse }
+  | null;
 
-// Solo dueño — ni el empleado con más permisos administra a otros
-// empleados. ?mockError=1 y ?mockVacio=1 fuerzan esos estados, mismo
-// patrón que el resto del panel.
+const PIN_VALIDO = /^\d{4}$/;
+
+/**
+ * Empleados del complejo. Solo dueño — ni el empleado con más permisos
+ * administra a otros.
+ *
+ * Un empleado acá NO es una cuenta: es un `Usuario` con rol EMPLOYEE, email
+ * sintético que genera el backend, plan FREE (la suscripción es del dueño) y
+ * una sola credencial de 4 dígitos. Entra únicamente por el kiosco, tocando su
+ * nombre en la PC del mostrador; nunca por /ingresar.
+ */
 export default function PanelEmpleados() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const rol = useRolPanel();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
+  const queryClient = useQueryClient();
+  const { establecimientoId } = useEstablecimientoActivo();
 
-  const mockError = searchParams.get("mockError") === "1";
-  const mockVacio = searchParams.get("mockVacio") === "1";
-
-  const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [panelAbierto, setPanelAbierto] = useState<PanelAbierto>(null);
-  const [reintento, setReintento] = useState(0);
-  const [proximoId, setProximoId] = useState(1000);
+  const [pinNuevo, setPinNuevo] = useState("");
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
 
   // "!bloqueadoPorCaja &&" evita pisar el router.replace("/caja") de
   // useBloqueadoPorCaja con un redirect a /panel/agenda.
   useEffect(() => {
-    if (!bloqueadoPorCaja && rol === "empleado") router.replace("/panel/agenda");
+    if (!bloqueadoPorCaja && rol === "empleado") router.replace("/panel/caja");
   }, [bloqueadoPorCaja, rol, router]);
 
-  const clave = `${mockError}|${mockVacio}|${reintento}`;
-  const [resuelto, setResuelto] = useState<{ clave: string; error: boolean } | null>(null);
-  const estadoCarga: EstadoCarga = resuelto?.clave !== clave ? "cargando" : resuelto.error ? "error" : "listo";
+  const consulta = useQuery({
+    queryKey: keys.empleados(establecimientoId ?? 0),
+    queryFn: () => endpointEmpleados.listar(establecimientoId!),
+    enabled: establecimientoId !== null,
+  });
 
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (mockError) {
-        setResuelto({ clave, error: true });
-        return;
-      }
-      setEmpleados(mockVacio ? [] : PANEL_EMPLEADOS.map((e) => ({ ...e })));
-      setResuelto({ clave, error: false });
-    }, 500);
-    return () => clearTimeout(id);
-  }, [clave, mockError, mockVacio]);
+  function cerrarYRefrescar() {
+    queryClient.invalidateQueries({ queryKey: keys.empleados(establecimientoId ?? 0) });
+    setPanelAbierto(null);
+    setPinNuevo("");
+    setErrorAccion(null);
+  }
+
+  function alFallar(e: unknown, porDefecto: string) {
+    setErrorAccion(e instanceof ApiError ? mensajeVisible(e) : porDefecto);
+  }
+
+  const crear = useMutation({
+    mutationFn: (datos: DatosEmpleado) =>
+      endpointEmpleados.crear(establecimientoId!, {
+        nombre: datos.nombre,
+        pin: datos.pin,
+        permisos: datos.permisos,
+      }),
+    onSuccess: cerrarYRefrescar,
+    // El backend rechaza nombres repetidos entre los activos y PINes triviales;
+    // los dos mensajes son útiles tal cual y se muestran dentro del formulario.
+    onError: (e) => alFallar(e, "No pudimos dar de alta al empleado."),
+  });
+
+  const actualizarPermisos = useMutation({
+    mutationFn: ({ id, permisos }: { id: number; permisos: DatosEmpleado["permisos"] }) =>
+      endpointEmpleados.actualizarPermisos(establecimientoId!, id, { permisos }),
+    onSuccess: cerrarYRefrescar,
+    onError: (e) => alFallar(e, "No pudimos guardar los permisos."),
+  });
+
+  const cambiarPin = useMutation({
+    mutationFn: ({ id, pin }: { id: number; pin: string }) =>
+      endpointEmpleados.cambiarPin(establecimientoId!, id, { pin }),
+    onSuccess: cerrarYRefrescar,
+    onError: (e) => alFallar(e, "No pudimos cambiar el PIN."),
+  });
+
+  const darDeBaja = useMutation({
+    mutationFn: (id: number) => endpointEmpleados.desactivar(establecimientoId!, id),
+    onSuccess: cerrarYRefrescar,
+    onError: (e) => alFallar(e, "No pudimos dar de baja al empleado."),
+  });
+
+  const estadoCarga: EstadoCarga = consulta.isPending ? "cargando" : consulta.isError ? "error" : "listo";
 
   if (bloqueadoPorCaja || rol === "empleado") return <div className="min-h-dvh bg-humo" />;
 
-  function crearEmpleado(datos: DatosEmpleado) {
-    setEmpleados((prev) => [
-      ...prev,
-      { id: `emp-${proximoId}`, nombre: datos.nombre, contrasena: datos.contrasena ?? "", pin: datos.pin ?? "", estado: "activo", permisos: datos.permisos, fechaAlta: hoyISO() },
-    ]);
-    setProximoId((id) => id + 1);
-    setPanelAbierto(null);
+  function guardarFicha(datos: DatosEmpleado) {
+    const empleado = panelAbierto?.tipo === "ficha" ? panelAbierto.empleado : null;
+    if (empleado) actualizarPermisos.mutate({ id: empleado.id, permisos: datos.permisos });
+    else crear.mutate(datos);
   }
 
-  function editarPermisos(id: string, datos: DatosEmpleado) {
-    setEmpleados((prev) => prev.map((e) => (e.id === id ? { ...e, nombre: datos.nombre, permisos: datos.permisos } : e)));
-    setPanelAbierto(null);
-  }
-
-  // Dar de baja revoca el acceso de inmediato — nunca borra al
-  // empleado, para conservar el historial de quién cobró qué en la
-  // agenda (C2/C5). TODO backend: esto tiene que invalidar la
-  // sesión/token de esa persona al instante, no solo cambiar un flag.
-  function confirmarBaja(empleado: Empleado) {
-    setEmpleados((prev) => prev.map((e) => (e.id === empleado.id ? { ...e, estado: "inactivo" } : e)));
-    setPanelAbierto(null);
-  }
+  const empleados = consulta.data ?? [];
+  const activos = empleados.filter((e) => e.activo);
+  const inactivos = empleados.filter((e) => !e.activo);
 
   return (
     <div className="flex h-dvh bg-humo">
       <SidebarPanel />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <HeaderPanel nombre={PANEL_COMPLEJO.nombre} estado={PANEL_COMPLEJO.estado} diasRestantesTrial={PANEL_COMPLEJO.diasRestantesTrial} />
+        <HeaderPanel />
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
           <Link href="/panel/configuracion" className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-grafito hover:text-tinta">
@@ -100,7 +135,9 @@ export default function PanelEmpleados() {
           <div className="mb-6 flex items-center justify-between gap-3">
             <div>
               <h1 className="font-display text-2xl font-extrabold tracking-tight text-tinta">Empleados</h1>
-              <p className="text-sm text-grafito">Cada uno entra con nombre y contraseña, y solo puede hacer lo que le tildaste en sus permisos.</p>
+              <p className="text-sm text-grafito">
+                Entran por la PC del mostrador tocando su nombre y su PIN de 4 dígitos — sin compartir tu login.
+              </p>
             </div>
             <button
               type="button"
@@ -112,6 +149,12 @@ export default function PanelEmpleados() {
             </button>
           </div>
 
+          {errorAccion && panelAbierto === null && (
+            <p role="alert" className="mb-4 rounded-card bg-white p-4 text-sm text-cancelado shadow-card">
+              {errorAccion}
+            </p>
+          )}
+
           {estadoCarga === "cargando" && <SkeletonEmpleados />}
 
           {estadoCarga === "error" && (
@@ -120,7 +163,7 @@ export default function PanelEmpleados() {
               <p className="font-semibold text-tinta">No pudimos cargar los empleados.</p>
               <button
                 type="button"
-                onClick={() => setReintento((r) => r + 1)}
+                onClick={() => consulta.refetch()}
                 className="rounded-full bg-azul px-5 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Reintentar
@@ -131,8 +174,11 @@ export default function PanelEmpleados() {
           {estadoCarga === "listo" && empleados.length === 0 && (
             <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center shadow-card">
               <Users className="size-8 text-grafito" aria-hidden />
-              <p className="font-display font-bold text-tinta">Todavía no invitaste a nadie</p>
-              <p className="max-w-xs text-sm text-grafito">Cargá a alguien de tu equipo con nombre, contraseña y los permisos que necesite.</p>
+              <p className="font-display font-bold text-tinta">Todavía no diste de alta a nadie</p>
+              <p className="max-w-sm text-sm text-grafito">
+                Cargá a alguien de tu equipo con su nombre y un PIN. Para que pueda entrar además necesitás una PC
+                emparejada como caja, desde Configuración.
+              </p>
               <button
                 type="button"
                 onClick={() => setPanelAbierto({ tipo: "ficha", empleado: null })}
@@ -145,36 +191,79 @@ export default function PanelEmpleados() {
           )}
 
           {estadoCarga === "listo" && empleados.length > 0 && (
-            <TablaEmpleados
-              empleados={empleados}
-              onEditar={(empleado) => setPanelAbierto({ tipo: "ficha", empleado })}
-              onDarDeBaja={(empleado) => setPanelAbierto({ tipo: "baja", empleado })}
-            />
+            <div className="space-y-6">
+              <TablaEmpleados
+                empleados={activos}
+                onEditarPermisos={(empleado) => setPanelAbierto({ tipo: "ficha", empleado })}
+                onCambiarPin={(empleado) => setPanelAbierto({ tipo: "pin", empleado })}
+                onDarDeBaja={(empleado) => setPanelAbierto({ tipo: "baja", empleado })}
+              />
+
+              {/* Separados a propósito: dar de baja no tiene vuelta atrás —
+                  no hay endpoint para reactivar— así que conviene que no
+                  parezcan una fila más de la misma tabla. */}
+              {inactivos.length > 0 && (
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-grafito">Dados de baja</p>
+                  <TablaEmpleados
+                    empleados={inactivos}
+                    onEditarPermisos={() => {}}
+                    onCambiarPin={() => {}}
+                    onDarDeBaja={() => {}}
+                  />
+                </div>
+              )}
+            </div>
           )}
         </main>
       </div>
 
       {panelAbierto?.tipo === "ficha" && (
         <DrawerPanel
-          titulo={panelAbierto.empleado ? "Editar empleado" : "Nuevo empleado"}
+          titulo={panelAbierto.empleado ? "Editar permisos" : "Nuevo empleado"}
           subtitulo={panelAbierto.empleado?.nombre}
           onClose={() => setPanelAbierto(null)}
         >
           <FormFichaEmpleado
             empleado={panelAbierto.empleado}
-            onGuardar={(datos) => (panelAbierto.empleado ? editarPermisos(panelAbierto.empleado.id, datos) : crearEmpleado(datos))}
+            guardando={crear.isPending || actualizarPermisos.isPending}
+            error={errorAccion}
+            onGuardar={guardarFicha}
             onCancelar={() => setPanelAbierto(null)}
           />
         </DrawerPanel>
       )}
 
-      {panelAbierto?.tipo === "baja" && (
-        <ModalPanel titulo="Dar de baja" subtitulo={panelAbierto.empleado.nombre} onClose={() => setPanelAbierto(null)}>
+      {panelAbierto?.tipo === "pin" && (
+        <ModalPanel titulo="Cambiar PIN" subtitulo={panelAbierto.empleado.nombre} onClose={() => setPanelAbierto(null)}>
           <div className="space-y-4">
+            {/* Cambiar el PIN incrementa el tokenVersion del empleado: si está
+                trabajando en el mostrador en este momento, su sesión se corta. */}
             <p className="text-sm text-tinta">
-              <span className="font-semibold">{panelAbierto.empleado.nombre}</span> pierde el acceso al panel de inmediato. No se borra —
-              conservás su historial, pero no va a poder volver a entrar hasta que lo des de alta de nuevo.
+              Si <span className="font-semibold">{panelAbierto.empleado.nombre}</span> está operando una caja ahora
+              mismo, su sesión se cierra y va a tener que volver a entrar con el PIN nuevo.
             </p>
+            <div>
+              <label htmlFor="pin-nuevo" className="mb-1 block text-xs font-semibold text-grafito">
+                PIN nuevo (4 dígitos)
+              </label>
+              <input
+                id="pin-nuevo"
+                autoFocus
+                inputMode="numeric"
+                maxLength={4}
+                value={pinNuevo}
+                onChange={(e) => setPinNuevo(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                placeholder="0000"
+                className="w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
+              />
+              <p className="mt-1 text-xs text-grafito">Nada de secuencias ni repeticiones: el sistema las rechaza.</p>
+            </div>
+            {errorAccion && (
+              <p role="alert" className="text-sm text-cancelado">
+                {errorAccion}
+              </p>
+            )}
             <div className="flex gap-2">
               <button
                 type="button"
@@ -185,11 +274,51 @@ export default function PanelEmpleados() {
               </button>
               <button
                 type="button"
-                onClick={() => confirmarBaja(panelAbierto.empleado)}
-                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-cancelado font-display text-sm font-bold text-white transition-colors hover:bg-cancelado/90 focus:outline-none focus:ring-2 focus:ring-celeste"
+                onClick={() => cambiarPin.mutate({ id: panelAbierto.empleado.id, pin: pinNuevo })}
+                disabled={!PIN_VALIDO.test(pinNuevo) || cambiarPin.isPending}
+                className="flex h-11 flex-1 items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste disabled:opacity-50"
+              >
+                {cambiarPin.isPending ? "Guardando..." : "Cambiar PIN"}
+              </button>
+            </div>
+          </div>
+        </ModalPanel>
+      )}
+
+      {panelAbierto?.tipo === "baja" && (
+        <ModalPanel titulo="Dar de baja" subtitulo={panelAbierto.empleado.nombre} onClose={() => setPanelAbierto(null)}>
+          <div className="space-y-4">
+            <p className="text-sm text-tinta">
+              <span className="font-semibold">{panelAbierto.empleado.nombre}</span> pierde el acceso al mostrador. No se
+              borra: conservás el historial de lo que cobró.
+            </p>
+            {/* No existe endpoint para reactivar, y el chequeo de nombre
+                duplicado sólo mira a los activos: por eso "volver a darlo de
+                alta" funciona, pero crea un empleado nuevo con el mismo nombre. */}
+            <p className="text-sm text-grafito">
+              No se puede reactivar: si vuelve, hay que darlo de alta de nuevo, con un PIN nuevo.
+            </p>
+            {errorAccion && (
+              <p role="alert" className="text-sm text-cancelado">
+                {errorAccion}
+              </p>
+            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setPanelAbierto(null)}
+                className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => darDeBaja.mutate(panelAbierto.empleado.id)}
+                disabled={darDeBaja.isPending}
+                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-cancelado font-display text-sm font-bold text-white transition-colors hover:bg-cancelado/90 focus:outline-none focus:ring-2 focus:ring-celeste disabled:opacity-60"
               >
                 <UserX className="size-4" aria-hidden />
-                Dar de baja
+                {darDeBaja.isPending ? "Dando de baja..." : "Dar de baja"}
               </button>
             </div>
           </div>
