@@ -8,7 +8,6 @@ import { HeaderPanel } from "@/components/panel/header-panel";
 import { GrillaProductosVenta } from "@/components/panel/grilla-productos-venta";
 import { TicketBuffet, type LineaTicket } from "@/components/panel/ticket-buffet";
 import { SkeletonVentaBuffet } from "@/components/panel/skeleton-venta-buffet";
-import { useRolPanel } from "@/lib/rol-panel";
 import { useBloqueadoPorCaja, usePermisos } from "@/lib/permisos";
 import { hoyISO } from "@/lib/fecha";
 
@@ -25,15 +24,12 @@ type EstadoCarga = "cargando" | "error" | "listo";
 
 export default function PanelVenderBuffet() {
   const router = useRouter();
-  const rol = useRolPanel();
   const tienePermiso = usePermisos();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
 
-  // REGISTRAR_VENTA_BUFFET habilita el POST de la venta, pero la pantalla
-  // necesita ANTES el listado de productos, que es OWNER/ADMIN. Un empleado con
-  // el permiso entraba y no podía cargar el catálogo: queda solo-dueño hasta
-  // que el backend abra ese GET.
-  const puedeVender = rol === "dueno";
+  // El catálogo (GET .../productos-buffet) acepta a un empleado con este mismo
+  // permiso: el que puede vender puede ver qué vender.
+  const puedeVender = tienePermiso("REGISTRAR_VENTA_BUFFET");
   const destinoAlternativo = tienePermiso("OPERAR_CAJA") ? "/panel/caja" : null;
 
 

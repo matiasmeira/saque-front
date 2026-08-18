@@ -6,6 +6,7 @@ import { BarChart3, Calendar, CreditCard, History, LayoutGrid, LogOut, Mail, Rec
 import { Isotipo } from "@/components/saque/logo";
 import { useRolPanel } from "@/lib/rol-panel";
 import { usePermisos } from "@/lib/permisos";
+import { PERMISOS_DE_AGENDA } from "@/lib/permisos-empleado";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePerfil } from "@/hooks/api/use-perfil";
 import { borrarToken } from "@/lib/api/sesion";
@@ -35,7 +36,7 @@ const GRUPOS: Grupo[] = [
   {
     label: "Gestión",
     items: [
-      { href: "/panel/agenda", label: "Agenda", icono: Calendar, visible: (_tp, esDueno) => esDueno },
+      { href: "/panel/agenda", label: "Agenda", icono: Calendar, visible: (tp, esDueno) => esDueno || PERMISOS_DE_AGENDA.some(tp) },
       { href: "/panel/canchas", label: "Canchas", icono: LayoutGrid, visible: (_tp, esDueno) => esDueno },
       { href: "/panel/precios", label: "Precios", icono: Tag, visible: (_tp, esDueno) => esDueno },
       // El ClienteController entero es OWNER/ADMIN: no hay PermisoEmpleado que
@@ -47,7 +48,7 @@ const GRUPOS: Grupo[] = [
     label: "Buffet",
     items: [
       { href: "/panel/buffet/productos", label: "Productos", icono: Utensils, visible: (_tp, esDueno) => esDueno },
-      { href: "/panel/buffet/vender", label: "Vender", icono: Utensils, visible: (_tp, esDueno) => esDueno },
+      { href: "/panel/buffet/vender", label: "Vender", icono: Utensils, visible: (tp) => tp("REGISTRAR_VENTA_BUFFET") },
     ],
   },
   {

@@ -1181,7 +1181,7 @@ Hoy la pantalla vive en el panel del complejo, gateada por `esDueno` → un OWNE
 | **Nombre del complejo en `/mis-reservas`** | `ReservaResponse` trae `canchaNombre` pero **no** el establecimiento ni su dirección. Las cards de reserva pierden el "dónde" y el link a Google Maps |
 | **Cookie de caja en desarrollo** | `saque_caja_device` es `SameSite=None; Secure` → **exige HTTPS**. En `http://localhost` el browser puede rechazarla y toda la zona `/caja` queda inutilizable en dev |
 
-### ⛔ B7 — El empleado no puede LEER casi nada, aunque tenga el permiso de la ACCIÓN
+### ✅ B7 — El empleado no podía LEER casi nada aunque tuviera el permiso de la ACCIÓN — **RESUELTO**
 
 Es el bloqueo más grande que queda después de B1, y no se ve leyendo los permisos: se ve leyendo los `@PreAuthorize` de los **listados**.
 
@@ -1207,9 +1207,24 @@ Es el bloqueo más grande que queda después de B1, y no se ve leyendo los permi
 - `CREAR_RESERVA_MANUAL` es el único borde: `/disponibilidad` (200) trae `canchaId` y `canchaNombre`, así que **se podría** armar un alta de turno sin tocar `/canchas`. Hoy `/panel/agenda` no está construida así.
 - `FIJAR_COMENTARIO_DESTACADO` sí es alcanzable (`/feedback` responde 200) pero no hay pantalla de feedback en el panel.
 
-**Qué se hizo mientras tanto**, sin tocar el back: el sidebar de un empleado muestra un solo ítem (Caja), `/caja/pin` rutea a `/panel/caja` y, si la persona no tiene `OPERAR_CAJA`, el kiosco le dice que no tiene ninguna pantalla habilitada en vez de mandarla a un 403. En la ficha de empleado, cada permiso que no se puede ejercer todavía lo aclara debajo del checkbox.
+**Resuelto en el backend** (autorizado por el dueño del producto). No hubo que escribir lógica nueva: `AutorizacionEmpleadoService` ya sabía resolver "dueño, admin o empleado con este permiso" (`validarAccion`) — los listados simplemente llamaban al otro método, `validarPropietarioOAdmin`. El cambio fue:
 
-**Falta:** que los listados del establecimiento acepten `EMPLOYEE` (con el chequeo de permiso adentro del service, como ya hacen las acciones). Es la diferencia entre que Modo Caja sirva para trabajar o sólo para manejar la caja chica.
+| Listado | Ahora lo lee | Dónde |
+|---|---|---|
+| Agenda del día | dueño, admin, o empleado con alguno de los 4 permisos de reserva | `ReservaController` + `ReservaService` |
+| Canchas | el **mismo** conjunto que la agenda | `CanchaController` + `CanchaService` |
+| Productos de buffet | dueño, admin, o empleado con `REGISTRAR_VENTA_BUFFET` | `ProductoBuffetController` + `ProductoBuffetService` |
+
+Dos decisiones que vale la pena registrar:
+
+- **Se agregó `validarLectura(establecimiento, email, Set<PermisoEmpleado>)`**, porque `validarAccion` pide UN permiso y una pantalla no le pertenece a una sola acción: quien cobra, quien cancela y quien marca ausencias necesitan la misma agenda. La lectura se habilita si el empleado puede hacer al menos una de las cosas que se hacen desde ahí.
+- **Las canchas van en el mismo conjunto que la agenda, no sólo en `CREAR_RESERVA_MANUAL`.** La agenda se dibuja POR cancha: sin ese listado no renderiza, aunque la persona sólo vaya a cobrar. Atarlo al permiso "correcto" habría dejado la agenda rota para tres de los cuatro permisos.
+
+**Lo que sigue cerrado, a propósito:** clientes, empleados, historial de caja, reportes y todas las MUTACIONES de canchas y productos. Un empleado con los 7 permisos sigue recibiendo 403 ahí — está cubierto por un test.
+
+`FIJAR_COMENTARIO_DESTACADO` sigue sin pantalla en el panel: es lo único de los 7 que no se puede ejercer, y es un gap del front, no del back.
+
+Cobertura nueva: `LecturaOperativaEmpleadoTest` (9 casos — con permiso ve, sin permiso no, empleado de otro local no, y las lecturas que siguen siendo del dueño). Suite completa del back: 546 verdes.
 
 ---
 
