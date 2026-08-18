@@ -1,11 +1,12 @@
 /**
  * Gastos del complejo (panel del dueño) — costos operativos que se
- * restan de la facturación para llegar al neto real (ver
- * mocks/reportes.ts, bloque "resultado").
+ * restan de la facturación para llegar al neto real (bloque "Resultado"
+ * de /panel/reportes, hoy contra GET .../reportes/resultado).
  *
- * TODO backend: reemplazar por los endpoints reales —
- * GET/POST/PUT/DELETE /establecimientos/{id}/gastos y
- * GET /establecimientos/{id}/reportes/gastos.
+ * Lo que queda acá NO son datos: /panel/gastos ya consume
+ * GET/POST/PUT/DELETE /establecimientos/{id}/gastos. Sobreviven el tipo
+ * `Gasto`, el catálogo `CATEGORIAS_GASTO` y los helpers de totales que usan
+ * las pantallas para presentar lo que trae la API.
  */
 import { crearRand, hashSeed } from "@/lib/prng";
 import { hoyISO, sumarDias } from "@/lib/fecha";

@@ -3,6 +3,21 @@ export function formatearPrecio(monto: number) {
   return `$${monto.toLocaleString("es-AR")}`;
 }
 
+/**
+ * "43%", "0,5%" — porcentajes de los reportes, que llegan del backend en escala
+ * 0–100 con dos decimales.
+ *
+ * Redondear siempre a entero convertiría un 0,46% real en "0%", que se lee como
+ * "no hubo nada" cuando sí hubo: dos turnos en un mes de 434 horas disponibles
+ * dan exactamente eso. Por debajo de 10 se muestra un decimal.
+ */
+export function formatearPorcentaje(valor: number): string {
+  if (valor !== 0 && Math.abs(valor) < 10) {
+    return `${valor.toLocaleString("es-AR", { maximumFractionDigits: 1 })}%`;
+  }
+  return `${Math.round(valor)}%`;
+}
+
 const DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 const MESES = [
   "enero",
