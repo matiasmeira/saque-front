@@ -1,15 +1,16 @@
 import type { Deporte } from "@/lib/api/tipos/comunes";
 
 /**
- * Catálogo de presentación de los deportes que entiende el backend.
+ * Catálogo de presentación de los 6 valores del enum `Deporte` del backend.
  *
- * No coincide con el mock `src/mocks/deportes.ts`, que subdivide fútbol por
- * cantidad de jugadores (futbol-5 / futbol-7 / futbol-11) y no tiene hockey.
- * El backend tiene un único FUTBOL y sí tiene HOCKEY, así que la variante se
- * deriva de `capacidad` de la cancha, no del deporte.
+ * Reemplaza al del mock, que NO era el mismo: subdividía fútbol por cantidad de
+ * jugadores (`futbol-5` / `futbol-7` / `futbol-11`, en minúsculas) y no tenía
+ * hockey. El backend tiene un único `FUTBOL` y sí tiene `HOCKEY`, así que la
+ * variante se deriva de `capacidad` de la cancha, no del deporte.
  *
- * El mock sobrevive mientras queden pantallas sin migrar; este catálogo es el
- * que vale para todo lo que hable con la API.
+ * La diferencia no era cosmética: el formulario de canchas armaba
+ * `CanchaRequest.deportes` con esos valores del mock y el backend los rechaza,
+ * porque no existen en el enum.
  */
 export const DEPORTES: { valor: Deporte; etiqueta: string; abreviatura: string }[] = [
   { valor: "FUTBOL", etiqueta: "Fútbol", abreviatura: "FUT" },

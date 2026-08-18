@@ -1,6 +1,6 @@
 import { Paperclip, Pencil, Trash2 } from "lucide-react";
 import { fechaLarga, formatearPrecio } from "@/lib/formato";
-import { etiquetaCategoriaGasto, type Gasto } from "@/mocks/gastos";
+import { etiquetaCategoriaGasto, type Gasto } from "@/lib/panel/gastos";
 
 const COLUMNAS = "grid-cols-[1fr_1fr_2fr_1fr_auto]";
 

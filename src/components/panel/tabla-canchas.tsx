@@ -1,6 +1,6 @@
 import { Pencil, PowerOff, Wrench } from "lucide-react";
-import { DEPORTES } from "@/mocks/deportes";
-import { esCompuesta, PANEL_CANCHAS, type Cancha } from "@/mocks/canchas";
+import { DEPORTES } from "@/lib/deportes";
+import { esCompuesta, type Cancha } from "@/lib/panel/canchas";
 import { formatearPrecio } from "@/lib/formato";
 import { hoyISO } from "@/lib/fecha";
 
@@ -12,11 +12,16 @@ function ChipDeporte({ valor }: { valor: string }) {
   );
 }
 
-function Composicion({ cancha }: { cancha: Cancha }) {
+/**
+ * Los nombres de las canchas físicas se resuelven contra el listado real que
+ * recibe la tabla, no contra el mock: una compuesta cuyas partes no estén en la
+ * lista (por ejemplo, dadas de baja) cae al `#id`, que es información honesta.
+ */
+function Composicion({ cancha, canchas }: { cancha: Cancha; canchas: Cancha[] }) {
   if (!esCompuesta(cancha)) {
     return <span className="text-sm text-grafito">Física</span>;
   }
-  const nombres = cancha.canchasFisicas.map((id) => PANEL_CANCHAS.find((c) => c.id === id)?.nombre ?? `#${id}`);
+  const nombres = cancha.canchasFisicas.map((id) => canchas.find((c) => c.id === id)?.nombre ?? `#${id}`);
   return (
     <span className="text-sm text-tinta">
       Usa {cancha.canchasNecesarias} de {cancha.canchasFisicas.length}
@@ -122,7 +127,7 @@ export function TablaCanchas({
               {cancha.permiteInicioMediaHora && <span className="block text-[11px] text-grafito">Admite media hora</span>}
             </span>
 
-            <Composicion cancha={cancha} />
+            <Composicion cancha={cancha} canchas={canchas} />
             <CeldaEstado cancha={cancha} />
 
             <div className="flex items-center gap-1 justify-self-end">

@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { hoyISO } from "@/lib/fecha";
-import { CATEGORIAS_GASTO, type CategoriaGasto, type Gasto } from "@/mocks/gastos";
+import { CATEGORIAS_GASTO, type CategoriaGasto, type Gasto } from "@/lib/panel/gastos";
 import { METODOS_PAGO } from "@/lib/metodos-pago";
 import type { MetodoPago } from "@/lib/api/tipos/comunes";
 

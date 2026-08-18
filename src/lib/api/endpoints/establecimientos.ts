@@ -1,4 +1,6 @@
 import { apiFetch } from "../cliente";
+import { construirQuery } from "../query";
+import type { DisponibilidadEstablecimientoResponse } from "../tipos/disponibilidad";
 import type {
   EstablecimientoRequest,
   EstablecimientoResponse,
@@ -26,4 +28,20 @@ export const establecimientos = {
       method: "PUT",
       body,
     }),
+
+  /**
+   * Grilla de horarios libres del establecimiento. La versión de adentro del
+   * panel del gemelo público `/publico/complejos/{slug}/disponibilidad`: acepta
+   * PLAYER, OWNER, ADMIN y EMPLOYEE.
+   *
+   * Ya viene cruzada contra horarios de atención, días no laborables, bloqueos
+   * y reservas, y sin los slots que ya pasaron — es la fuente para ofrecer un
+   * horario al cargar un turno a mano, no una cuenta que haga el front.
+   *
+   * `fecha` es obligatoria; con `fechaFin` devuelve el rango (máximo 31 días).
+   */
+  disponibilidad: (estId: number, fecha: string, fechaFin?: string) =>
+    apiFetch<DisponibilidadEstablecimientoResponse>(
+      `/api/v1/establecimientos/${estId}/disponibilidad${construirQuery({ fecha, fechaFin })}`,
+    ),
 };

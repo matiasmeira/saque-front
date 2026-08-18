@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { DIA_SEMANA_A_BACK, DIA_SEMANA_DESDE_BACK, aHoraBack } from "@/lib/api/fechas";
-import { DIAS_SEMANA, type DiaSemana } from "@/mocks/tarifas";
+import { DIAS_SEMANA, type DiaSemana } from "@/lib/panel/tarifas";
 import type { HorarioAtencionDto, DiaSemanaBack } from "@/lib/api/tipos/comunes";
 
 type Fila = { dia: DiaSemana; cerrado: boolean; abre: string; cierra: string };

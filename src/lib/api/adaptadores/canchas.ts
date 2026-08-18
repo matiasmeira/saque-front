@@ -1,4 +1,4 @@
-import type { Bloqueo, Cancha as CanchaPanel, PrecioPorDuracion } from "@/mocks/canchas";
+import type { Bloqueo, Cancha as CanchaPanel, PrecioPorDuracion } from "@/lib/panel/canchas";
 import type { Deporte } from "@/lib/api/tipos/comunes";
 import type {
   BloqueoCanchaResponse,

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Clock, Dumbbell, MapPin } from "lucide-react";
 import { DEPORTES } from "@/lib/deportes";
-import { FRANJAS } from "@/mocks/franjas";
+import { FRANJAS } from "@/lib/franjas";
 import { CampoFormulario } from "@/components/saque/campo-formulario";
 import { Selector } from "@/components/saque/selector";
 import { SelectorFecha, proximosDias } from "@/components/saque/selector-fecha";

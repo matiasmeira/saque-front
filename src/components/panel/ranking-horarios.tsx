@@ -1,5 +1,5 @@
 import { DIA_SEMANA_DESDE_BACK } from "@/lib/api/fechas";
-import { DIAS_SEMANA } from "@/mocks/tarifas";
+import { DIAS_SEMANA } from "@/lib/panel/tarifas";
 import type { HorarioPedidoDto } from "@/lib/api/tipos/reportes";
 import type { DiaSemanaBack } from "@/lib/api/tipos/comunes";
 

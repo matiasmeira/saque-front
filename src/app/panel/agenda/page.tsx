@@ -8,7 +8,7 @@ import { HeaderPanel } from "@/components/panel/header-panel";
 import { TimelineAgenda, type ColumnaTimeline } from "@/components/panel/timeline-agenda";
 import { SkeletonAgenda } from "@/components/panel/skeleton-agenda";
 import { DrawerPanel } from "@/components/panel/drawer-panel";
-import { FormTurnoRapido } from "@/components/panel/form-turno-rapido";
+import { FormTurnoRapido, type DatosTurnoManual } from "@/components/panel/form-turno-rapido";
 import { DetalleTurno } from "@/components/panel/detalle-turno";
 import { useBloqueadoPorCaja, usePermisos } from "@/lib/permisos";
 import { PERMISOS_DE_AGENDA } from "@/lib/permisos-empleado";
@@ -22,13 +22,12 @@ import { canchas as endpointCanchas } from "@/lib/api/endpoints/canchas";
 import { keys } from "@/lib/api/keys";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { aCanchaPanel } from "@/lib/api/adaptadores/canchas";
-import { aFechaHora } from "@/lib/api/fechas";
 import { useAccionesReserva, useAgenda } from "@/hooks/api/use-agenda";
 import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
+import { rangoDeAgenda } from "@/lib/horarios";
 import type { TurnoConReserva } from "@/lib/api/adaptadores/agenda";
-import type { Turno } from "@/mocks/agenda";
 import type { MetodoPago } from "@/lib/api/tipos/comunes";
-import { type Cancha } from "@/mocks/canchas";
+import { type Cancha } from "@/lib/panel/canchas";
 
 type Vista = "dia" | "semana";
 type PanelAbierto =
@@ -41,11 +40,10 @@ function etiquetaDeportes(cancha: Cancha): string {
   return cancha.deportes.map(abreviaturaDeporte).join(" / ");
 }
 
-// ?mockError=1 y ?mockVacio=1 fuerzan esos estados para poder
-// probarlos sin backend real — mismo patrón que ?mockPago en A7.
-// TODO backend: turnos y disponibilidad vienen de la API — y ahí sí
-// hay que validar el destino de "mover turno" contra disponibilidad
-// real del pool, acá el mock no lo chequea.
+// El destino de "mover turno" NO se valida acá: el backend chequea que la
+// cancha destino sea del mismo establecimiento, que el estado lo permita y que
+// el horario esté libre, y devuelve 409 si el pool no da. Repetir esa cuenta
+// del lado del front sería la clase de duplicación que después miente.
 export default function PanelAgenda() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -62,7 +60,7 @@ export default function PanelAgenda() {
   const puedeCobrarTurnos = tienePermiso("FINALIZAR_RESERVA");
   const puedeCancelarTurnos = tienePermiso("CANCELAR_RESERVA");
 
-  const { establecimientoId } = useEstablecimientoActivo();
+  const { establecimientoId, establecimiento } = useEstablecimientoActivo();
 
   const [fecha, setFecha] = useState(() => hoyISO());
   const [vista, setVista] = useState<Vista>("dia");
@@ -158,20 +156,24 @@ export default function PanelAgenda() {
 
   /**
    * Alta de mostrador: POST /reservas/manual, que nace en CONFIRMADA (no pasa
-   * por el hold de 10 minutos). El formulario emite un `Turno` con fecha y
-   * horas separadas; el backend quiere dos LocalDateTime.
+   * por el hold de 10 minutos).
+   *
+   * Las dos fecha-hora vienen del slot que devolvió la grilla de
+   * disponibilidad, sin rearmar: el backend valida que el inicio caiga en
+   * :00/:30 y que la duración esté entre las permitidas de la cancha.
    */
-  async function agregarTurno(nuevo: Turno) {
-    const cancha = canchas.find((c) => c.id === nuevo.canchaId);
+  async function agregarTurno(datos: DatosTurnoManual) {
+    const cancha = canchas.find((c) => c.id === datos.canchaId);
     setErrorAccion(null);
     try {
       await acciones.crearManual.mutateAsync({
-        canchaId: nuevo.canchaId,
-        fechaHoraInicio: aFechaHora(nuevo.fecha, nuevo.horaInicio),
-        fechaHoraFin: aFechaHora(nuevo.fecha, nuevo.horaFin),
+        canchaId: datos.canchaId,
+        fechaHoraInicio: datos.fechaHoraInicio,
+        fechaHoraFin: datos.fechaHoraFin,
         deporteSeleccionado: (cancha?.deportes[0] ?? "FUTBOL") as never,
-        nombreCliente: nuevo.cliente.nombre,
-        telefonoCliente: nuevo.cliente.telefono || undefined,
+        nombreCliente: datos.nombre,
+        telefonoCliente: datos.telefono || undefined,
+        senaFisicaRecibida: datos.senaFisicaRecibida,
       });
       setPanelAbierto(null);
     } catch (e) {
@@ -245,6 +247,16 @@ export default function PanelAgenda() {
         }));
 
   const diaVacio = vista === "dia" && estadoCarga === "listo" && (turnosPorFecha[fecha] ?? []).length === 0;
+
+  // Los extremos de la grilla salen del horario de atención real, ampliados
+  // para no cortar nada de lo que haya que dibujar. Un EMPLOYEE no puede leer
+  // el establecimiento (no hay GET /establecimientos/{id}), así que para él
+  // manda lo segundo y el rango por defecto.
+  const { abre, cierra } = rangoDeAgenda(
+    establecimiento?.horariosAtencion,
+    dias,
+    columnas.flatMap((col) => [...col.turnos, ...(col.bloqueos ?? [])]),
+  );
 
   return (
     <div className="flex h-dvh bg-humo">
@@ -370,6 +382,8 @@ export default function PanelAgenda() {
                 columnas={columnas}
                 horaActual={horaActual}
                 mostrarLineaAhora={dias.includes(hoyISO())}
+                abre={abre}
+                cierra={cierra}
                 onClickLibre={abrirLibre}
                 onClickTurno={(turno) => setPanelAbierto({ tipo: "detalle", turno: turno as TurnoConReserva })}
               />
@@ -421,7 +435,8 @@ export default function PanelAgenda() {
             horaInicial={panelAbierto.hora}
             nombreInicial={panelAbierto.nombreInicial}
             telefonoInicial={panelAbierto.telefonoInicial}
-            turnosDelDia={turnosPorFecha[panelAbierto.fecha] ?? []}
+            establecimientoId={establecimientoId ?? 0}
+            guardando={acciones.crearManual.isPending}
             onGuardar={agregarTurno}
             onCancelar={() => setPanelAbierto(null)}
           />

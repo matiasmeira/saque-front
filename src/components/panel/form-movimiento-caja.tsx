@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import type { TipoMovimiento } from "@/mocks/caja";
+import type { TipoMovimientoCaja } from "@/lib/api/tipos/comunes";
 
 export type DatosMovimientoCaja = { monto: number; descripcion: string };
 
@@ -13,7 +13,7 @@ export function FormMovimientoCaja({
   onGuardar,
   onCancelar,
 }: {
-  tipo: TipoMovimiento;
+  tipo: TipoMovimientoCaja;
   onGuardar: (datos: DatosMovimientoCaja) => void;
   onCancelar: () => void;
 }) {

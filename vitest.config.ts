@@ -1,8 +1,10 @@
 import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
 
-// Solo cubre la capa de API (src/lib/api): funciones puras que traducen el
-// contrato del backend. Los componentes y hooks se verifican en el browser.
+// Cubre las funciones puras de src/lib: las que traducen el contrato del
+// backend (src/lib/api) y las que derivan de él algo que la UI necesita, como
+// el rango horario de la agenda. Los componentes y hooks se verifican en el
+// browser.
 export default defineConfig({
   resolve: {
     alias: {
@@ -11,6 +13,6 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["src/lib/api/**/*.test.ts"],
+    include: ["src/lib/**/*.test.ts"],
   },
 });

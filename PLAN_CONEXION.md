@@ -1176,6 +1176,21 @@ es `cuerpoHtml` y el template lo inserta con `th:utext` — o sea sin escapar �
 preview va en un `<iframe sandbox>` para renderizarlo de verdad sin darle la página. Verificado: un OWNER recibe 403
 (`{"error":"No está autorizado para enviar ofertas de marketing"}`) y los campos vacíos, un 400 con forma B.
 
+### ⛔ B8 — Los filtros de `/buscar` que no existen
+
+`GET /api/v1/publico/complejos` filtra por `lat`/`lng`/`distanciaKm`, `deporte`, `fecha` y `hora`. Nada más.
+
+La hoja "Más filtros" del buscador ofrecía además **precio máximo**, **superficie**, **techada**, **servicios** y un
+selector de **orden** (más cerca / más barato / mejor puntuado). Ninguno tocaba el listado, y dos de ellos no podrían:
+`superficie` y `techada` **no existen en la entidad `Cancha`**, así que no hay dato que filtrar. El orden tampoco es
+elegible: el backend ordena por `promedioCalificacion` si no hay geo, y por distancia si la hay.
+
+Se sacó la hoja entera. Un control que se mueve y no cambia nada es peor que no tenerlo.
+
+**Falta:** que el endpoint acepte filtros por precio y servicios (los dos datos sí existen: `precioDesde` viene en la
+card y `servicios` en la entidad) y un parámetro de orden. Superficie y techada necesitarían antes campos nuevos en
+`Cancha`.
+
 ### ⚠️ B6 — Bloqueos parciales, no de pantalla completa
 
 | Caso | Detalle |
@@ -1306,10 +1321,42 @@ Cobertura nueva: `LecturaOperativaEmpleadoTest` (9 casos — con permiso ve, sin
 31. ~~`/panel/pagos` — solo la tabla de ventas de buffet (`GET /buffet/ventas`); el bloque de pagos/comisiones queda deshabilitado (B3).~~ ✅ La pantalla pasó a llamarse **Cobros** en el sidebar: sin comisiones ni liquidaciones, lo que muestra son las dos fuentes de ingreso reales.
 32. ~~**Mover Ofertas a `/admin/ofertas`** con gate de ADMIN y sacarla del sidebar del panel (B5).~~ ✅
 
-### Fase 7 — Limpieza
-33. Borrar los mocks sin consumidores. Los que sobrevivan quedan solo como catálogos de presentación (`deportes`, `zonas`, `franjas`, `servicios`).
-34. Barrer las 62 marcas `// TODO backend:` — cerrar las resueltas, reescribir las que ahora apuntan a un bloqueo de §6.
-35. Documentar los flags `?mockError` / `?mockVacio` que se conservaron.
+### Fase 7 — Limpieza ✅
+
+33. ~~Borrar los mocks sin consumidores.~~ ✅ De los 19 módulos de `src/mocks/` queda **uno**: `complejos.ts`, que es
+    el fixture de `/estilo` (la guía de estilo interna, fuera de alcance por definición). Lo que sobrevivió no era mock
+    sino tipos y catálogos, y se mudó a donde corresponde:
+
+    | Ahora | Qué es |
+    |---|---|
+    | `src/lib/metodos-pago.ts`, `src/lib/servicios.ts`, `src/lib/deportes.ts`, `src/lib/franjas.ts` | Catálogos de presentación de enums del backend |
+    | `src/lib/panel/{agenda,canchas,tarifas,gastos}.ts` | La forma que usan las pantallas del panel, que NO es el DTO — la traducción vive en `src/lib/api/adaptadores/` |
+    | `src/lib/horarios.ts` | De qué hora a qué hora se dibuja la agenda, derivado de `horariosAtencion` |
+
+34. ~~Barrer las marcas `// TODO backend:`.~~ ✅ De 62 queda **una**, y no es de contrato: mandar `error.digest` a un
+    servicio de logs (`src/app/error.tsx`).
+
+35. ~~Documentar los flags `?mockError` / `?mockVacio`.~~ ⚠️ **No sobrevivió ninguno.** Se fueron pantalla por pantalla
+    al migrar, y no se reimplementaron como override en `endpoints/` como preveía §3.6. El estado de error se prueba
+    bajando el backend o con una sesión vencida; el vacío, con un período sin actividad o un establecimiento recién
+    creado. Si hacen falta de vuelta, el lugar es `apiFetch` y el gate tiene que ser `NODE_ENV === "development"`.
+
+**Lo que la limpieza destapó.** Barrer los mocks no fue cosmético: varias pantallas ya conectadas seguían leyendo datos
+falsos por abajo.
+
+| Dónde | Qué hacía | Ahora |
+|---|---|---|
+| `form-turno-rapido.tsx` | Ofrecía horarios calculados contra un horario de atención fijo (09–24) y bloqueos del mock, y mostraba un precio de `calcularPrecio()` que ni se enviaba | `GET /establecimientos/{id}/disponibilidad`; el slot se pasa tal cual (`inicio`/`fin`) y el precio lo fija el backend |
+| `form-cancha.tsx` | Armaba `CanchaRequest.deportes` con los valores del mock (`futbol-5`, `padel`…), que **no existen en el enum** del backend | Catálogo real de `src/lib/deportes.ts` |
+| `timeline-agenda.tsx` | Dibujaba la grilla entre horas fijas: un turno anterior a la apertura del mock caía en una fila negativa | `rangoDeAgenda()` sobre `horariosAtencion`, ampliado para no cortar nada |
+| `tabla-canchas.tsx` | Resolvía los nombres de las canchas físicas de una compuesta contra el mock | Contra el listado real |
+| `/ingresar` | Buscaba el nombre del complejo en el array de mocks | `GET /publico/complejos/{slug}` |
+| `form-turno-rapido.tsx` | Un checkbox "se repite todas las semanas" que se descartaba al guardar, y otro de seña que también | El de repetición se fue (no hay forma de marcar la serie); el de seña ahora manda `senaFisicaRecibida` |
+| `detalle-turno.tsx` | Badge "Se repite todas las semanas" que nunca se prendía (`repiteSemanal` siempre `false`) | Se fue |
+| `vista-previa-precio.tsx` | Calculadora de precios que no reproducía `PrecioReservaCalculator`: mostraba $0 donde el backend cobraba proporcional | Se fue (§4.5 ya lo recomendaba) |
+| `filter-sheet.tsx` | Hoja "Más filtros" con precio, superficie, techada y servicios: ninguno filtraba nada | Se fue — ver **B8** |
+| `sesion-caja.ts` | 13 exports que simulaban emparejamiento, revocación y tokens con vencimiento | Sólo lo que sigue siendo del navegador: a qué establecimiento está atada la PC y qué empleado tocó su nombre |
+| `galeria-config.tsx`, `panel-mercadopago.tsx`, `form-politica-cancelacion.tsx` | Componentes huérfanos de las secciones bloqueadas por B4 | Se fueron |
 
 ---
 

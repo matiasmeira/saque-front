@@ -1,4 +1,4 @@
-import type { DiaSemana } from "@/mocks/tarifas";
+import type { DiaSemana } from "@/lib/panel/tarifas";
 
 /**
  * Conversion entre el modelo de fecha de la UI (fecha y hora separadas, como
@@ -45,6 +45,26 @@ export const DIA_SEMANA_DESDE_BACK: Record<DiaSemanaBack, DiaSemana> = {
   SATURDAY: "sab",
   SUNDAY: "dom",
 };
+
+/**
+ * Día de la semana del backend a partir de una fecha ISO.
+ *
+ * Con `T00:00:00` explícito: `new Date("2026-08-13")` se parsea como UTC y en
+ * Argentina (UTC-3) cae en el día anterior.
+ */
+const DIAS_BACK_POR_INDICE: DiaSemanaBack[] = [
+  "SUNDAY",
+  "MONDAY",
+  "TUESDAY",
+  "WEDNESDAY",
+  "THURSDAY",
+  "FRIDAY",
+  "SATURDAY",
+];
+
+export function diaSemanaBackDeFecha(fechaISO: FechaISO): DiaSemanaBack {
+  return DIAS_BACK_POR_INDICE[new Date(`${fechaISO}T00:00:00`).getDay()];
+}
 
 /** `"20:00"` o `"20:00:00"` → `"20:00:00"`. */
 export function aHoraBack(hora: string): HoraISO {

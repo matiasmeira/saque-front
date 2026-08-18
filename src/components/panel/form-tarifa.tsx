@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import type { Cancha } from "@/mocks/canchas";
-import { DIAS_SEMANA, diasEnComun, rangosSeSuperponen, type DiaSemana, type Tarifa } from "@/mocks/tarifas";
+import type { Cancha } from "@/lib/panel/canchas";
+import { DIAS_SEMANA, diasEnComun, rangosSeSuperponen, type DiaSemana, type Tarifa } from "@/lib/panel/tarifas";
 
 function chipClase(activo: boolean) {
   return `h-9 w-9 rounded-full text-xs font-semibold transition-colors ${

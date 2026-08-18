@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Cancha, PrecioPorDuracion } from "@/mocks/canchas";
+import type { Cancha, PrecioPorDuracion } from "@/lib/panel/canchas";
 
 /**
  * Fila por duración, editable directo (sin drawer — es un dato

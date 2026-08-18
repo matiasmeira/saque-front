@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Clock, Dumbbell, MapPin, SlidersHorizontal } from "lucide-react";
+import { CalendarDays, Clock, Dumbbell, MapPin } from "lucide-react";
 import { DEPORTES } from "@/lib/deportes";
-import { FRANJAS } from "@/mocks/franjas";
+import { FRANJAS } from "@/lib/franjas";
 import { Selector } from "@/components/saque/selector";
 import { SelectorFecha } from "@/components/saque/selector-fecha";
 import { SelectorUbicacion, type Ubicacion } from "@/components/saque/selector-ubicacion";
-import { FilterSheet } from "@/components/saque/filter-sheet";
 
 /**
  * Barra de filtros compacta de A2 — versión horizontal de los
@@ -16,6 +15,13 @@ import { FilterSheet } from "@/components/saque/filter-sheet";
  * segunda implementación. Cada cambio renavega /buscar con los params
  * actualizados: es lo más simple que sigue siendo real (sin estado
  * duplicado del lado del cliente que se pueda desincronizar de la URL).
+ *
+ * Estos cuatro campos son TODO lo que `GET /publico/complejos` sabe filtrar
+ * (deporte, fecha, hora y geo). Había además un botón "Más filtros" que abría
+ * una hoja con precio, superficie, techada y servicios: ninguno de esos filtros
+ * existe en el endpoint, y superficie y techada ni siquiera existen en el
+ * modelo. Los controles se movían pero el listado nunca cambiaba, así que la
+ * hoja se sacó — ver B8 en PLAN_CONEXION.md.
  */
 type Filtros = { deporte: string; fecha: string; franja: string };
 
@@ -38,7 +44,6 @@ export function FiltrosResultados({
   ubicacion,
 }: Filtros & { ubicacion: Ubicacion | null }) {
   const router = useRouter();
-  const [sheetAbierta, setSheetAbierta] = useState(false);
   const valores: Filtros = { deporte, fecha, franja };
 
   function navegar(filtros: Filtros, nuevaUbicacion: Ubicacion | null) {
@@ -56,8 +61,7 @@ export function FiltrosResultados({
   }
 
   return (
-    <>
-      <div className="rounded-card bg-white p-4">
+    <div className="rounded-card bg-white p-4">
         <div className="flex flex-wrap items-end gap-3">
           <CampoCompacto icon={<Dumbbell className="size-[18px]" aria-hidden />} label="Deporte">
             <Selector id="f-deporte" value={deporte} onChange={(v) => actualizar({ deporte: v })} opciones={DEPORTES} />
@@ -78,19 +82,7 @@ export function FiltrosResultados({
           <CampoCompacto icon={<Clock className="size-[18px]" aria-hidden />} label="Horario">
             <Selector id="f-franja" value={franja} onChange={(v) => actualizar({ franja: v })} opciones={FRANJAS} />
           </CampoCompacto>
-
-          <button
-            type="button"
-            onClick={() => setSheetAbierta(true)}
-            className="flex h-[46px] items-center gap-2 rounded-full border border-azul px-6 text-sm font-semibold text-azul transition-colors hover:bg-azul hover:text-white"
-          >
-            <SlidersHorizontal className="size-[18px]" aria-hidden />
-            Más filtros
-          </button>
-        </div>
       </div>
-
-      <FilterSheet open={sheetAbierta} onClose={() => setSheetAbierta(false)} />
-    </>
+    </div>
   );
 }
