@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, Calendar, CreditCard, History, LayoutGrid, LogOut, Mail, Receipt, Settings, Tag, Users, Utensils, Wallet } from "lucide-react";
+import { BarChart3, Calendar, CreditCard, History, LayoutGrid, LogOut, Receipt, Settings, Tag, Users, Utensils, Wallet } from "lucide-react";
 import { Isotipo } from "@/components/saque/logo";
 import { useRolPanel } from "@/lib/rol-panel";
 import { usePermisos } from "@/lib/permisos";
@@ -68,7 +68,6 @@ const GRUPOS: Grupo[] = [
       { href: "/panel/gastos", label: "Gastos", icono: Receipt, visible: (_tp, esDueno) => esDueno },
       { href: "/panel/reportes", label: "Reportes", icono: BarChart3, visible: (_tp, esDueno) => esDueno },
       { href: "/panel/configuracion", label: "Configuración", icono: Settings, visible: (_tp, esDueno) => esDueno },
-      { href: "/panel/configuracion/ofertas", label: "Enviar ofertas", icono: Mail, visible: (_tp, esDueno) => esDueno },
     ],
   },
 ];

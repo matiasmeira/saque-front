@@ -1170,6 +1170,12 @@ Hoy la pantalla vive en el panel del complejo, gateada por `esDueno` → un OWNE
 
 > **Depende de la Fase 2**: el gate de ADMIN necesita `/me` y la resolución de rol real. No ejecutar antes.
 
+✅ **Hecho.** La pantalla es `/admin/ofertas`, gateada por `perfil.rol === "ADMIN"`, sin `SidebarPanel` ni link desde
+ningún lado (se entra por URL). A quien no sea ADMIN le explica por qué no puede usarla en vez de redirigirlo. El campo
+es `cuerpoHtml` y el template lo inserta con `th:utext` — o sea sin escapar —, así que el textarea es de HTML y el
+preview va en un `<iframe sandbox>` para renderizarlo de verdad sin darle la página. Verificado: un OWNER recibe 403
+(`{"error":"No está autorizado para enviar ofertas de marketing"}`) y los campos vacíos, un 400 con forma B.
+
 ### ⚠️ B6 — Bloqueos parciales, no de pantalla completa
 
 | Caso | Detalle |
@@ -1298,7 +1304,7 @@ Cobertura nueva: `LecturaOperativaEmpleadoTest` (9 casos — con permiso ve, sin
 29. ~~`/panel/configuracion` — datos básicos + horarios + **servicios** + dispositivos; fotos, política y MercadoPago deshabilitados (B4).~~ ✅
 30. ~~`/panel/configuracion/empleados` — **remapeo completo de permisos** (§5.7) y actualización del sidebar.~~ ✅ Ver **B7**: el remapeo dejó a la vista que un empleado sólo puede leer la caja.
 31. ~~`/panel/pagos` — solo la tabla de ventas de buffet (`GET /buffet/ventas`); el bloque de pagos/comisiones queda deshabilitado (B3).~~ ✅ La pantalla pasó a llamarse **Cobros** en el sidebar: sin comisiones ni liquidaciones, lo que muestra son las dos fuentes de ingreso reales.
-32. **Mover Ofertas a `/admin/ofertas`** con gate de ADMIN y sacarla del sidebar del panel (B5).
+32. ~~**Mover Ofertas a `/admin/ofertas`** con gate de ADMIN y sacarla del sidebar del panel (B5).~~ ✅
 
 ### Fase 7 — Limpieza
 33. Borrar los mocks sin consumidores. Los que sobrevivan quedan solo como catálogos de presentación (`deportes`, `zonas`, `franjas`, `servicios`).
@@ -1359,7 +1365,7 @@ Cobertura nueva: `LecturaOperativaEmpleadoTest` (9 casos — con permiso ve, sin
 - [x] `/panel/reportes` — 5 endpoints en paralelo · `Comparativo` por métrica · ausencias sin comparativo · clientes sólo registrados
 - [x] `/panel/configuracion` — datos + horarios + **servicios** + dispositivos · ⚠️ el PUT va SIEMPRE con los horarios (omitirlos los borra) · `requiereSena` forzada en TRIAL/FREE · ⛔ **B4**: fotos, política y MercadoPago
 - [x] `/panel/configuracion/empleados` — CRUD + cambiar PIN + baja · permisos = los 7 del back · ⛔ **B7**: sólo `OPERAR_CAJA` es ejercible
-- [ ] `/panel/configuracion/ofertas` — 🔀 **B5: mover a `/admin/ofertas` con gate ADMIN** (post Fase 2)
+- [x] `/admin/ofertas` — `POST /admin/mails/oferta` · gate `rol === "ADMIN"` · fuera del sidebar del panel · 202 sin body: no se puede informar a cuántos llegó
 
 ### Fuera de alcance
 - [ ] `/estilo` — guía de estilo interna, no se conecta
