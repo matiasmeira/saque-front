@@ -43,8 +43,8 @@ const TOP_N = 5;
  * por su cuenta.
  *
  * TODO: reporte de demanda insatisfecha (búsquedas sin lugar) — hace falta
- * tráfico real del buscador. Facturación de buffet y productos más vendidos —
- * el backend sólo tiene GET /buffet/ventas/metricas, agregado.
+ * tráfico real del buscador. El buffet no está acá a propósito: sus métricas
+ * viven en Cobros (/panel/pagos), pegadas a la tabla de ventas.
  */
 export default function PanelReportes() {
   const router = useRouter();

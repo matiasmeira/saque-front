@@ -18,7 +18,7 @@ import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { useAgenda } from "@/hooks/api/use-agenda";
 import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
 import type { ProductoBuffetResponse as ProductoBuffet } from "@/lib/api/tipos/buffet";
-import { type MetodoPago } from "@/mocks/pagos";
+import type { MetodoPago } from "@/lib/api/tipos/comunes";
 
 type EstadoCarga = "cargando" | "error" | "listo";
 

@@ -3,7 +3,8 @@
 import { useState, type FormEvent } from "react";
 import { hoyISO } from "@/lib/fecha";
 import { CATEGORIAS_GASTO, type CategoriaGasto, type Gasto } from "@/mocks/gastos";
-import { METODOS_PAGO, type MetodoPago } from "@/mocks/pagos";
+import { METODOS_PAGO } from "@/lib/metodos-pago";
+import type { MetodoPago } from "@/lib/api/tipos/comunes";
 
 export type DatosGasto = {
   fecha: string;

@@ -832,7 +832,7 @@ Corrección en el front: `/ingresar` se convierte en login email+password con un
 | ⚠️ `/panel/caja/cerrado/[turnoId]` | `buscarTurnoCerradoPorId` | `GET …/caja/turnos/{turnoId}` | R | Medio |
 | ✅ `/panel/caja/historial` | `PANEL_HISTORIAL_CAJA` | `GET …/caja/turnos` | R | Bajo |
 | ✅ `/panel/caja/historial/[turnoId]` | `PANEL_HISTORIAL_CAJA` | `GET …/caja/turnos/{turnoId}` | R | Bajo |
-| ⚠️ `/panel/pagos` | `PANEL_PAGOS`, `PANEL_VENTAS` | Ventas ✅ `GET /buffet/ventas` · Pagos ⛔ (parcial: `GET /reportes/facturacion`) | R | — |
+| ⚠️ `/panel/pagos` | `PANEL_PAGOS`, `PANEL_VENTAS` | `GET /reportes/facturacion` + `GET /buffet/ventas` + `/metricas` + `PUT /ventas/{id}/cancelar` | R+U | — |
 | ✅ `/panel/gastos` | `PANEL_GASTOS` | `GET/POST/PUT/DELETE …/gastos` | CRUD | Bajo |
 | ⚠️ `/panel/reportes` | `generarReporte()` | 5 endpoints de `/reportes/*` | R | **Alto** |
 | ⚠️ `/panel/configuracion` | 5 mocks de `config.ts` | `PUT /establecimientos/{id}` (datos + horarios + **servicios** ✅) + dispositivos ✅ | U | Medio |
@@ -1001,7 +1001,7 @@ Dónde lo pide el back:
 | `POST/PUT …/gastos` | `GastoRequest.metodoPago` **@NotNull** | ✅ Sí, `form-ficha-gasto.tsx` |
 | `POST …/caja/movimientos` | — (siempre EFECTIVO) | ✅ Coincide: el form no lo pide |
 
-**Corrección:** agregar un selector de método de pago al flujo de cobro de la agenda. `form-registrar-cobro.tsx` (hoy en `/panel/pagos`) ya tiene exactamente ese control — **reutilizarlo** en `detalle-turno.tsx` en vez de escribir uno nuevo. Ojo: ese form también expone `generoComision`, que no existe en el back (§5.5) — usar solo la parte de `metodoPago`.
+**Corrección:** agregar un selector de método de pago al flujo de cobro de la agenda. Resuelto en `detalle-turno.tsx`; `form-registrar-cobro.tsx` se borró junto con el resto de `/panel/pagos` (exponía `generoComision`, que no existe en el back — §5.5).
 
 ### 5.5 Campos que el front muestra y el DTO real no trae
 
@@ -1124,6 +1124,7 @@ Sin cobertura: `Pago.generoComision`, `comision` (`COMISION_FIJA = 450`), `Estad
 
 > Esto responde el TODO abierto en `mocks/pagos.ts:122-126`: el flag **no existe** en el back.
 > Fuera de alcance por decisión del dueño del producto: pagos y comisiones se abordan más adelante.
+> **Resuelto en el front:** `mocks/pagos.ts` se borró entero. La pantalla se llama **Cobros** y muestra sólo lo que existe — facturación de turnos, ventas de buffet y su ranking. `METODOS_PAGO` sobrevivió como catálogo de presentación en `src/lib/metodos-pago.ts`.
 
 ### ⛔ B4 — `/panel/configuracion` (parcialmente)
 
@@ -1296,7 +1297,7 @@ Cobertura nueva: `LecturaOperativaEmpleadoTest` (9 casos — con permiso ve, sin
 28. ~~`/panel/reportes` — 5 queries en paralelo y reestructuración del `Comparativo` (§4.5).~~ ✅
 29. ~~`/panel/configuracion` — datos básicos + horarios + **servicios** + dispositivos; fotos, política y MercadoPago deshabilitados (B4).~~ ✅
 30. ~~`/panel/configuracion/empleados` — **remapeo completo de permisos** (§5.7) y actualización del sidebar.~~ ✅ Ver **B7**: el remapeo dejó a la vista que un empleado sólo puede leer la caja.
-31. `/panel/pagos` — solo la tabla de ventas de buffet (`GET /buffet/ventas`); el bloque de pagos/comisiones queda deshabilitado (B3).
+31. ~~`/panel/pagos` — solo la tabla de ventas de buffet (`GET /buffet/ventas`); el bloque de pagos/comisiones queda deshabilitado (B3).~~ ✅ La pantalla pasó a llamarse **Cobros** en el sidebar: sin comisiones ni liquidaciones, lo que muestra son las dos fuentes de ingreso reales.
 32. **Mover Ofertas a `/admin/ofertas`** con gate de ADMIN y sacarla del sidebar del panel (B5).
 
 ### Fase 7 — Limpieza
@@ -1353,7 +1354,7 @@ Cobertura nueva: `LecturaOperativaEmpleadoTest` (9 casos — con permiso ve, sin
 - [ ] `/panel/caja/historial/[turnoId]` — `GET /caja/turnos/{turnoId}`
 
 ### Panel — administración
-- [ ] `/panel/pagos` — ventas ✅ `GET /buffet/ventas` · pagos ⛔ **B3: sin comisiones ni liquidación**
+- [x] `/panel/pagos` ("Cobros") — `GET /reportes/facturacion` + `GET /buffet/ventas` + `/metricas` · cancelar venta devuelve stock · ⛔ **B3**: sin comisiones ni liquidación
 - [ ] `/panel/gastos` — CRUD completo · ✅ match 1:1
 - [x] `/panel/reportes` — 5 endpoints en paralelo · `Comparativo` por métrica · ausencias sin comparativo · clientes sólo registrados
 - [x] `/panel/configuracion` — datos + horarios + **servicios** + dispositivos · ⚠️ el PUT va SIEMPRE con los horarios (omitirlos los borra) · `requiereSena` forzada en TRIAL/FREE · ⛔ **B4**: fotos, política y MercadoPago

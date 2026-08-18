@@ -19,16 +19,18 @@ type Grupo = { label: string; items: Item[] };
 /**
  * Qué ve cada quien.
  *
- * El recorte NO sale de los permisos de acción del backend sino de qué
- * LISTADOS puede leer cada rol, que es otra cosa. Verificado con un empleado
- * con los siete permisos: `GET /reservas/establecimiento/{id}`,
- * `GET .../productos-buffet`, `GET .../canchas`, `GET .../clientes` y todo
- * `/reportes/*` responden 403 a un EMPLOYEE. Lo único que un empleado puede
- * cargar hoy es la caja (`/caja/abierta`, `/caja/movimientos`, `/caja/cerrar`).
+ * El recorte NO sale sólo de los permisos de acción: sale de qué LISTADOS puede
+ * leer cada rol, que es otra cosa. Un empleado con FINALIZAR_RESERVA necesita
+ * además poder LEER la agenda para llegar al id del turno que va a cobrar.
  *
- * Por eso el sidebar de un empleado tiene un solo ítem. Mostrarle Agenda o
- * Vender sería mandarlo a una pantalla que no puede cargar: tiene el permiso de
- * la ACCIÓN (finalizar, vender) pero no el de la LECTURA que la precede.
+ * Los tres listados del mostrador — agenda, canchas y productos de buffet — se
+ * abrieron a EMPLOYEE atados al permiso que los usa (B7), y el resto sigue
+ * cerrado: clientes, empleados, turnos de caja y todo `/reportes/*` son
+ * OWNER/ADMIN y le responden 403 a un empleado con los siete permisos. Por eso
+ * esos ítems son `esDueno` a secas y no hay permiso que los habilite.
+ *
+ * Cada `visible` de acá tiene que reflejar el gateo REAL del backend: si deja
+ * pasar de más, el empleado entra a una pantalla que no carga.
  *
  * Ver PLAN_CONEXION.md §5.7 y B7.
  */
@@ -62,7 +64,7 @@ const GRUPOS: Grupo[] = [
   {
     label: "Administración",
     items: [
-      { href: "/panel/pagos", label: "Pagos", icono: CreditCard, visible: (_tp, esDueno) => esDueno },
+      { href: "/panel/pagos", label: "Cobros", icono: CreditCard, visible: (_tp, esDueno) => esDueno },
       { href: "/panel/gastos", label: "Gastos", icono: Receipt, visible: (_tp, esDueno) => esDueno },
       { href: "/panel/reportes", label: "Reportes", icono: BarChart3, visible: (_tp, esDueno) => esDueno },
       { href: "/panel/configuracion", label: "Configuración", icono: Settings, visible: (_tp, esDueno) => esDueno },

@@ -17,7 +17,7 @@ import { useRolPanel } from "@/lib/rol-panel";
 import { useAccionesCaja, useCajaAbierta } from "@/hooks/api/use-caja";
 import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
-import { METODOS_PAGO } from "@/mocks/pagos";
+import { METODOS_PAGO } from "@/lib/metodos-pago";
 import type { MetodoPago } from "@/lib/api/tipos/comunes";
 import type { TipoMovimiento } from "@/mocks/caja";
 

@@ -1,11 +1,6 @@
 import { formatearPrecio } from "@/lib/formato";
-import { METODOS_PAGO } from "@/mocks/pagos";
-import type { MetodoPago } from "@/lib/api/tipos/comunes";
+import { etiquetaMetodoPago } from "@/lib/metodos-pago";
 import type { DesglosePorMetodoPagoDto } from "@/lib/api/tipos/reportes";
-
-function etiquetaMetodo(metodo: MetodoPago): string {
-  return METODOS_PAGO.find((m) => m.valor === metodo)?.etiqueta ?? metodo;
-}
 
 /**
  * Facturación por método real de pago — reemplaza la vieja distinción
@@ -25,7 +20,7 @@ export function DesglosePorMetodo({ datos }: { datos: DesglosePorMetodoPagoDto[]
     <ul className="space-y-2.5">
       {visibles.map((d) => (
         <li key={d.metodoPago} className="flex items-center gap-3">
-          <span className="w-36 shrink-0 truncate text-sm font-semibold text-tinta">{etiquetaMetodo(d.metodoPago)}</span>
+          <span className="w-36 shrink-0 truncate text-sm font-semibold text-tinta">{etiquetaMetodoPago(d.metodoPago)}</span>
           <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-humo">
             <div className="h-full rounded-full bg-azul" style={{ width: `${(d.monto.actual / total) * 100}%` }} />
           </div>
