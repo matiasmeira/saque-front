@@ -38,7 +38,7 @@ export default function ResumenCierreCaja({ params }: { params: Promise<{ turnoI
   const router = useRouter();
   const tienePermiso = usePermisos();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
-  const puedeGestionarCaja = tienePermiso("gestionar_caja");
+  const puedeGestionarCaja = tienePermiso("OPERAR_CAJA");
   const { establecimientoId } = useEstablecimientoActivo();
   const { data: perfil } = usePerfil();
   const queryClient = useQueryClient();

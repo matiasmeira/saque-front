@@ -53,10 +53,13 @@ export default function PanelAgenda() {
   const rol = useRolPanel();
   const horaActual = useHoraActual();
 
-  const puedeVerAgenda = tienePermiso("ver_agenda");
-  const puedeVerClientes = tienePermiso("ver_clientes");
-  const puedeCobrarTurnos = tienePermiso("cobrar_turnos");
-  const puedeCancelarTurnos = tienePermiso("cancelar_turnos");
+  // La agenda pasó a ser solo-dueño: el listado que la alimenta
+  // (GET /reservas/establecimiento/{id}) es @PreAuthorize OWNER/ADMIN, así que
+  // un empleado la abría y recibía 403 aunque tuviera FINALIZAR_RESERVA. Los
+  // permisos de acción se siguen consultando para los botones del detalle.
+  const puedeVerAgenda = rol === "dueno";
+  const puedeCobrarTurnos = tienePermiso("FINALIZAR_RESERVA");
+  const puedeCancelarTurnos = tienePermiso("CANCELAR_RESERVA");
 
   const { establecimientoId } = useEstablecimientoActivo();
 
@@ -90,8 +93,8 @@ export default function PanelAgenda() {
   // hay a dónde mandarlo: se queda en blanco (cuenta mal configurada
   // por el dueño, no un flujo que valga la pena resolver más).
   useEffect(() => {
-    if (!puedeVerAgenda && puedeVerClientes) router.replace("/panel/clientes");
-  }, [puedeVerAgenda, puedeVerClientes, router]);
+    if (!bloqueadoPorCaja && !puedeVerAgenda) router.replace("/panel/caja");
+  }, [bloqueadoPorCaja, puedeVerAgenda, router]);
 
   const dias = diasVisibles(fecha, vista);
   const canchaSeleccionada = canchas.find((c) => c.id === canchaSemana) ?? canchas[0];

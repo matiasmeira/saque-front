@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
 
 import { PantallaKiosco } from "@/components/caja/pantalla-kiosco";
 import { TecladoNumerico } from "@/components/caja/teclado-numerico";
@@ -11,20 +11,24 @@ import { auth, usuarios } from "@/lib/api/endpoints/auth";
 import { mostrador } from "@/lib/api/endpoints/caja";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { keys } from "@/lib/api/keys";
-import { guardarToken } from "@/lib/api/sesion";
+import { borrarToken, guardarToken } from "@/lib/api/sesion";
 import type { PermisoEmpleado } from "@/lib/api/tipos/comunes";
 import { iniciarSesionEmpleado, leerEstablecimientoDispositivo } from "@/lib/sesion-caja";
 
 /**
- * A qué pantalla del panel entra según lo primero que pueda hacer. Se elige una
- * sola vez, al loguearse, con los permisos que devuelve /me — no en cada
- * pantalla. Un empleado sin ninguno de estos igual ve la agenda: es de lectura
- * y el back la deja ver a cualquier miembro del establecimiento.
+ * A qué pantalla del panel entra, según lo primero que pueda hacer. Se elige
+ * una sola vez, al loguearse, con los permisos que devuelve /me.
+ *
+ * Hoy la lista tiene UNA entrada. No es por diseño: es que los listados que
+ * alimentan las demás pantallas son OWNER/ADMIN en el backend
+ * (`GET /reservas/establecimiento/{id}`, `GET .../productos-buffet`,
+ * `GET .../canchas` responden 403 a un EMPLOYEE, verificado). Un empleado
+ * puede tener FINALIZAR_RESERVA y aun así no poder abrir la agenda desde donde
+ * se cobra. Antes se lo mandaba igual y caía en un 403 sin explicación.
+ *
+ * Cuando el backend abra esos GET a EMPLOYEE, alcanza con sumar las rutas acá.
  */
 const RUTA_POR_PERMISO: { permiso: PermisoEmpleado; ruta: string }[] = [
-  { permiso: "CREAR_RESERVA_MANUAL", ruta: "/panel/agenda" },
-  { permiso: "FINALIZAR_RESERVA", ruta: "/panel/agenda" },
-  { permiso: "REGISTRAR_VENTA_BUFFET", ruta: "/panel/buffet/vender" },
   { permiso: "OPERAR_CAJA", ruta: "/panel/caja" },
 ];
 
@@ -57,6 +61,7 @@ export default function PinCaja({ params }: { params: Promise<{ empleadoId: stri
   const empleado = empleados.data?.find((e) => String(e.id) === empleadoId) ?? null;
 
   const [pin, setPin] = useState("");
+  const [sinAcceso, setSinAcceso] = useState(false);
 
   const login = useMutation({
     mutationFn: async (pinIngresado: string) => {
@@ -71,10 +76,18 @@ export default function PinCaja({ params }: { params: Promise<{ empleadoId: stri
       return usuarios.me();
     },
     onSuccess: (perfil) => {
+      const ruta = RUTA_POR_PERMISO.find((r) => perfil.permisos.includes(r.permiso))?.ruta;
+      // Sin una sola pantalla que pueda abrir, entrar al panel sería mandarlo a
+      // un 403. Se le dice acá, en el kiosco, y se suelta el token: dejarlo con
+      // sesión abierta en una PC compartida y sin nada que hacer es peor.
+      if (!ruta) {
+        borrarToken();
+        queryClient.clear();
+        setSinAcceso(true);
+        return;
+      }
       queryClient.setQueryData(keys.perfil(), perfil);
       iniciarSesionEmpleado(empleadoId);
-      const ruta =
-        RUTA_POR_PERMISO.find((r) => perfil.permisos.includes(r.permiso))?.ruta ?? "/panel/agenda";
       router.push(ruta);
     },
     onError: (e) => {
@@ -113,6 +126,28 @@ export default function PinCaja({ params }: { params: Promise<{ empleadoId: stri
   if (!empleado) return <div className="min-h-dvh bg-tinta" />;
 
   const primerNombre = empleado.nombre.split(" ")[0];
+
+  if (sinAcceso) {
+    return (
+      <PantallaKiosco>
+        <div className="flex flex-col items-center gap-4 text-center">
+          <AlertTriangle className="size-14 text-pendiente" aria-hidden />
+          <p className="font-display text-2xl font-bold text-white">Tu PIN es correcto, {primerNombre}</p>
+          <p className="max-w-sm text-base text-[#9DB6D6]">
+            Pero todavía no tenés habilitada ninguna pantalla. Pedile al dueño que te dé el permiso de
+            <span className="font-semibold text-white"> gestionar caja</span>.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push("/caja")}
+            className="mt-2 h-12 rounded-full bg-white px-7 font-display text-base font-bold text-tinta transition-transform hover:scale-95"
+          >
+            Volver
+          </button>
+        </div>
+      </PantallaKiosco>
+    );
+  }
   const bloqueadoPorIntentos = login.error instanceof ApiError && login.error.status === 429;
 
   return (

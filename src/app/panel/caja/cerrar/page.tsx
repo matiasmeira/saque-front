@@ -20,7 +20,7 @@ export default function CerrarCaja() {
   const router = useRouter();
   const tienePermiso = usePermisos();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
-  const puedeGestionarCaja = tienePermiso("gestionar_caja");
+  const puedeGestionarCaja = tienePermiso("OPERAR_CAJA");
   const { establecimientoId } = useEstablecimientoActivo();
   const { caja } = useCajaAbierta(establecimientoId);
   const acciones = useAccionesCaja(establecimientoId);

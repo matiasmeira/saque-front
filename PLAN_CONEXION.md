@@ -1181,6 +1181,36 @@ Hoy la pantalla vive en el panel del complejo, gateada por `esDueno` → un OWNE
 | **Nombre del complejo en `/mis-reservas`** | `ReservaResponse` trae `canchaNombre` pero **no** el establecimiento ni su dirección. Las cards de reserva pierden el "dónde" y el link a Google Maps |
 | **Cookie de caja en desarrollo** | `saque_caja_device` es `SameSite=None; Secure` → **exige HTTPS**. En `http://localhost` el browser puede rechazarla y toda la zona `/caja` queda inutilizable en dev |
 
+### ⛔ B7 — El empleado no puede LEER casi nada, aunque tenga el permiso de la ACCIÓN
+
+Es el bloqueo más grande que queda después de B1, y no se ve leyendo los permisos: se ve leyendo los `@PreAuthorize` de los **listados**.
+
+`PermisoEmpleado` habilita acciones. Pero para ejercer casi cualquiera de ellas hay que leer algo antes, y ese algo es OWNER/ADMIN. Probado con un empleado real con **los siete permisos** tildados:
+
+| Request | EMPLOYEE |
+|---|---|
+| `GET /reservas/establecimiento/{id}?fecha` — la agenda | **403** |
+| `GET …/productos-buffet` — catálogo para vender | **403** |
+| `GET …/canchas` | **403** |
+| `GET …/clientes` | **403** |
+| `GET …/caja/turnos` — historial | **403** |
+| `GET …/reportes/*` | **403** |
+| `GET …/disponibilidad?fecha` | 200 |
+| `GET …/bloqueos?fecha` | 200 |
+| `GET …/feedback` | 200 |
+| `GET …/caja/abierta` · `POST /abrir` · `/movimientos` · `/cerrar` | ✅ |
+
+**Consecuencia:** de los 7 permisos, sólo `OPERAR_CAJA` es ejercible desde el panel.
+
+- `FINALIZAR_RESERVA`, `CANCELAR_RESERVA`, `MARCAR_AUSENTE` necesitan el id de una reserva, y el único listado que lo da es 403.
+- `REGISTRAR_VENTA_BUFFET` puede hacer el POST de la venta, pero no puede listar los productos para armarla.
+- `CREAR_RESERVA_MANUAL` es el único borde: `/disponibilidad` (200) trae `canchaId` y `canchaNombre`, así que **se podría** armar un alta de turno sin tocar `/canchas`. Hoy `/panel/agenda` no está construida así.
+- `FIJAR_COMENTARIO_DESTACADO` sí es alcanzable (`/feedback` responde 200) pero no hay pantalla de feedback en el panel.
+
+**Qué se hizo mientras tanto**, sin tocar el back: el sidebar de un empleado muestra un solo ítem (Caja), `/caja/pin` rutea a `/panel/caja` y, si la persona no tiene `OPERAR_CAJA`, el kiosco le dice que no tiene ninguna pantalla habilitada en vez de mandarla a un 403. En la ficha de empleado, cada permiso que no se puede ejercer todavía lo aclara debajo del checkbox.
+
+**Falta:** que los listados del establecimiento acepten `EMPLOYEE` (con el chequeo de permiso adentro del service, como ya hacen las acciones). Es la diferencia entre que Modo Caja sirva para trabajar o sólo para manejar la caja chica.
+
 ---
 
 ## 7. Orden de ejecución en fases
@@ -1250,7 +1280,7 @@ Hoy la pantalla vive en el panel del complejo, gateada por `esDueno` → un OWNE
 - El gate pasó de `ver_clientes` al **rol**: el `ClienteController` entero es OWNER/ADMIN y no hay ningún `PermisoEmpleado` que lo habilite. El ítem del sidebar también.
 28. ~~`/panel/reportes` — 5 queries en paralelo y reestructuración del `Comparativo` (§4.5).~~ ✅
 29. ~~`/panel/configuracion` — datos básicos + horarios + **servicios** + dispositivos; fotos, política y MercadoPago deshabilitados (B4).~~ ✅
-30. `/panel/configuracion/empleados` — **remapeo completo de permisos** (§5.7) y actualización del sidebar.
+30. ~~`/panel/configuracion/empleados` — **remapeo completo de permisos** (§5.7) y actualización del sidebar.~~ ✅ Ver **B7**: el remapeo dejó a la vista que un empleado sólo puede leer la caja.
 31. `/panel/pagos` — solo la tabla de ventas de buffet (`GET /buffet/ventas`); el bloque de pagos/comisiones queda deshabilitado (B3).
 32. **Mover Ofertas a `/admin/ofertas`** con gate de ADMIN y sacarla del sidebar del panel (B5).
 
@@ -1312,7 +1342,7 @@ Hoy la pantalla vive en el panel del complejo, gateada por `esDueno` → un OWNE
 - [ ] `/panel/gastos` — CRUD completo · ✅ match 1:1
 - [x] `/panel/reportes` — 5 endpoints en paralelo · `Comparativo` por métrica · ausencias sin comparativo · clientes sólo registrados
 - [x] `/panel/configuracion` — datos + horarios + **servicios** + dispositivos · ⚠️ el PUT va SIEMPRE con los horarios (omitirlos los borra) · `requiereSena` forzada en TRIAL/FREE · ⛔ **B4**: fotos, política y MercadoPago
-- [ ] `/panel/configuracion/empleados` — CRUD · ⚠️ **remapeo completo de permisos**
+- [x] `/panel/configuracion/empleados` — CRUD + cambiar PIN + baja · permisos = los 7 del back · ⛔ **B7**: sólo `OPERAR_CAJA` es ejercible
 - [ ] `/panel/configuracion/ofertas` — 🔀 **B5: mover a `/admin/ofertas` con gate ADMIN** (post Fase 2)
 
 ### Fuera de alcance

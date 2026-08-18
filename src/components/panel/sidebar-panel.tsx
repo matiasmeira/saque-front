@@ -5,26 +5,37 @@ import { usePathname, useRouter } from "next/navigation";
 import { BarChart3, Calendar, CreditCard, History, LayoutGrid, LogOut, Mail, Receipt, Settings, Tag, Users, Utensils, Wallet } from "lucide-react";
 import { Isotipo } from "@/components/saque/logo";
 import { useRolPanel } from "@/lib/rol-panel";
-import { usePermisos, useEmpleadoActual } from "@/lib/permisos";
+import { usePermisos } from "@/lib/permisos";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePerfil } from "@/hooks/api/use-perfil";
 import { borrarToken } from "@/lib/api/sesion";
 import { cerrarSesionEmpleado, useEmpleadoIdSesion } from "@/lib/sesion-caja";
-import type { Permiso } from "@/mocks/empleados";
+import type { PermisoEmpleado } from "@/lib/api/tipos/comunes";
 
-type Item = { href: string; label: string; icono: typeof Calendar; visible: (tienePermiso: (p: Permiso) => boolean, esDueno: boolean) => boolean };
+type Item = { href: string; label: string; icono: typeof Calendar; visible: (tienePermiso: (p: PermisoEmpleado) => boolean, esDueno: boolean) => boolean };
 type Grupo = { label: string; items: Item[] };
 
-// Los grupos son fijos (no dependen de rol/permiso, solo sus items):
-// GESTIÓN es el día a día, BUFFET agrupa Productos (C11) y Vender
-// (C12) porque son dos permisos independientes (alguien puede vender
-// sin ver el stock completo, o llevar el stock sin tocar la caja),
-// ADMINISTRACIÓN es todo lo que solo el dueño ve.
+/**
+ * Qué ve cada quien.
+ *
+ * El recorte NO sale de los permisos de acción del backend sino de qué
+ * LISTADOS puede leer cada rol, que es otra cosa. Verificado con un empleado
+ * con los siete permisos: `GET /reservas/establecimiento/{id}`,
+ * `GET .../productos-buffet`, `GET .../canchas`, `GET .../clientes` y todo
+ * `/reportes/*` responden 403 a un EMPLOYEE. Lo único que un empleado puede
+ * cargar hoy es la caja (`/caja/abierta`, `/caja/movimientos`, `/caja/cerrar`).
+ *
+ * Por eso el sidebar de un empleado tiene un solo ítem. Mostrarle Agenda o
+ * Vender sería mandarlo a una pantalla que no puede cargar: tiene el permiso de
+ * la ACCIÓN (finalizar, vender) pero no el de la LECTURA que la precede.
+ *
+ * Ver PLAN_CONEXION.md §5.7 y B7.
+ */
 const GRUPOS: Grupo[] = [
   {
     label: "Gestión",
     items: [
-      { href: "/panel/agenda", label: "Agenda", icono: Calendar, visible: (tp) => tp("ver_agenda") },
+      { href: "/panel/agenda", label: "Agenda", icono: Calendar, visible: (_tp, esDueno) => esDueno },
       { href: "/panel/canchas", label: "Canchas", icono: LayoutGrid, visible: (_tp, esDueno) => esDueno },
       { href: "/panel/precios", label: "Precios", icono: Tag, visible: (_tp, esDueno) => esDueno },
       // El ClienteController entero es OWNER/ADMIN: no hay PermisoEmpleado que
@@ -35,14 +46,15 @@ const GRUPOS: Grupo[] = [
   {
     label: "Buffet",
     items: [
-      { href: "/panel/buffet/productos", label: "Productos", icono: Utensils, visible: (tp) => tp("ver_stock_buffet") },
-      { href: "/panel/buffet/vender", label: "Vender", icono: Utensils, visible: (tp) => tp("vender_buffet") },
+      { href: "/panel/buffet/productos", label: "Productos", icono: Utensils, visible: (_tp, esDueno) => esDueno },
+      { href: "/panel/buffet/vender", label: "Vender", icono: Utensils, visible: (_tp, esDueno) => esDueno },
     ],
   },
   {
     label: "Caja",
     items: [
-      { href: "/panel/caja", label: "Caja", icono: Wallet, visible: (tp) => tp("gestionar_caja") },
+      // El único ítem que un empleado puede abrir de verdad.
+      { href: "/panel/caja", label: "Caja", icono: Wallet, visible: (tp) => tp("OPERAR_CAJA") },
       { href: "/panel/caja/historial", label: "Historial de caja", icono: History, visible: (_tp, esDueno) => esDueno },
     ],
   },
@@ -77,7 +89,6 @@ export function SidebarPanel() {
   const rol = useRolPanel();
   const tienePermiso = usePermisos();
   const empleadoIdSesion = useEmpleadoIdSesion();
-  const empleadoActual = useEmpleadoActual();
   const { data: perfil } = usePerfil();
   const queryClient = useQueryClient();
 
@@ -135,9 +146,7 @@ export function SidebarPanel() {
           que cerrar. Nunca desvincula el dispositivo, solo la persona. */}
       {empleadoIdSesion && (
         <div className="border-t border-white/10 p-3">
-          {(perfil?.nombre ?? empleadoActual?.nombre) && (
-            <p className="truncate px-2.5 pb-2 text-xs text-[#9DB6D6]">{perfil?.nombre ?? empleadoActual?.nombre}</p>
-          )}
+          {perfil?.nombre && <p className="truncate px-2.5 pb-2 text-xs text-[#9DB6D6]">{perfil.nombre}</p>}
           <button
             type="button"
             onClick={salirDeLaCaja}

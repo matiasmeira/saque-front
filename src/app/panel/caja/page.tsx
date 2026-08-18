@@ -29,7 +29,7 @@ export default function PanelCaja() {
   const rol = useRolPanel();
   const tienePermiso = usePermisos();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
-  const puedeGestionarCaja = tienePermiso("gestionar_caja");
+  const puedeGestionarCaja = tienePermiso("OPERAR_CAJA");
 
   const { establecimientoId } = useEstablecimientoActivo();
   const [panelAbierto, setPanelAbierto] = useState<PanelAbierto>(null);

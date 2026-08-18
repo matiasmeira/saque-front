@@ -34,8 +34,10 @@ export default function PanelProductosBuffet() {
   const tienePermiso = usePermisos();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
 
-  const puedeVerStock = tienePermiso("ver_stock_buffet");
-  const destinoAlternativo = tienePermiso("vender_buffet") ? "/panel/buffet/vender" : tienePermiso("ver_agenda") ? "/panel/agenda" : null;
+  // GET .../productos-buffet es @PreAuthorize OWNER/ADMIN: no hay
+  // PermisoEmpleado que lo abra, así que la pantalla es solo del dueño.
+  const puedeVerStock = rol === "dueno";
+  const destinoAlternativo = tienePermiso("OPERAR_CAJA") ? "/panel/caja" : null;
 
   const queryClient = useQueryClient();
   const { establecimientoId } = useEstablecimientoActivo();
