@@ -27,7 +27,6 @@ import type {
 export type DatosCancha = {
   nombre: string;
   deportes: string[];
-  capacidad: number;
   isActive: boolean;
   preciosBase: PrecioPorDuracion[];
   montoSena: number;
@@ -46,7 +45,6 @@ export function aCanchaPanel(cancha: CanchaResponse): CanchaPanel {
     id: cancha.id,
     nombre: cancha.nombre,
     deportes: cancha.deportes,
-    capacidad: cancha.capacidad,
     isActive: cancha.isActive,
     canchasFisicas: cancha.canchasFisicasIds,
     canchasNecesarias: cancha.cantidadCanchasNecesarias,
@@ -79,7 +77,6 @@ export function aCanchaRequest(datos: DatosCancha): CanchaRequest {
   return {
     nombre: datos.nombre,
     deportes: datos.deportes as Deporte[],
-    capacidad: datos.capacidad,
     precioBase,
     montoSena: datos.montoSena,
     duracionesPermitidas: datos.duracionesPermitidas,

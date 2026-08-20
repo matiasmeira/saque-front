@@ -29,7 +29,6 @@ export type TarifaDto = {
 export type CanchaRequest = {
   nombre: string;
   deportes: Deporte[];
-  capacidad: number;
   /** @NotNull @Positive en el backend, además del map por duración. */
   precioBase: number;
   montoSena?: number;
@@ -45,7 +44,6 @@ export type CanchaResponse = {
   id: number;
   nombre: string;
   deportes: Deporte[];
-  capacidad: number;
   isActive: boolean;
   establecimientoId: number;
   precioBase: number;

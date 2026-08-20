@@ -58,7 +58,36 @@ export type MetodoPago =
   | "TARJETA_DEBITO"
   | "TARJETA_CREDITO";
 
-export type Deporte = "FUTBOL" | "PADEL" | "TENIS" | "HOCKEY" | "BASQUET" | "VOLEY";
+export type Deporte =
+  | "PADEL"
+  | "FUTBOL_4"
+  | "FUTBOL_5"
+  | "FUTBOL_6"
+  | "FUTBOL_7"
+  | "FUTBOL_8"
+  | "FUTBOL_9"
+  | "FUTBOL_10"
+  | "FUTBOL_11"
+  | "TENIS"
+  | "BASQUET_3VS3"
+  | "BASQUET_5VS5"
+  | "HOCKEY"
+  | "FUTGOLF"
+  | "GOLF_VIRTUAL"
+  | "PING_PONG"
+  | "VOLEY"
+  | "FRONTON"
+  | "SQUASH"
+  | "PADBOL"
+  | "BEACH_TENIS"
+  | "FUTVOLEY"
+  | "HANDBALL"
+  | "NATACION"
+  | "SURF"
+  | "PICKLEBALL"
+  | "PADEL_SINGLE"
+  | "BEACH_VOLLEY"
+  | "PATINAJE";
 
 export type Servicio =
   | "PARRILLA"

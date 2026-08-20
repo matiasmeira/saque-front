@@ -70,7 +70,7 @@ function CeldaEstado({ cancha }: { cancha: Cancha }) {
   );
 }
 
-const COLUMNAS = "grid-cols-[1.2fr_1fr_0.6fr_1fr_1.2fr_1.6fr_0.9fr_auto]";
+const COLUMNAS = "grid-cols-[1.2fr_1fr_1fr_1.2fr_1.6fr_0.9fr_auto]";
 
 /**
  * Lista de canchas del complejo, físicas y compuestas mezcladas. Un
@@ -93,7 +93,6 @@ export function TablaCanchas({
       <div className={`grid ${COLUMNAS} gap-3 bg-humo px-6 py-3 text-xs font-semibold uppercase tracking-wide text-grafito`}>
         <span>Nombre</span>
         <span>Deportes</span>
-        <span>Cap.</span>
         <span>Precio / seña</span>
         <span>Duración</span>
         <span>Composición</span>
@@ -111,8 +110,6 @@ export function TablaCanchas({
                 <ChipDeporte key={d} valor={d} />
               ))}
             </span>
-
-            <span className="text-sm text-grafito">{cancha.capacidad}</span>
 
             <span className="text-sm text-tinta">
               {cancha.preciosBase.length > 1 ? "Desde " : ""}

@@ -170,7 +170,7 @@ export default function PanelAgenda() {
         canchaId: datos.canchaId,
         fechaHoraInicio: datos.fechaHoraInicio,
         fechaHoraFin: datos.fechaHoraFin,
-        deporteSeleccionado: (cancha?.deportes[0] ?? "FUTBOL") as never,
+        deporteSeleccionado: (cancha?.deportes[0] ?? "FUTBOL_5") as never,
         nombreCliente: datos.nombre,
         telefonoCliente: datos.telefono || undefined,
         senaFisicaRecibida: datos.senaFisicaRecibida,
