@@ -30,6 +30,10 @@ export type DatosEstablecimiento = {
  *
  * Lo que se sumó: **latitud/longitud** (son `@NotNull` en el request, o sea que
  * el PUT ni siquiera pasa sin ellas) y **requiereSena**.
+ *
+ * Sin `establecimiento` (prop opcional) queda en modo creación: arranca con
+ * los campos vacíos y no hay coordenadas por defecto, así que hay que elegir
+ * una localidad antes de poder guardar.
  */
 export function FormDatosComplejo({
   establecimiento,
@@ -37,15 +41,15 @@ export function FormDatosComplejo({
   guardando,
   onGuardar,
 }: {
-  establecimiento: EstablecimientoResponse;
+  establecimiento?: EstablecimientoResponse;
   /** TRIAL y FREE no pueden desactivar la seña: el backend la fuerza. */
   plan: PlanSuscripcion | undefined;
   guardando: boolean;
   onGuardar: (datos: DatosEstablecimiento) => void;
 }) {
-  const [nombre, setNombre] = useState(establecimiento.nombre);
-  const [direccion, setDireccion] = useState(establecimiento.direccion);
-  const [requiereSena, setRequiereSena] = useState(establecimiento.requiereSena);
+  const [nombre, setNombre] = useState(establecimiento?.nombre ?? "");
+  const [direccion, setDireccion] = useState(establecimiento?.direccion ?? "");
+  const [requiereSena, setRequiereSena] = useState(establecimiento?.requiereSena ?? false);
   const [ubicacion, setUbicacion] = useState<Ubicacion | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,13 +61,14 @@ export function FormDatosComplejo({
    */
   const senaForzada = plan === "TRIAL" || plan === "FREE";
 
-  const latitud = ubicacion?.lat ?? establecimiento.latitud;
-  const longitud = ubicacion?.lng ?? establecimiento.longitud;
+  const latitud = ubicacion?.lat ?? establecimiento?.latitud;
+  const longitud = ubicacion?.lng ?? establecimiento?.longitud;
 
   function guardar(e: FormEvent) {
     e.preventDefault();
     if (!nombre.trim()) return setError("Falta el nombre del complejo.");
     if (!direccion.trim()) return setError("Falta la dirección.");
+    if (latitud == null || longitud == null) return setError("Elegí la localidad del complejo.");
     setError(null);
     onGuardar({
       nombre: nombre.trim(),
@@ -104,8 +109,10 @@ export function FormDatosComplejo({
             más preciso. */}
         <p className="mt-1 text-xs text-grafito">
           {ubicacion
-            ? `Se va a guardar en ${ubicacion.etiqueta} (${latitud.toFixed(4)}, ${longitud.toFixed(4)}).`
-            : `Ubicación actual: ${latitud.toFixed(4)}, ${longitud.toFixed(4)}. Buscá una localidad sólo si querés cambiarla.`}
+            ? `Se va a guardar en ${ubicacion.etiqueta} (${latitud!.toFixed(4)}, ${longitud!.toFixed(4)}).`
+            : establecimiento
+              ? `Ubicación actual: ${latitud!.toFixed(4)}, ${longitud!.toFixed(4)}. Buscá una localidad sólo si querés cambiarla.`
+              : "Buscá la localidad donde está el complejo."}
         </p>
       </div>
 

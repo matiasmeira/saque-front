@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, MonitorSmartphone } from "lucide-react";
 
@@ -148,6 +149,11 @@ export default function Caja() {
         empleados={empleados.data}
         onElegir={(empleado) => router.push(`/caja/pin/${empleado.id}`)}
       />
+      <div className="mt-8 text-center">
+        <Link href="/ingresar" className="text-sm text-white/50 hover:text-white">
+          Ingresar como dueño
+        </Link>
+      </div>
     </PantallaKiosco>
   );
 }

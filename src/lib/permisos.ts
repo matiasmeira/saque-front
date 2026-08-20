@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePerfil } from "@/hooks/api/use-perfil";
+import { useHaySesion } from "@/hooks/api/use-sesion";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useEmparejado, useEmpleadoIdSesion } from "@/lib/sesion-caja";
 import type { PermisoEmpleado } from "@/lib/api/tipos/comunes";
@@ -32,18 +33,27 @@ export function usePermisos(): (permiso: PermisoEmpleado) => boolean {
 }
 
 /**
- * true cuando este dispositivo está emparejado como caja (zona E) y no hay
- * ningún empleado logueado — ni "dueño" ni ningún empleado tienen acceso
- * legítimo en ese estado. El atajo de prueba ?rol=... siempre gana (así no
- * rompe los tests ya escritos contra esa convención): esto solo aplica cuando
- * el dispositivo decide todo por sí mismo, sin overrides de URL.
+ * true cuando este dispositivo está emparejado como caja (zona E), no hay
+ * ningún empleado logueado por PIN, y tampoco hay un dueño autenticado. Un
+ * dispositivo emparejado es "kiosco por defecto", no "kiosco para siempre": la
+ * sesión de dueño manda por encima del emparejamiento, así que un OWNER/ADMIN
+ * real nunca cae acá. El atajo de prueba ?rol=... siempre gana (así no rompe
+ * los tests ya escritos contra esa convención): esto solo aplica cuando el
+ * dispositivo decide todo por sí mismo, sin overrides de URL.
  */
 export function useCajaSinEmpleado(): boolean {
   const searchParams = useSearchParams();
   const empleadoIdSesion = useEmpleadoIdSesion();
   const emparejado = useEmparejado();
+  const haySesion = useHaySesion();
+  const { data: perfil, isPending: perfilPendiente } = usePerfil();
   if (searchParams.get("rol")) return false;
-  return emparejado && !empleadoIdSesion;
+  // Hay JWT guardado pero GET /me todavía no resolvió: no se sabe todavía si
+  // es un dueño real. Esperar en vez de expulsarlo por una carrera (mismo
+  // patrón que admin/ofertas/page.tsx).
+  if (haySesion && perfilPendiente) return false;
+  const duenoLogueado = perfil?.rol === "OWNER" || perfil?.rol === "ADMIN";
+  return emparejado && !empleadoIdSesion && !duenoLogueado;
 }
 
 /**

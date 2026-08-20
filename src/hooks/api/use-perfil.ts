@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/api/errores";
 import { keys } from "@/lib/api/keys";
 import { borrarToken, guardarToken } from "@/lib/api/sesion";
 import { useHaySesion } from "@/hooks/api/use-sesion";
+import { guardarEstablecimientoSeleccionado, useEstablecimientoSeleccionado } from "@/lib/establecimiento-seleccionado";
 import type { AuthRequest, PerfilResponse } from "@/lib/api/tipos/auth";
 import type { EstablecimientoResponse } from "@/lib/api/tipos/establecimientos";
 
@@ -45,10 +46,15 @@ export function useEstablecimientoActivo(): {
    * GET /establecimientos/{id}).
    */
   establecimiento: EstablecimientoResponse | null;
+  /** Todos los establecimientos del dueño. Vacío para EMPLOYEE (no aplica). */
+  misEstablecimientos: EstablecimientoResponse[];
+  /** Cambia cuál establecimiento queda activo en este navegador. */
+  seleccionarEstablecimiento: (id: number) => void;
   cargando: boolean;
 } {
   const { data: perfil, isPending: perfilPendiente } = usePerfil();
   const esDuenoOAdmin = perfil?.rol === "OWNER" || perfil?.rol === "ADMIN";
+  const idSeleccionado = useEstablecimientoSeleccionado();
 
   const { data: mios, isPending: misEstablecimientosPendientes } = useQuery({
     queryKey: keys.establecimientos.mios(),
@@ -61,19 +67,32 @@ export function useEstablecimientoActivo(): {
     return {
       establecimientoId: perfil.establecimientoId,
       establecimiento: null,
+      misEstablecimientos: [],
+      seleccionarEstablecimiento: guardarEstablecimientoSeleccionado,
       cargando: false,
     };
   }
 
   if (esDuenoOAdmin) {
+    // Si lo elegido ya no está en la lista (se borró, o quedó de otra
+    // cuenta tras un logout/login), se cae solo al primero.
+    const activo = mios?.find((e) => e.id === idSeleccionado) ?? mios?.[0] ?? null;
     return {
-      establecimientoId: mios?.[0]?.id ?? null,
-      establecimiento: mios?.[0] ?? null,
+      establecimientoId: activo?.id ?? null,
+      establecimiento: activo,
+      misEstablecimientos: mios ?? [],
+      seleccionarEstablecimiento: guardarEstablecimientoSeleccionado,
       cargando: misEstablecimientosPendientes,
     };
   }
 
-  return { establecimientoId: null, establecimiento: null, cargando: perfilPendiente };
+  return {
+    establecimientoId: null,
+    establecimiento: null,
+    misEstablecimientos: [],
+    seleccionarEstablecimiento: guardarEstablecimientoSeleccionado,
+    cargando: perfilPendiente,
+  };
 }
 
 /** Login con email y contraseña. Guarda el token y precarga el perfil. */
