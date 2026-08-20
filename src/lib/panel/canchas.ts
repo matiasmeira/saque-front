@@ -40,7 +40,6 @@ export type Cancha = {
   nombre: string;
   /** valores de DEPORTES — una cancha puede servir para varios */
   deportes: string[];
-  capacidad: number;
   /** indefinido: fuera de servicio hasta que alguien la reactive a mano */
   isActive: boolean;
   /** ids de canchas físicas del pool — vacío = esta cancha ES física */

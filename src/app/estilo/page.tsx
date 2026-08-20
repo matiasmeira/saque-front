@@ -54,7 +54,7 @@ const COMPLEJO_DEMO: ComplejoDetalleResponse = {
   direccion: "Av. Croacia 1250, José C. Paz",
   latitud: -34.5221,
   longitud: -58.7573,
-  deportes: ["FUTBOL", "PADEL"],
+  deportes: ["FUTBOL_5", "PADEL"],
   servicios: ["PARRILLA", "VESTUARIOS", "ESTACIONAMIENTO", "BUFFET", "WIFI"],
   fotos: [],
   horariosAtencion: [
@@ -403,7 +403,7 @@ export default function GuiaDeEstilo() {
               nombre: "Arena Sport Club",
               direccion: "Av. Croacia 1250, José C. Paz",
               fotoPrincipal: null,
-              deportes: ["FUTBOL", "PADEL"],
+              deportes: ["FUTBOL_5", "PADEL"],
               precioDesde: 12000,
               requiereSena: true,
               senaDesde: 4000,

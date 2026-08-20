@@ -3,21 +3,9 @@
 import { useState, type FormEvent } from "react";
 import { Wrench } from "lucide-react";
 import { DEPORTES } from "@/lib/deportes";
-import { DURACIONES_DISPONIBLES, esCompuesta, type Bloqueo, type Cancha, type PrecioPorDuracion } from "@/lib/panel/canchas";
+import { DURACIONES_DISPONIBLES, esCompuesta, type Bloqueo, type Cancha } from "@/lib/panel/canchas";
 import { fechaLarga } from "@/lib/formato";
-
-type DatosCancha = {
-  nombre: string;
-  deportes: string[];
-  capacidad: number;
-  isActive: boolean;
-  preciosBase: PrecioPorDuracion[];
-  montoSena: number;
-  duracionesPermitidas: number[];
-  permiteInicioMediaHora: boolean;
-  canchasFisicas: number[];
-  canchasNecesarias: number | null;
-};
+import type { DatosCancha } from "@/lib/api/adaptadores/canchas";
 
 /** "martes 29 de julio 08:00" — para listar bloqueos en el drawer. */
 function fechaHoraLarga(datetimeLocal: string): string {
@@ -77,7 +65,6 @@ export function FormCancha({
 }) {
   const [nombre, setNombre] = useState(cancha?.nombre ?? "");
   const [deportes, setDeportes] = useState<string[]>(cancha?.deportes ?? []);
-  const [capacidad, setCapacidad] = useState(cancha?.capacidad ?? 10);
   const [activa, setActiva] = useState(cancha?.isActive ?? true);
   const [preciosPorDuracion, setPreciosPorDuracion] = useState<Record<number, number>>(() =>
     Object.fromEntries((cancha?.preciosBase ?? []).map((p) => [p.duracionMinutos, p.precio])),
@@ -116,7 +103,6 @@ export function FormCancha({
     onGuardar({
       nombre: nombre.trim(),
       deportes,
-      capacidad,
       isActive: activa,
       preciosBase: duraciones.map((d) => ({ duracionMinutos: d, precio: preciosPorDuracion[d] })),
       montoSena,
@@ -175,21 +161,6 @@ export function FormCancha({
             </button>
           ))}
         </div>
-      </div>
-
-      <div>
-        <label htmlFor="cancha-capacidad" className="mb-1 block text-xs font-semibold text-grafito">
-          Capacidad (jugadores)
-        </label>
-        <input
-          id="cancha-capacidad"
-          type="number"
-          min={1}
-          required
-          value={capacidad}
-          onChange={(e) => setCapacidad(Number(e.target.value))}
-          className="w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
-        />
       </div>
 
       <div>
