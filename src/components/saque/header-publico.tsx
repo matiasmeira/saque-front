@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { Isotipo } from "@/components/saque/logo";
+import { NavSesion } from "@/components/saque/nav-sesion";
 
 /**
  * Header de zona A y B.
  *
- * "Software para negocios" es un link discreto a propósito: es la
- * puerta de entrada B2B, pero no puede competir visualmente con
- * "Ingresar", que es la acción del jugador que está en esta pantalla.
+ * El slot derecho (antes "Software para negocios" + "Ingresar" fijos) ahora
+ * depende de la sesión: lo resuelve NavSesion (usePerfil()/useHaySesion()).
  */
 type HeaderPublicoProps = {
   /** "oscuro" para fondos tinta (ej. el hero de A1), "claro" para el resto */
@@ -33,20 +33,7 @@ export function HeaderPublico({ variant = "claro", ancho = "5xl" }: HeaderPublic
           </span>
         </Link>
 
-        <nav className="flex items-center gap-5 text-sm">
-          <Link
-            href="/negocios"
-            className={`hidden min-h-11 items-center decoration-celeste decoration-2 underline-offset-4 transition-colors hover:underline sm:inline-flex ${textoSecundario}`}
-          >
-            Software para negocios
-          </Link>
-          <Link
-            href="/ingresar"
-            className={`inline-flex min-h-11 items-center font-semibold decoration-celeste decoration-2 underline-offset-4 transition-colors hover:underline ${texto}`}
-          >
-            Ingresar
-          </Link>
-        </nav>
+        <NavSesion texto={texto} textoSecundario={textoSecundario} oscuro={oscuro} />
       </div>
     </header>
   );
