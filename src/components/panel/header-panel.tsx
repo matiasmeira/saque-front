@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { AlertTriangle, Clock } from "lucide-react";
 
 import { usePerfil, useEstablecimientoActivo } from "@/hooks/api/use-perfil";
+import { SelectorEstablecimiento } from "@/components/panel/selector-establecimiento";
+import { ModalCrearEstablecimiento } from "@/components/panel/modal-crear-establecimiento";
 import type { EstadoComplejo } from "@/lib/panel/agenda";
 
 /**
@@ -34,43 +37,55 @@ export function HeaderPanel({
 } = {}) {
   const { establecimiento } = useEstablecimientoActivo();
   const { data: perfil } = usePerfil();
+  const [creandoComplejo, setCreandoComplejo] = useState(false);
 
-  const nombreVisible = nombre ?? establecimiento?.nombre ?? "";
+  const esDuenoOAdmin = perfil?.rol === "OWNER" || perfil?.rol === "ADMIN";
+  // Para OWNER/ADMIN el nombre ya lo muestra el selector de al lado: repetirlo
+  // acá sería el mismo texto dos veces. Sigue mostrándose para EMPLOYEE (no
+  // tiene selector) y para las pantallas viejas que mandan `nombre` a mano.
+  const nombreVisible = nombre ?? (esDuenoOAdmin ? "" : establecimiento?.nombre) ?? "";
   const estadoVisible =
     estado ??
     (establecimiento ? (establecimiento.isActive ? "publicado" : "despublicado") : undefined);
   const enPrueba = perfil?.planSuscripcion === "TRIAL";
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-borde bg-white px-8">
-      <h1 className="truncate font-display text-base font-bold text-tinta">{nombreVisible}</h1>
+    <>
+      <header className="flex h-16 shrink-0 items-center justify-between border-b border-borde bg-white px-8">
+        <div className="flex min-w-0 items-center gap-4">
+          <h1 className="truncate font-display text-base font-bold text-tinta">{nombreVisible}</h1>
+          <SelectorEstablecimiento onCrear={() => setCreandoComplejo(true)} />
+        </div>
 
-      <div className="flex items-center gap-2">
-        {estadoVisible === "borrador" && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-pendiente-suave px-3 py-1.5 text-xs font-semibold text-pendiente">
-            <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
-            Tu complejo está en borrador · verificando
-          </span>
-        )}
-        {(estadoVisible === "despublicado" || estadoVisible === "suspendido") && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-cancelado-suave px-3 py-1.5 text-xs font-semibold text-cancelado">
-            <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
-            {estadoVisible === "despublicado" ? "Complejo despublicado" : "Complejo suspendido"}
-          </span>
-        )}
-        {estadoVisible === "publicado" && typeof diasRestantesTrial === "number" && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-celeste-suave px-3 py-1.5 text-xs font-semibold text-tinta">
-            <Clock className="size-3.5 shrink-0" aria-hidden />
-            Prueba gratis · quedan {diasRestantesTrial} días
-          </span>
-        )}
-        {estadoVisible === "publicado" && diasRestantesTrial === undefined && enPrueba && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-celeste-suave px-3 py-1.5 text-xs font-semibold text-tinta">
-            <Clock className="size-3.5 shrink-0" aria-hidden />
-            Prueba gratuita
-          </span>
-        )}
-      </div>
-    </header>
+        <div className="flex items-center gap-2">
+          {estadoVisible === "borrador" && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-pendiente-suave px-3 py-1.5 text-xs font-semibold text-pendiente">
+              <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
+              Tu complejo está en borrador · verificando
+            </span>
+          )}
+          {(estadoVisible === "despublicado" || estadoVisible === "suspendido") && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-cancelado-suave px-3 py-1.5 text-xs font-semibold text-cancelado">
+              <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
+              {estadoVisible === "despublicado" ? "Complejo despublicado" : "Complejo suspendido"}
+            </span>
+          )}
+          {estadoVisible === "publicado" && typeof diasRestantesTrial === "number" && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-celeste-suave px-3 py-1.5 text-xs font-semibold text-tinta">
+              <Clock className="size-3.5 shrink-0" aria-hidden />
+              Prueba gratis · quedan {diasRestantesTrial} días
+            </span>
+          )}
+          {estadoVisible === "publicado" && diasRestantesTrial === undefined && enPrueba && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-celeste-suave px-3 py-1.5 text-xs font-semibold text-tinta">
+              <Clock className="size-3.5 shrink-0" aria-hidden />
+              Prueba gratuita
+            </span>
+          )}
+        </div>
+      </header>
+
+      {creandoComplejo && <ModalCrearEstablecimiento onClose={() => setCreandoComplejo(false)} />}
+    </>
   );
 }

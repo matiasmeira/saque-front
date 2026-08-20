@@ -8,9 +8,9 @@ import { useRolPanel } from "@/lib/rol-panel";
 import { usePermisos } from "@/lib/permisos";
 import { PERMISOS_DE_AGENDA } from "@/lib/permisos-empleado";
 import { useQueryClient } from "@tanstack/react-query";
-import { usePerfil } from "@/hooks/api/use-perfil";
+import { usePerfil, useLogout } from "@/hooks/api/use-perfil";
 import { borrarToken } from "@/lib/api/sesion";
-import { cerrarSesionEmpleado, useEmpleadoIdSesion } from "@/lib/sesion-caja";
+import { cerrarSesionEmpleado, useEmparejado, useEmpleadoIdSesion } from "@/lib/sesion-caja";
 import type { PermisoEmpleado } from "@/lib/api/tipos/comunes";
 
 type Item = { href: string; label: string; icono: typeof Calendar; visible: (tienePermiso: (p: PermisoEmpleado) => boolean, esDueno: boolean) => boolean };
@@ -91,8 +91,10 @@ export function SidebarPanel() {
   const rol = useRolPanel();
   const tienePermiso = usePermisos();
   const empleadoIdSesion = useEmpleadoIdSesion();
+  const emparejado = useEmparejado();
   const { data: perfil } = usePerfil();
   const queryClient = useQueryClient();
+  const logout = useLogout();
 
   /**
    * Devuelve el mostrador a la pantalla de nombres. Tiene que soltar el JWT del
@@ -110,6 +112,17 @@ export function SidebarPanel() {
     borrarToken();
     queryClient.clear();
     router.push("/caja");
+  }
+
+  /**
+   * Logout real de dueño: a diferencia de salirDeLaCaja, sí llama a
+   * POST /auth/logout (invalida el JWT en el server). El destino depende de si
+   * ESTA PC quedó emparejada como caja — nunca se toca el emparejamiento acá,
+   * solo se lee.
+   */
+  async function cerrarSesionDueno() {
+    await logout.mutateAsync().catch(() => {});
+    router.push(emparejado ? "/caja" : "/ingresar");
   }
 
   return (
@@ -156,6 +169,25 @@ export function SidebarPanel() {
           >
             <LogOut className="size-[18px] shrink-0" aria-hidden />
             Salir / cambiar de empleado
+          </button>
+        </div>
+      )}
+
+      {/* Mutuamente excluyente con el bloque de arriba: un dueño real nunca
+          tiene empleadoIdSesion seteado. Se chequea perfil.rol directamente
+          (no useRolPanel(), que en desarrollo sin perfil cae por defecto a
+          "dueno") para no mostrar este botón sin una sesión real. */}
+      {!empleadoIdSesion && (perfil?.rol === "OWNER" || perfil?.rol === "ADMIN") && (
+        <div className="border-t border-white/10 p-3">
+          {perfil?.nombre && <p className="truncate px-2.5 pb-2 text-xs text-[#9DB6D6]">{perfil.nombre}</p>}
+          <button
+            type="button"
+            onClick={cerrarSesionDueno}
+            disabled={logout.isPending}
+            className="flex h-10 w-full items-center gap-2.5 rounded-input pl-2.5 pr-3 text-sm font-semibold text-[#9DB6D6] transition-colors hover:bg-white/5 hover:text-white disabled:opacity-60"
+          >
+            <LogOut className="size-[18px] shrink-0" aria-hidden />
+            {logout.isPending ? "Cerrando sesión..." : "Cerrar sesión"}
           </button>
         </div>
       )}
