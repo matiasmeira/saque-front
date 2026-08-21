@@ -12,7 +12,7 @@ import { ProductosMasVendidos } from "@/components/panel/productos-mas-vendidos"
 import { SkeletonPagos } from "@/components/panel/skeleton-pagos";
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { useRolPanel } from "@/lib/rol-panel";
-import { useBloqueadoPorCaja } from "@/lib/permisos";
+import { useBloqueadoPorCaja, usePerfilPendiente } from "@/lib/permisos";
 import { finMes, finSemana, hoyISO, inicioMes, inicioSemana } from "@/lib/fecha";
 import { etiquetaMetodoPago } from "@/lib/metodos-pago";
 import { formatearPrecio } from "@/lib/formato";
@@ -86,6 +86,7 @@ export default function PanelPagos() {
   const router = useRouter();
   const rol = useRolPanel();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
+  const perfilPendiente = usePerfilPendiente();
   const queryClient = useQueryClient();
   const { establecimientoId } = useEstablecimientoActivo();
 
@@ -100,8 +101,8 @@ export default function PanelPagos() {
   // router.replace("/caja") de useBloqueadoPorCaja. El backend igual responde
   // 403: tanto /reportes/* como el listado de ventas son OWNER/ADMIN.
   useEffect(() => {
-    if (!bloqueadoPorCaja && rol === "empleado") router.replace("/panel/agenda");
-  }, [bloqueadoPorCaja, rol, router]);
+    if (!bloqueadoPorCaja && !perfilPendiente && rol === "empleado") router.replace("/panel/agenda");
+  }, [bloqueadoPorCaja, perfilPendiente, rol, router]);
 
   const habilitado = establecimientoId !== null;
   const estado = filtroEstado === "todas" ? undefined : filtroEstado;

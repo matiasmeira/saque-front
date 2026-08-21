@@ -9,7 +9,10 @@ export default function Home() {
       <div className="relative overflow-hidden bg-tinta">
         <HeaderPublico variant="oscuro" />
         <LineasDeCancha className="opacity-[0.16]" />
-        <div className="relative z-10 mx-auto max-w-5xl px-5 pb-20 pt-6 sm:px-8 sm:pb-28 sm:pt-10">
+        {/* pointer-events-none: es puro texto decorativo, sin nada clickeable
+            adentro. Sin esto, este div (mismo z-10 que el header, y después
+            en el DOM) tapa el menú de usuario y le come los clicks/hover. */}
+        <div className="relative z-10 mx-auto max-w-5xl px-5 pb-20 pt-6 pointer-events-none sm:px-8 sm:pb-28 sm:pt-10">
           <h1 className="text-[clamp(2.75rem,7vw,4.5rem)] font-display font-extrabold leading-[0.95] tracking-[-0.03em] text-white">
             <span className="block">Reservá tu cancha</span>
             <span className="block">en 30 segundos</span>

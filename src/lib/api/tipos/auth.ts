@@ -92,3 +92,7 @@ export type SolicitarCodigoRequest = {
 export type VerificarCodigoRequest = {
   codigo: string;
 };
+
+export type EliminarCuentaRequest = {
+  password: string;
+};

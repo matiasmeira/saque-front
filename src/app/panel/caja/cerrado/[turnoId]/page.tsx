@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Printer } from "lucide-react";
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
-import { useBloqueadoPorCaja, usePermisos } from "@/lib/permisos";
+import { useBloqueadoPorCaja, usePerfilPendiente, usePermisos } from "@/lib/permisos";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { caja as endpointCaja } from "@/lib/api/endpoints/caja";
 import { keys } from "@/lib/api/keys";
@@ -38,6 +38,7 @@ export default function ResumenCierreCaja({ params }: { params: Promise<{ turnoI
   const router = useRouter();
   const tienePermiso = usePermisos();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
+  const perfilPendiente = usePerfilPendiente();
   const puedeGestionarCaja = tienePermiso("OPERAR_CAJA");
   const { establecimientoId } = useEstablecimientoActivo();
   const { data: perfil } = usePerfil();
@@ -86,8 +87,8 @@ export default function ResumenCierreCaja({ params }: { params: Promise<{ turnoI
   const movimientos = detalle?.movimientos ?? [];
 
   useEffect(() => {
-    if (!bloqueadoPorCaja && !puedeGestionarCaja) router.replace("/panel/agenda");
-  }, [bloqueadoPorCaja, puedeGestionarCaja, router]);
+    if (!bloqueadoPorCaja && !perfilPendiente && !puedeGestionarCaja) router.replace("/panel/agenda");
+  }, [bloqueadoPorCaja, perfilPendiente, puedeGestionarCaja, router]);
 
   if (bloqueadoPorCaja || !puedeGestionarCaja) return <div className="min-h-dvh bg-humo" />;
 

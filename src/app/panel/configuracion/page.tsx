@@ -24,7 +24,7 @@ import type { DispositivoCajaResponse } from "@/lib/api/tipos/caja";
 import type { EstablecimientoRequest } from "@/lib/api/tipos/establecimientos";
 import type { HorarioAtencionDto, Servicio } from "@/lib/api/tipos/comunes";
 import { useRolPanel } from "@/lib/rol-panel";
-import { useBloqueadoPorCaja } from "@/lib/permisos";
+import { useBloqueadoPorCaja, usePerfilPendiente } from "@/lib/permisos";
 import { guardarDispositivo, useEmparejado } from "@/lib/sesion-caja";
 
 type SeccionGuardable = "datos" | "horarios" | "servicios";
@@ -73,6 +73,7 @@ export default function PanelConfiguracion() {
   const router = useRouter();
   const rol = useRolPanel();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
+  const perfilPendiente = usePerfilPendiente();
   const queryClient = useQueryClient();
   const { data: perfil } = usePerfil();
   const { establecimientoId, establecimiento, cargando } = useEstablecimientoActivo();
@@ -163,8 +164,8 @@ export default function PanelConfiguracion() {
   // useBloqueadoPorCaja con uno a /panel/agenda — dejando al dueño viendo un
   // panel que ya no le correspondía en vez de la pantalla de nombres del kiosco.
   useEffect(() => {
-    if (!bloqueadoPorCaja && rol === "empleado") router.replace("/panel/agenda");
-  }, [bloqueadoPorCaja, rol, router]);
+    if (!bloqueadoPorCaja && !perfilPendiente && rol === "empleado") router.replace("/panel/agenda");
+  }, [bloqueadoPorCaja, perfilPendiente, rol, router]);
 
   if (bloqueadoPorCaja || rol === "empleado") return <div className="min-h-dvh bg-humo" />;
 

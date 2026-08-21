@@ -15,7 +15,7 @@ import { RankingHorarios } from "@/components/panel/ranking-horarios";
 import { TopClientes } from "@/components/panel/top-clientes";
 import { SkeletonReportes } from "@/components/panel/skeleton-reportes";
 import { useRolPanel } from "@/lib/rol-panel";
-import { useBloqueadoPorCaja } from "@/lib/permisos";
+import { useBloqueadoPorCaja, usePerfilPendiente } from "@/lib/permisos";
 import { finMes, finSemana, hoyISO, inicioMes, inicioSemana } from "@/lib/fecha";
 import { formatearPorcentaje, formatearPrecio } from "@/lib/formato";
 import { reportes } from "@/lib/api/endpoints/reportes";
@@ -50,6 +50,7 @@ export default function PanelReportes() {
   const router = useRouter();
   const rol = useRolPanel();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
+  const perfilPendiente = usePerfilPendiente();
   const { establecimientoId } = useEstablecimientoActivo();
 
   const [desde, setDesde] = useState(() => inicioMes(hoyISO()));
@@ -60,8 +61,8 @@ export default function PanelReportes() {
   // router.replace("/caja") de useBloqueadoPorCaja. El backend igual responde
   // 403: los siete endpoints son @PreAuthorize("hasAnyRole('OWNER','ADMIN')").
   useEffect(() => {
-    if (!bloqueadoPorCaja && rol === "empleado") router.replace("/panel/agenda");
-  }, [bloqueadoPorCaja, rol, router]);
+    if (!bloqueadoPorCaja && !perfilPendiente && rol === "empleado") router.replace("/panel/agenda");
+  }, [bloqueadoPorCaja, perfilPendiente, rol, router]);
 
   const habilitado = establecimientoId !== null;
   const periodo = { desde, hasta };

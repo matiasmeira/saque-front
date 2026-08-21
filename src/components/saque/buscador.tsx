@@ -34,12 +34,20 @@ import { SelectorUbicacion, type Ubicacion } from "@/components/saque/selector-u
 export function Buscador() {
   const router = useRouter();
   const dias = proximosDias(14);
+  // "Próximo sábado/domingo" puede caer en "Hoy" o "Mañana" (ej. hoy viernes
+  // -> mañana YA es el próximo sábado): sin el dedupe por valor, esos dos
+  // chips quedan con la misma key y React tira el warning de keys duplicadas.
+  const valoresVistos = new Set<string>();
   const chips = [
     dias[0],
     dias[1],
     dias.find((d) => d.fecha.getDay() === 6)!,
     dias.find((d) => d.fecha.getDay() === 0)!,
-  ];
+  ].filter((chip) => {
+    if (valoresVistos.has(chip.valor)) return false;
+    valoresVistos.add(chip.valor);
+    return true;
+  });
 
   const [deporte, setDeporte] = useState<string>(DEPORTES[0].valor);
   const [ubicacion, setUbicacion] = useState<Ubicacion | null>(null);

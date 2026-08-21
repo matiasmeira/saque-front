@@ -45,15 +45,31 @@ export function useCajaSinEmpleado(): boolean {
   const searchParams = useSearchParams();
   const empleadoIdSesion = useEmpleadoIdSesion();
   const emparejado = useEmparejado();
-  const haySesion = useHaySesion();
-  const { data: perfil, isPending: perfilPendiente } = usePerfil();
+  const perfilPendiente = usePerfilPendiente();
+  const { data: perfil } = usePerfil();
   if (searchParams.get("rol")) return false;
   // Hay JWT guardado pero GET /me todavía no resolvió: no se sabe todavía si
   // es un dueño real. Esperar en vez de expulsarlo por una carrera (mismo
   // patrón que admin/ofertas/page.tsx).
-  if (haySesion && perfilPendiente) return false;
+  if (perfilPendiente) return false;
   const duenoLogueado = perfil?.rol === "OWNER" || perfil?.rol === "ADMIN";
   return emparejado && !empleadoIdSesion && !duenoLogueado;
+}
+
+/**
+ * true si hay una sesión guardada (JWT en localStorage) pero GET /me todavía
+ * no resolvió. Mientras está en vuelo, useRolPanel() cae a "empleado" y
+ * usePermisos() a "sin permisos" — son valores por defecto, no un dato real.
+ * Cualquier efecto que redirija por rol o por permiso tiene que esperar esto
+ * antes de disparar: si no, un dueño real (o un empleado con el permiso real)
+ * puede terminar expulsado de la pantalla que pidió por ese default
+ * transitorio en cada F5 o entrada directa por URL — y esa navegación no se
+ * deshace sola cuando el perfil de verdad llega.
+ */
+export function usePerfilPendiente(): boolean {
+  const haySesion = useHaySesion();
+  const { isPending } = usePerfil();
+  return haySesion && isPending;
 }
 
 /**

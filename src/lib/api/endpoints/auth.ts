@@ -4,6 +4,7 @@ import type {
   AuthRequest,
   AuthResponse,
   CompletarRegistroRequest,
+  EliminarCuentaRequest,
   EmpleadoLoginRequest,
   IniciarRegistroRequest,
   PerfilResponse,
@@ -107,5 +108,17 @@ export const usuarios = {
     apiFetch<void>("/api/v1/usuarios/telefono/verificar-codigo", {
       method: "POST",
       body,
+    }),
+
+  /**
+   * 204. Pide la contraseña actual como confirmación. El back devuelve 401 si
+   * no coincide y 400 si es un OWNER con complejos activos (guardrail).
+   */
+  eliminar: (body: EliminarCuentaRequest) =>
+    apiFetch<void>("/api/v1/usuarios/me", {
+      method: "DELETE",
+      body,
+      // Un 401 acá es "contraseña incorrecta", no sesión muerta.
+      borrarTokenEn401: false,
     }),
 };

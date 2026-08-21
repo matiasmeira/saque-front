@@ -12,7 +12,7 @@ import { TablaMovimientosCaja } from "@/components/panel/tabla-movimientos-caja"
 import { FormMovimientoCaja, type DatosMovimientoCaja } from "@/components/panel/form-movimiento-caja";
 import { SkeletonCaja } from "@/components/panel/skeleton-caja";
 import { DrawerPanel } from "@/components/panel/drawer-panel";
-import {useBloqueadoPorCaja, usePermisos } from "@/lib/permisos";
+import { useBloqueadoPorCaja, usePerfilPendiente, usePermisos } from "@/lib/permisos";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useAccionesCaja, useCajaAbierta } from "@/hooks/api/use-caja";
 import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
@@ -29,6 +29,7 @@ export default function PanelCaja() {
   const rol = useRolPanel();
   const tienePermiso = usePermisos();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
+  const perfilPendiente = usePerfilPendiente();
   const puedeGestionarCaja = tienePermiso("OPERAR_CAJA");
 
   const { establecimientoId } = useEstablecimientoActivo();
@@ -36,8 +37,8 @@ export default function PanelCaja() {
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!bloqueadoPorCaja && !puedeGestionarCaja) router.replace("/panel/agenda");
-  }, [bloqueadoPorCaja, puedeGestionarCaja, router]);
+    if (!bloqueadoPorCaja && !perfilPendiente && !puedeGestionarCaja) router.replace("/panel/agenda");
+  }, [bloqueadoPorCaja, perfilPendiente, puedeGestionarCaja, router]);
 
   const { caja, movimientos, puedeVerMovimientos, cargando, error, refetch } =
     useCajaAbierta(establecimientoId);

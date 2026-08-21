@@ -10,7 +10,7 @@ import { SkeletonAgenda } from "@/components/panel/skeleton-agenda";
 import { DrawerPanel } from "@/components/panel/drawer-panel";
 import { FormTurnoRapido, type DatosTurnoManual } from "@/components/panel/form-turno-rapido";
 import { DetalleTurno } from "@/components/panel/detalle-turno";
-import { useBloqueadoPorCaja, usePermisos } from "@/lib/permisos";
+import { useBloqueadoPorCaja, usePerfilPendiente, usePermisos } from "@/lib/permisos";
 import { PERMISOS_DE_AGENDA } from "@/lib/permisos-empleado";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useHoraActual } from "@/lib/hora-actual";
@@ -49,6 +49,7 @@ export default function PanelAgenda() {
   const searchParams = useSearchParams();
   const tienePermiso = usePermisos();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
+  const perfilPendiente = usePerfilPendiente();
   const rol = useRolPanel();
   const horaActual = useHoraActual();
 
@@ -92,8 +93,8 @@ export default function PanelAgenda() {
   // hay a dónde mandarlo: se queda en blanco (cuenta mal configurada
   // por el dueño, no un flujo que valga la pena resolver más).
   useEffect(() => {
-    if (!bloqueadoPorCaja && !puedeVerAgenda) router.replace("/panel/caja");
-  }, [bloqueadoPorCaja, puedeVerAgenda, router]);
+    if (!bloqueadoPorCaja && !perfilPendiente && !puedeVerAgenda) router.replace("/panel/caja");
+  }, [bloqueadoPorCaja, perfilPendiente, puedeVerAgenda, router]);
 
   const dias = diasVisibles(fecha, vista);
   const canchaSeleccionada = canchas.find((c) => c.id === canchaSemana) ?? canchas[0];

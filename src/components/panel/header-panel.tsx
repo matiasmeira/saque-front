@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { AlertTriangle, Clock } from "lucide-react";
 
 import { usePerfil, useEstablecimientoActivo } from "@/hooks/api/use-perfil";
@@ -48,6 +49,12 @@ export function HeaderPanel({
     estado ??
     (establecimiento ? (establecimiento.isActive ? "publicado" : "despublicado") : undefined);
   const enPrueba = perfil?.planSuscripcion === "TRIAL";
+  // Un complejo sin ningún horario de atención cargado no tiene ningún día
+  // en el que "esté abierto": ComplejoPublicoService lo excluye de /buscar
+  // apenas alguien pide fecha/hora (que es siempre, desde el front público),
+  // aunque tenga canchas activas y esté publicado. Sin este aviso el dueño no
+  // tiene forma de enterarse de que su complejo es invisible.
+  const sinHorarios = esDuenoOAdmin && !!establecimiento && establecimiento.horariosAtencion.length === 0;
 
   return (
     <>
@@ -58,6 +65,15 @@ export function HeaderPanel({
         </div>
 
         <div className="flex items-center gap-2">
+          {sinHorarios && (
+            <Link
+              href="/panel/configuracion"
+              className="inline-flex items-center gap-1.5 rounded-full bg-pendiente-suave px-3 py-1.5 text-xs font-semibold text-pendiente hover:underline"
+            >
+              <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
+              Sin horarios cargados · no aparecés en las búsquedas
+            </Link>
+          )}
           {estadoVisible === "borrador" && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-pendiente-suave px-3 py-1.5 text-xs font-semibold text-pendiente">
               <AlertTriangle className="size-3.5 shrink-0" aria-hidden />

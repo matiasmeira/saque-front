@@ -9,7 +9,7 @@ import { HeaderPanel } from "@/components/panel/header-panel";
 import { TablaClientes, type ColumnaOrdenable, type Orden } from "@/components/panel/tabla-clientes";
 import { SkeletonClientes } from "@/components/panel/skeleton-clientes";
 import { useRolPanel } from "@/lib/rol-panel";
-import { useBloqueadoPorCaja } from "@/lib/permisos";
+import { useBloqueadoPorCaja, usePerfilPendiente } from "@/lib/permisos";
 import { clientes as endpointClientes } from "@/lib/api/endpoints/clientes";
 import { keys } from "@/lib/api/keys";
 import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
@@ -72,6 +72,7 @@ export default function PanelClientes() {
   const router = useRouter();
   const rol = useRolPanel();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
+  const perfilPendiente = usePerfilPendiente();
   const { establecimientoId } = useEstablecimientoActivo();
 
   const [busqueda, setBusqueda] = useState("");
@@ -81,8 +82,8 @@ export default function PanelClientes() {
   const [pagina, setPagina] = useState(0);
 
   useEffect(() => {
-    if (!bloqueadoPorCaja && rol === "empleado") router.replace("/panel/agenda");
-  }, [bloqueadoPorCaja, rol, router]);
+    if (!bloqueadoPorCaja && !perfilPendiente && rol === "empleado") router.replace("/panel/agenda");
+  }, [bloqueadoPorCaja, perfilPendiente, rol, router]);
 
   // Cada tecla no puede ser una request. Se espera a que la persona deje de
   // escribir y recién ahí se consulta; volver a la página 0 es parte del mismo

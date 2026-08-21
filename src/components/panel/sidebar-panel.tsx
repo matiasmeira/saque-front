@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, Calendar, CreditCard, History, LayoutGrid, LogOut, Receipt, Settings, Tag, Users, Utensils, Wallet } from "lucide-react";
+import { BarChart3, Calendar, CreditCard, History, LayoutGrid, LogOut, Receipt, Settings, Tag, User, Users, Utensils, Wallet } from "lucide-react";
 import { Isotipo } from "@/components/saque/logo";
 import { useRolPanel } from "@/lib/rol-panel";
 import { usePermisos } from "@/lib/permisos";
@@ -162,6 +162,14 @@ export function SidebarPanel() {
       {empleadoIdSesion && (
         <div className="border-t border-white/10 p-3">
           {perfil?.nombre && <p className="truncate px-2.5 pb-2 text-xs text-[#9DB6D6]">{perfil.nombre}</p>}
+          <Link
+            href="/panel/perfil"
+            aria-current={pathname === "/panel/perfil" ? "page" : undefined}
+            className="flex h-10 items-center gap-2.5 rounded-input pl-2.5 pr-3 text-sm font-semibold text-[#9DB6D6] transition-colors hover:bg-white/5 hover:text-white"
+          >
+            <User className="size-[18px] shrink-0" aria-hidden />
+            Mi perfil
+          </Link>
           <button
             type="button"
             onClick={salirDeLaCaja}
@@ -180,6 +188,14 @@ export function SidebarPanel() {
       {!empleadoIdSesion && (perfil?.rol === "OWNER" || perfil?.rol === "ADMIN") && (
         <div className="border-t border-white/10 p-3">
           {perfil?.nombre && <p className="truncate px-2.5 pb-2 text-xs text-[#9DB6D6]">{perfil.nombre}</p>}
+          <Link
+            href="/panel/perfil"
+            aria-current={pathname === "/panel/perfil" ? "page" : undefined}
+            className="flex h-10 items-center gap-2.5 rounded-input pl-2.5 pr-3 text-sm font-semibold text-[#9DB6D6] transition-colors hover:bg-white/5 hover:text-white"
+          >
+            <User className="size-[18px] shrink-0" aria-hidden />
+            Mi perfil
+          </Link>
           <button
             type="button"
             onClick={cerrarSesionDueno}

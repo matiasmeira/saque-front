@@ -12,7 +12,7 @@ import { SkeletonGastos } from "@/components/panel/skeleton-gastos";
 import { DrawerPanel } from "@/components/panel/drawer-panel";
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { useRolPanel } from "@/lib/rol-panel";
-import { useBloqueadoPorCaja } from "@/lib/permisos";
+import { useBloqueadoPorCaja, usePerfilPendiente } from "@/lib/permisos";
 import { finMes, finSemana, hoyISO, inicioMes, inicioSemana } from "@/lib/fecha";
 import { formatearPrecio } from "@/lib/formato";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,6 +30,7 @@ export default function PanelGastos() {
   const router = useRouter();
   const rol = useRolPanel();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
+  const perfilPendiente = usePerfilPendiente();
 
   const queryClient = useQueryClient();
   const { establecimientoId } = useEstablecimientoActivo();
@@ -41,8 +42,8 @@ export default function PanelGastos() {
   const [panelAbierto, setPanelAbierto] = useState<PanelAbierto>(null);
 
   useEffect(() => {
-    if (!bloqueadoPorCaja && rol === "empleado") router.replace("/panel/agenda");
-  }, [bloqueadoPorCaja, rol, router]);
+    if (!bloqueadoPorCaja && !perfilPendiente && rol === "empleado") router.replace("/panel/agenda");
+  }, [bloqueadoPorCaja, perfilPendiente, rol, router]);
 
   /**
    * El filtro por categoría lo resuelve el backend, pero se deja del lado del
