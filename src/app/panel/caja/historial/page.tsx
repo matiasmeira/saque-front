@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
 import { TablaHistorialCaja } from "@/components/panel/tabla-historial-caja";
-import { useBloqueadoPorCaja } from "@/lib/permisos";
+import { useBloqueadoPorCaja, usePerfilPendiente } from "@/lib/permisos";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useQuery } from "@tanstack/react-query";
 import { caja as endpointCaja } from "@/lib/api/endpoints/caja";
@@ -17,6 +17,7 @@ export default function HistorialCaja() {
   const router = useRouter();
   const rol = useRolPanel();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
+  const perfilPendiente = usePerfilPendiente();
   const { establecimientoId } = useEstablecimientoActivo();
   const consulta = useQuery({
     queryKey: keys.caja.turnos(establecimientoId ?? 0),
@@ -27,8 +28,8 @@ export default function HistorialCaja() {
   const historial = (consulta.data?.content ?? []).filter((t) => t.estado === "CERRADO");
 
   useEffect(() => {
-    if (!bloqueadoPorCaja && rol === "empleado") router.replace("/panel/agenda");
-  }, [bloqueadoPorCaja, rol, router]);
+    if (!bloqueadoPorCaja && !perfilPendiente && rol === "empleado") router.replace("/panel/agenda");
+  }, [bloqueadoPorCaja, perfilPendiente, rol, router]);
 
   if (bloqueadoPorCaja || rol === "empleado") return <div className="min-h-dvh bg-humo" />;
 

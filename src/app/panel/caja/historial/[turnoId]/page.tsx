@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
 import { TablaMovimientosCaja } from "@/components/panel/tabla-movimientos-caja";
-import { useBloqueadoPorCaja } from "@/lib/permisos";
+import { useBloqueadoPorCaja, usePerfilPendiente } from "@/lib/permisos";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useQuery } from "@tanstack/react-query";
 import { caja as endpointCaja } from "@/lib/api/endpoints/caja";
@@ -31,6 +31,7 @@ export default function DetalleTurnoCaja({ params }: { params: Promise<{ turnoId
   const router = useRouter();
   const rol = useRolPanel();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
+  const perfilPendiente = usePerfilPendiente();
   const { establecimientoId } = useEstablecimientoActivo();
   const consulta = useQuery({
     queryKey: keys.caja.turno(establecimientoId ?? 0, Number(turnoId)),
@@ -41,8 +42,8 @@ export default function DetalleTurnoCaja({ params }: { params: Promise<{ turnoId
   const movimientos = consulta.data?.movimientos ?? [];
 
   useEffect(() => {
-    if (!bloqueadoPorCaja && rol === "empleado") router.replace("/panel/agenda");
-  }, [bloqueadoPorCaja, rol, router]);
+    if (!bloqueadoPorCaja && !perfilPendiente && rol === "empleado") router.replace("/panel/agenda");
+  }, [bloqueadoPorCaja, perfilPendiente, rol, router]);
 
   if (bloqueadoPorCaja || rol === "empleado") return <div className="min-h-dvh bg-humo" />;
 

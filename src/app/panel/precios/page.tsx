@@ -11,7 +11,7 @@ import { FormTarifa } from "@/components/panel/form-tarifa";
 import { SkeletonPrecios } from "@/components/panel/skeleton-precios";
 import { DrawerPanel } from "@/components/panel/drawer-panel";
 import { useRolPanel } from "@/lib/rol-panel";
-import { useBloqueadoPorCaja } from "@/lib/permisos";
+import { useBloqueadoPorCaja, usePerfilPendiente } from "@/lib/permisos";
 import { type PrecioPorDuracion } from "@/lib/panel/canchas";
 import { etiquetaDias, type DiaSemana, type Tarifa } from "@/lib/panel/tarifas";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -44,6 +44,7 @@ export default function PanelPrecios() {
   const router = useRouter();
   const rol = useRolPanel();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
+  const perfilPendiente = usePerfilPendiente();
 
   const queryClient = useQueryClient();
   const { establecimientoId } = useEstablecimientoActivo();
@@ -69,8 +70,8 @@ export default function PanelPrecios() {
   // a "empleado" en el mismo render, y sin este chequeo este efecto
   // pisaba el router.replace("/caja") correcto con uno a /panel/agenda.
   useEffect(() => {
-    if (!bloqueadoPorCaja && rol === "empleado") router.replace("/panel/agenda");
-  }, [bloqueadoPorCaja, rol, router]);
+    if (!bloqueadoPorCaja && !perfilPendiente && rol === "empleado") router.replace("/panel/agenda");
+  }, [bloqueadoPorCaja, perfilPendiente, rol, router]);
 
   const canchasApi = consulta.data ?? [];
   const canchas = canchasApi.map(aCanchaPanel);

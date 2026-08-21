@@ -13,7 +13,7 @@ import { SkeletonEmpleados } from "@/components/panel/skeleton-empleados";
 import { DrawerPanel } from "@/components/panel/drawer-panel";
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { useRolPanel } from "@/lib/rol-panel";
-import { useBloqueadoPorCaja } from "@/lib/permisos";
+import { useBloqueadoPorCaja, usePerfilPendiente } from "@/lib/permisos";
 import { empleados as endpointEmpleados } from "@/lib/api/endpoints/empleados";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { keys } from "@/lib/api/keys";
@@ -42,6 +42,7 @@ export default function PanelEmpleados() {
   const router = useRouter();
   const rol = useRolPanel();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
+  const perfilPendiente = usePerfilPendiente();
   const queryClient = useQueryClient();
   const { establecimientoId } = useEstablecimientoActivo();
 
@@ -52,8 +53,8 @@ export default function PanelEmpleados() {
   // "!bloqueadoPorCaja &&" evita pisar el router.replace("/caja") de
   // useBloqueadoPorCaja con un redirect a /panel/agenda.
   useEffect(() => {
-    if (!bloqueadoPorCaja && rol === "empleado") router.replace("/panel/caja");
-  }, [bloqueadoPorCaja, rol, router]);
+    if (!bloqueadoPorCaja && !perfilPendiente && rol === "empleado") router.replace("/panel/caja");
+  }, [bloqueadoPorCaja, perfilPendiente, rol, router]);
 
   const consulta = useQuery({
     queryKey: keys.empleados(establecimientoId ?? 0),

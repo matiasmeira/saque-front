@@ -35,6 +35,13 @@ export type OpcionesRequest = {
    */
   idempotencyKey?: string;
   signal?: AbortSignal;
+  /**
+   * `false` cuando un 401 de ESTE endpoint no significa sesión muerta. Hoy
+   * sólo lo usa DELETE /usuarios/me: ahí un 401 es "contraseña incorrecta",
+   * y borrar el token de golpe expulsaría al usuario a /ingresar antes de
+   * que llegue a ver el mensaje de error.
+   */
+  borrarTokenEn401?: boolean;
 };
 
 async function leerCuerpo(respuesta: Response): Promise<unknown> {
@@ -57,6 +64,7 @@ export async function apiFetch<T>(
     conCookieDispositivo = false,
     idempotencyKey,
     signal,
+    borrarTokenEn401 = true,
   } = opciones;
 
   const headers: Record<string, string> = {};
@@ -83,7 +91,7 @@ export async function apiFetch<T>(
 
     // El back invalida todos los JWT del usuario via tokenVersion. Un 401 es
     // sesion muerta: se limpia para que los guards del front reaccionen.
-    if (respuesta.status === 401) borrarToken();
+    if (respuesta.status === 401 && borrarTokenEn401) borrarToken();
 
     throw parsearError(respuesta.status, cuerpo);
   }

@@ -20,6 +20,11 @@ const MENSAJE_LIMITE = "Ya alcanzaste el máximo de 3 establecimientos activos."
  * después desde Configuración (misma pantalla que ya edita un complejo
  * existente sección por sección).
  *
+ * Un complejo sin horarios queda invisible en /buscar apenas alguien pide
+ * fecha/hora (ComplejoPublicoService.estaAbiertoEnVentana lo excluye para
+ * cualquier día de la semana): el subtítulo se lo advierte al dueño acá
+ * mismo, y HeaderPanel repite el aviso en todo el panel hasta que los carga.
+ *
  * Si ya se llegó al límite de 3, no se muestra el formulario: el chequeo del
  * backend (fuente de verdad) igual corre si de algún modo se manda el POST,
  * pero acá se evita el viaje de ida y vuelta la mayoría de las veces.
@@ -44,7 +49,11 @@ export function ModalCrearEstablecimiento({ onClose }: { onClose: () => void }) 
   return (
     <ModalPanel
       titulo="Nuevo complejo"
-      subtitulo={limiteAlcanzado ? undefined : "Después le cargás horarios y servicios desde Configuración"}
+      subtitulo={
+        limiteAlcanzado
+          ? undefined
+          : "Después le cargás horarios y servicios desde Configuración — hasta que cargues horarios, no vas a aparecer en las búsquedas"
+      }
       onClose={onClose}
     >
       {limiteAlcanzado ? (

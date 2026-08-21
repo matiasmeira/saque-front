@@ -10,7 +10,7 @@ import { HeaderPanel } from "@/components/panel/header-panel";
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { StatusBadge } from "@/components/saque/status-badge";
 import { useRolPanel } from "@/lib/rol-panel";
-import { useBloqueadoPorCaja } from "@/lib/permisos";
+import { useBloqueadoPorCaja, usePerfilPendiente } from "@/lib/permisos";
 import { fechaLarga, formatearPrecio } from "@/lib/formato";
 import { partirFechaHora } from "@/lib/api/fechas";
 import { aEstadoTurno } from "@/lib/api/adaptadores/agenda";
@@ -45,6 +45,7 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
   const router = useRouter();
   const rol = useRolPanel();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
+  const perfilPendiente = usePerfilPendiente();
   const queryClient = useQueryClient();
   const { establecimientoId } = useEstablecimientoActivo();
 
@@ -59,8 +60,8 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
   // Esconder el link en la lista no alcanza: la ficha tiene su propia URL, y
   // el ClienteController entero es OWNER/ADMIN.
   useEffect(() => {
-    if (!bloqueadoPorCaja && rol === "empleado") router.replace("/panel/agenda");
-  }, [bloqueadoPorCaja, rol, router]);
+    if (!bloqueadoPorCaja && !perfilPendiente && rol === "empleado") router.replace("/panel/agenda");
+  }, [bloqueadoPorCaja, perfilPendiente, rol, router]);
 
   const habilitado = establecimientoId !== null && idValido;
 
