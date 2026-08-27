@@ -14,6 +14,9 @@ import { borrarToken, leerToken } from "./sesion";
  *   6. Adjuntar Idempotency-Key cuando se pide.
  *
  * NO hace cache, ni reintentos, ni deduplicacion: eso es de TanStack Query.
+ *
+ * La unica excepcion es `subirArchivo`, mas abajo: fetch() no da progreso de
+ * subida de forma confiable entre navegadores, asi que esa usa XMLHttpRequest.
  */
 
 export type OpcionesRequest = {
@@ -102,6 +105,59 @@ export async function apiFetch<T>(
   }
 
   return (await leerCuerpo(respuesta)) as T;
+}
+
+function leerCuerpoXhr(xhr: XMLHttpRequest): unknown {
+  const contenido = xhr.getResponseHeader("content-type") ?? "";
+  if (!contenido.includes("application/json")) return xhr.responseText || null;
+  try {
+    return xhr.responseText ? JSON.parse(xhr.responseText) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * POST multipart de un solo archivo, con progreso de subida. No pasa por
+ * `apiFetch`: ver el comentario del bloque de arriba.
+ *
+ * No fija Content-Type a mano: el browser arma el boundary del
+ * multipart/form-data solo al mandar un FormData, y pisarlo lo rompe.
+ */
+export function subirArchivo<T>(
+  ruta: string,
+  archivo: File,
+  opciones: { campo?: string; onProgress?: (fraccion: number) => void } = {},
+): Promise<T> {
+  const { campo = "file", onProgress } = opciones;
+
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${API_URL}${ruta}`);
+
+    const token = leerToken();
+    if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress?.(e.loaded / e.total);
+    };
+
+    xhr.onload = () => {
+      const cuerpo = leerCuerpoXhr(xhr);
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(cuerpo as T);
+        return;
+      }
+      if (xhr.status === 401) borrarToken();
+      reject(parsearError(xhr.status, cuerpo));
+    };
+
+    xhr.onerror = () => reject(new ApiError({ status: 0, mensaje: "No pudimos conectar con el servidor." }));
+
+    const formData = new FormData();
+    formData.append(campo, archivo);
+    xhr.send(formData);
+  });
 }
 
 /** Clave de idempotencia para los POST que el back protege. */

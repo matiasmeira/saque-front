@@ -7,6 +7,7 @@ import { AlertTriangle, Building2, CalendarClock, Check, ChevronRight, Clock, Im
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
 import { FormDatosComplejo, type DatosEstablecimiento } from "@/components/panel/form-datos-complejo";
+import { FormFotos } from "@/components/panel/form-fotos";
 import { FormHorariosAtencion } from "@/components/panel/form-horarios-atencion";
 import { FormServicios } from "@/components/panel/form-servicios";
 import { TablaDispositivos } from "@/components/panel/tabla-dispositivos";
@@ -243,12 +244,9 @@ export default function PanelConfiguracion() {
                 {guardado === "servicios" && <Guardado />}
               </Seccion>
 
-              <SeccionSinEndpoint
-                icono={Images}
-                titulo="Fotos"
-                descripcion="Las que ve el jugador al entrar a la ficha del complejo."
-                falta="El complejo guarda sus fotos y la zona pública las muestra, pero no hay endpoint para subirlas ni para cambiarlas: EstablecimientoRequest no acepta el campo."
-              />
+              <Seccion icono={Images} titulo="Fotos" descripcion="Las que ve el jugador al entrar a la ficha del complejo. La primera es la que aparece en las búsquedas.">
+                <FormFotos establecimientoId={establecimiento.id} />
+              </Seccion>
 
               <SeccionSinEndpoint
                 icono={CalendarClock}
