@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizarLocalidades } from "./georef";
+import { normalizarDireccion, normalizarLocalidades } from "./georef";
 
 /**
  * Respuestas capturadas de apis.datos.gob.ar/georef/api/localidades.
@@ -15,6 +15,7 @@ describe("normalizarLocalidades", () => {
           id: "0641201002",
           nombre: "José C. Paz",
           provincia: { id: "06", nombre: "Buenos Aires" },
+          departamento: { nombre: "José C. Paz" },
           centroide: { lat: -34.5217463442325, lon: -58.7553740815986 },
         },
       ],
@@ -25,10 +26,26 @@ describe("normalizarLocalidades", () => {
         id: "0641201002",
         nombre: "José C. Paz",
         provincia: "Buenos Aires",
+        departamento: "José C. Paz",
         lat: -34.5217463442325,
         lng: -58.7553740815986,
       },
     ]);
+  });
+
+  it("deja departamento vacío si la respuesta no lo trae", () => {
+    const localidades = normalizarLocalidades({
+      localidades: [
+        {
+          id: "1",
+          nombre: "Wildermuth",
+          provincia: { id: "82", nombre: "Santa Fe" },
+          centroide: { lat: -31, lon: -61 },
+        },
+      ],
+    });
+
+    expect(localidades[0].departamento).toBe("");
   });
 
   it("deduplica localidad y municipio homonimos de la misma provincia", () => {
@@ -81,5 +98,38 @@ describe("normalizarLocalidades", () => {
   it("no rompe si la respuesta no tiene la clave localidades", () => {
     expect(normalizarLocalidades({})).toEqual([]);
     expect(normalizarLocalidades(null)).toEqual([]);
+  });
+});
+
+/**
+ * Respuesta capturada de apis.datos.gob.ar/georef/api/direcciones para
+ * "Av Corrientes 1000" con provincia=CABA.
+ */
+describe("normalizarDireccion", () => {
+  it("toma la primera coincidencia y arma la etiqueta con la nomenclatura", () => {
+    const direccion = normalizarDireccion({
+      cantidad: 1,
+      direcciones: [
+        {
+          nomenclatura: "AV CORRIENTES 1000, Comuna 1, Ciudad Autónoma de Buenos Aires",
+          ubicacion: { lat: -34.6036694728664, lon: -58.3809752829037 },
+        },
+      ],
+    });
+
+    expect(direccion).toEqual({
+      lat: -34.6036694728664,
+      lng: -58.3809752829037,
+      etiqueta: "AV CORRIENTES 1000, Comuna 1, Ciudad Autónoma de Buenos Aires",
+    });
+  });
+
+  it("devuelve null cuando la calle no está en el nomenclador", () => {
+    expect(normalizarDireccion({ cantidad: 0, direcciones: [] })).toBeNull();
+  });
+
+  it("no rompe si la respuesta no tiene la clave direcciones", () => {
+    expect(normalizarDireccion({})).toBeNull();
+    expect(normalizarDireccion(null)).toBeNull();
   });
 });
