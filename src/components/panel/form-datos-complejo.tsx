@@ -29,6 +29,7 @@ export type DatosEstablecimiento = {
   latitud: number;
   longitud: number;
   requiereSena: boolean;
+  requiereTelefonoVerificado: boolean;
 };
 
 /**
@@ -65,6 +66,9 @@ export function FormDatosComplejo({
   const [nombre, setNombre] = useState(establecimiento?.nombre ?? "");
   const [direccion, setDireccion] = useState(establecimiento?.direccion ?? "");
   const [requiereSena, setRequiereSena] = useState(establecimiento?.requiereSena ?? false);
+  const [requiereTelefonoVerificado, setRequiereTelefonoVerificado] = useState(
+    establecimiento?.requiereTelefonoVerificado ?? false,
+  );
   const [ubicacion, setUbicacion] = useState<Ubicacion | null>(null);
   /**
    * Corrección manual del pin, junto con la dirección/localidad para la que
@@ -149,6 +153,7 @@ export function FormDatosComplejo({
       latitud: coords.lat,
       longitud: coords.lng,
       requiereSena: senaForzada ? true : requiereSena,
+      requiereTelefonoVerificado,
     });
   }
 
@@ -215,6 +220,25 @@ export function FormDatosComplejo({
               {senaForzada
                 ? "En el plan gratuito la seña es obligatoria y no se puede desactivar."
                 : "El jugador tiene que pagar una seña para que su turno quede confirmado."}
+            </span>
+          </span>
+        </label>
+      </div>
+
+      <div className="rounded-input bg-humo p-3.5">
+        <label className="flex items-start gap-2.5">
+          <input
+            type="checkbox"
+            checked={requiereTelefonoVerificado}
+            onChange={(e) => setRequiereTelefonoVerificado(e.target.checked)}
+            className="mt-0.5 size-4 shrink-0 rounded border-borde accent-azul"
+          />
+          <span>
+            <span className="block text-sm font-semibold text-tinta">
+              Exigir teléfono verificado para reservar
+            </span>
+            <span className="block text-xs text-grafito">
+              El jugador va a necesitar verificar su celular desde su perfil antes de poder reservar acá.
             </span>
           </span>
         </label>

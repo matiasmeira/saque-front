@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ApiError, mensajeVisible, parsearError } from "./errores";
+import { ApiError, esErrorTelefonoNoVerificado, mensajeVisible, parsearError } from "./errores";
 
 describe("mensajeVisible", () => {
   it("prefiere el mensaje del campo cuando el error es de bean validation", () => {
@@ -68,5 +68,31 @@ describe("parsearError — body ausente o no parseable", () => {
     const error = parsearError(502, "<html>Bad Gateway</html>");
 
     expect(error.camposInvalidos).toBeUndefined();
+  });
+});
+
+describe("esErrorTelefonoNoVerificado", () => {
+  it("detecta un 403 cuyo mensaje pide teléfono verificado", () => {
+    const error = parsearError(403, { error: "Este complejo exige tener el celular verificado" });
+
+    expect(esErrorTelefonoNoVerificado(error)).toBe(true);
+  });
+
+  it("detecta un 409 con el mismo mensaje, sin tilde", () => {
+    const error = parsearError(409, { error: "El telefono del jugador no esta verificado" });
+
+    expect(esErrorTelefonoNoVerificado(error)).toBe(true);
+  });
+
+  it("no confunde otro 403 conocido (jugador bloqueado)", () => {
+    const error = parsearError(403, { error: "El jugador está bloqueado en este establecimiento" });
+
+    expect(esErrorTelefonoNoVerificado(error)).toBe(false);
+  });
+
+  it("no dispara fuera de 403/409 aunque el mensaje coincida", () => {
+    const error = parsearError(400, { error: "Falta verificar el teléfono" });
+
+    expect(esErrorTelefonoNoVerificado(error)).toBe(false);
   });
 });

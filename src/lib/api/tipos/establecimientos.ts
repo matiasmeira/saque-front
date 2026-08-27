@@ -24,6 +24,8 @@ export type EstablecimientoRequest = {
   latitud: number;
   longitud: number;
   requiereSena: boolean;
+  /** @NotNull, igual que requiereSena: todo PUT tiene que mandarlo siempre. */
+  requiereTelefonoVerificado: boolean;
   horariosAtencion: HorarioAtencionDto[];
   servicios?: Servicio[];
 };
@@ -35,6 +37,7 @@ export type EstablecimientoResponse = {
   latitud: number;
   longitud: number;
   requiereSena: boolean;
+  requiereTelefonoVerificado: boolean;
   isActive: boolean;
   duenoId: number;
   horariosAtencion: HorarioAtencionDto[];

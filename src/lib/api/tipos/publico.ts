@@ -23,6 +23,7 @@ export type ComplejoCardResponse = {
   precioDesde: number | null;
   requiereSena: boolean;
   senaDesde: number | null;
+  requiereTelefonoVerificado: boolean;
   /** Sólo viene calculada si la búsqueda incluyó lat y lng. */
   distanciaKm: number | null;
   promedioCalificacion: number | null;
@@ -50,6 +51,7 @@ export type ComplejoDetalleResponse = {
   precioDesde: number | null;
   requiereSena: boolean;
   senaDesde: number | null;
+  requiereTelefonoVerificado: boolean;
   promedioCalificacion: number | null;
   cantidadCalificaciones: number | null;
   comentarioDestacado: FeedbackDestacadoDto | null;

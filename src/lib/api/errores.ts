@@ -42,6 +42,26 @@ export function mensajeVisible(error: ApiError): string {
 }
 
 /**
+ * Detecta el 403/409 de "el complejo exige teléfono verificado y el jugador
+ * no lo tiene", para poder mostrar un aviso accionable en vez del mensaje
+ * genérico del backend.
+ *
+ * HEURÍSTICO: el backend no manda un código de error propio para este caso,
+ * sólo status + un mensaje de texto libre — igual que "el jugador está
+ * bloqueado en el establecimiento", que también es un 403 (ver
+ * reservas.crear). Matchea por contenido del mensaje (("telefono" o
+ * "celular") + "verifi") hasta que el backend exponga algo distinguible; si
+ * el texto del mensaje cambia del lado del backend, esto deja de detectarlo
+ * silenciosamente y el jugador vuelve a ver el mensaje genérico en vez del
+ * aviso amigable.
+ */
+export function esErrorTelefonoNoVerificado(error: ApiError): boolean {
+  if (error.status !== 403 && error.status !== 409) return false;
+  const mensaje = error.mensaje.toLowerCase();
+  return /tel[eé]fono|celular/.test(mensaje) && /verifi/.test(mensaje);
+}
+
+/**
  * Mensajes de ultimo recurso cuando el body no trae uno usable (5xx detras de
  * un proxy, respuesta vacia, HTML de error de infraestructura).
  */

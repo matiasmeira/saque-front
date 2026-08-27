@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArrowLeft, CalendarDays, CheckCircle2, Clock, Info, Loader2 } from "lucide-react";
+import { ArrowLeft, CalendarDays, CheckCircle2, Clock, Info, Loader2, Phone } from "lucide-react";
 
 import { HeaderPublico } from "@/components/saque/header-publico";
 import { FooterPublico } from "@/components/saque/footer-publico";
@@ -13,7 +13,7 @@ import { publico } from "@/lib/api/endpoints/publico";
 import { reservas } from "@/lib/api/endpoints/reservas";
 import { keys } from "@/lib/api/keys";
 import { partirFechaHora } from "@/lib/api/fechas";
-import { ApiError, mensajeVisible } from "@/lib/api/errores";
+import { ApiError, esErrorTelefonoNoVerificado, mensajeVisible } from "@/lib/api/errores";
 import { etiquetaDeporte } from "@/lib/deportes";
 import { fechaLarga, formatearPrecio } from "@/lib/formato";
 import { useHaySesion } from "@/hooks/api/use-sesion";
@@ -55,6 +55,7 @@ export default function Checkout({ params }: { params: Promise<{ id: string }> }
   const [reserva, setReserva] = useState<ReservaResponse | null>(null);
   const [vencida, setVencida] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [telefonoNoVerificado, setTelefonoNoVerificado] = useState(false);
 
   const complejo = useQuery({
     queryKey: keys.publico.detalle(slug),
@@ -108,6 +109,10 @@ export default function Checkout({ params }: { params: Promise<{ id: string }> }
     try {
       await crear.mutateAsync();
     } catch (e) {
+      if (e instanceof ApiError && esErrorTelefonoNoVerificado(e)) {
+        setTelefonoNoVerificado(true);
+        return;
+      }
       setError(
         e instanceof ApiError ? mensajeVisible(e) : "No pudimos crear la reserva.",
       );
@@ -197,6 +202,20 @@ export default function Checkout({ params }: { params: Promise<{ id: string }> }
                   {formatearPrecio(complejo.data?.senaDesde ?? 0)} para confirmar.
                 </p>
               )}
+
+              {!reserva && complejo.data?.requiereTelefonoVerificado && (
+                <p className="mt-2 flex items-start gap-1.5 text-sm text-grafito">
+                  <Phone className="mt-0.5 size-4 shrink-0" aria-hidden />
+                  <span>
+                    Este complejo exige tener el celular verificado para reservar. Verificalo
+                    desde{" "}
+                    <Link href="/perfil" className="font-semibold text-azul hover:underline">
+                      tu perfil
+                    </Link>{" "}
+                    antes de continuar.
+                  </span>
+                </p>
+              )}
             </div>
 
             {reserva ? (
@@ -229,6 +248,54 @@ export default function Checkout({ params }: { params: Promise<{ id: string }> }
       </main>
 
       <FooterPublico />
+
+      {telefonoNoVerificado && (
+        <AlertaTelefonoNoVerificado onClose={() => setTelefonoNoVerificado(false)} />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Aviso al intentar crear la reserva contra un complejo con
+ * requiereTelefonoVerificado: el backend rechaza el POST (ver
+ * esErrorTelefonoNoVerificado) y esto reemplaza el mensaje genérico por una
+ * salida accionable hacia la verificación del perfil.
+ */
+function AlertaTelefonoNoVerificado({ onClose }: { onClose: () => void }) {
+  const router = useRouter();
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button type="button" aria-label="Cerrar" onClick={onClose} className="absolute inset-0 bg-tinta/40" />
+
+      <div className="relative w-full max-w-sm rounded-card bg-white p-6 text-center shadow-xl">
+        <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-celeste-suave text-azul">
+          <Phone className="size-5" aria-hidden />
+        </div>
+        <h2 className="mt-4 font-display text-lg font-bold text-tinta">
+          Este complejo exige tener el celular verificado
+        </h2>
+        <p className="mt-2 text-sm text-grafito">
+          Verificá tu teléfono desde tu perfil para poder reservar acá.
+        </p>
+        <div className="mt-5 flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => router.push("/perfil")}
+            className="flex h-11 items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro"
+          >
+            Verificar mi teléfono
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-11 items-center justify-center rounded-full border border-borde font-display text-sm font-semibold text-grafito transition-colors hover:bg-humo"
+          >
+            Ahora no
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
