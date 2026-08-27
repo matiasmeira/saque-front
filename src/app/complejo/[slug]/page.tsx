@@ -98,7 +98,17 @@ export default async function FichaComplejo({ params }: { params: Promise<{ slug
 
   return (
     <div className="flex min-h-dvh flex-col bg-humo">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {/*
+        Cada "<" se reemplaza por su escape unicode ANTES de inyectar. JSON.stringify
+        NO escapa "<", así que un nombre de complejo que contenga la secuencia de cierre
+        de script rompe este bloque y ejecuta lo que siga — y ese nombre lo controla el
+        dueño del complejo, sobre una ficha que ve cualquiera. El escape es transparente
+        para el parser de JSON-LD, que lo vuelve a leer como "<".
+      */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
 
       <HeaderPublico variant="claro" ancho="7xl" />
 
