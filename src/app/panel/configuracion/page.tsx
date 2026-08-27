@@ -60,11 +60,12 @@ function SeccionSinEndpoint({ icono, titulo, descripcion, falta }: { icono: type
  * Configuración del establecimiento.
  *
  * El PUT es del OBJETO ENTERO: `EstablecimientoRequest` exige nombre,
- * dirección, latitud, longitud y requiereSena siempre. Además —y esto es lo
- * que muerde— `horariosAtencion` NO tiene semántica de "no modificar": el
- * service hace `getHorariosAtencion().clear()` y vuelve a cargar lo que venga
- * en el request, así que un PUT sin horarios los BORRA. Por eso cada sección
- * manda el establecimiento completo con su parte cambiada, y no sólo su parte.
+ * dirección, latitud, longitud, requiereSena y requiereTelefonoVerificado
+ * siempre. Además —y esto es lo que muerde— `horariosAtencion` NO tiene
+ * semántica de "no modificar": el service hace `getHorariosAtencion().clear()`
+ * y vuelve a cargar lo que venga en el request, así que un PUT sin horarios
+ * los BORRA. Por eso cada sección manda el establecimiento completo con su
+ * parte cambiada, y no sólo su parte.
  *
  * `servicios` sí distingue: null = no modificar, [] = borrar todos. Sólo la
  * sección de servicios manda ese campo.
@@ -140,6 +141,7 @@ export default function PanelConfiguracion() {
         latitud: actual.latitud,
         longitud: actual.longitud,
         requiereSena: actual.requiereSena,
+        requiereTelefonoVerificado: actual.requiereTelefonoVerificado,
         // Va SIEMPRE: omitirlo borra los horarios del establecimiento.
         horariosAtencion: actual.horariosAtencion,
         ...cambios,

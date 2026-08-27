@@ -1,4 +1,4 @@
-import { Star } from "lucide-react";
+import { Phone, Star } from "lucide-react";
 
 import { formatearPrecio } from "@/lib/formato";
 import type { ComplejoDetalleResponse } from "@/lib/api/tipos/publico";
@@ -31,6 +31,13 @@ export function ReservaBlock({ complejo }: { complejo: ComplejoDetalleResponse }
           {complejo.requiereSena && complejo.senaDesde !== null && (
             <p className="mt-1 text-sm text-grafito">
               Reservás con una seña desde {formatearPrecio(complejo.senaDesde)}
+            </p>
+          )}
+
+          {complejo.requiereTelefonoVerificado && (
+            <p className="mt-1 flex items-center gap-1.5 text-sm text-grafito">
+              <Phone className="size-3.5 shrink-0" aria-hidden />
+              Exige celular verificado para reservar
             </p>
           )}
 
