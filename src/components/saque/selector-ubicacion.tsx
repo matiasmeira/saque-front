@@ -21,6 +21,13 @@ export type Ubicacion = {
   lng: number;
   /** Sólo para mostrar y para que el link sea compartible. */
   etiqueta: string;
+  /**
+   * Contexto de la localidad elegida, para desambiguar al geocodificar una
+   * dirección (ver geocodificarDireccion). Ausente en "Mi ubicación": ese
+   * origen ya es una coordenada precisa, no hace falta geocodificar nada.
+   */
+  provincia?: string;
+  departamento?: string;
 };
 
 const MS_DEBOUNCE = 300;
@@ -81,6 +88,8 @@ export function SelectorUbicacion({
       lat: localidad.lat,
       lng: localidad.lng,
       etiqueta: `${localidad.nombre}, ${localidad.provincia}`,
+      provincia: localidad.provincia,
+      departamento: localidad.departamento,
     });
     // Vuelve a mostrar la etiqueta del valor elegido, no lo que se había tipeado.
     setTextoEditado(null);

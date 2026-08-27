@@ -1,12 +1,27 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import dynamic from "next/dynamic";
+import { useQuery } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
 import { SelectorUbicacion, type Ubicacion } from "@/components/saque/selector-ubicacion";
+import { geocodificarDireccion } from "@/lib/api/georef";
 import type { EstablecimientoResponse } from "@/lib/api/tipos/establecimientos";
 import type { PlanSuscripcion } from "@/lib/api/tipos/comunes";
 
+/**
+ * Leaflet toca `window` al armar sus íconos, así que sólo puede vivir en el
+ * cliente: `ssr:false` sirve porque este archivo ya es `"use client"`
+ * (fuera de un Client Component, Next tira error al usarlo).
+ */
+const MapaUbicacion = dynamic(
+  () => import("@/components/saque/mapa-ubicacion").then((mod) => mod.MapaUbicacion),
+  { ssr: false },
+);
+
 const campoClase = "w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste";
+
+const MS_DEBOUNCE_DIRECCION = 400;
 
 export type DatosEstablecimiento = {
   nombre: string;
@@ -51,7 +66,68 @@ export function FormDatosComplejo({
   const [direccion, setDireccion] = useState(establecimiento?.direccion ?? "");
   const [requiereSena, setRequiereSena] = useState(establecimiento?.requiereSena ?? false);
   const [ubicacion, setUbicacion] = useState<Ubicacion | null>(null);
+  /**
+   * Corrección manual del pin, junto con la dirección/localidad para la que
+   * se hizo. No se sincroniza con un efecto: se guarda el contexto y, al
+   * leerlo (ver `pinVigente`), se ignora si ese contexto ya cambió — mismo
+   * criterio que usa `SelectorUbicacion` para su texto derivado, para no caer
+   * en el antipatrón que marca react-hooks/set-state-in-effect.
+   */
+  const [pin, setPin] = useState<{
+    lat: number;
+    lng: number;
+    direccion: string;
+    provincia?: string;
+    departamento?: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Debounce: geocodificar en cada tecla sería una request por letra.
+  const [direccionDebounced, setDireccionDebounced] = useState(direccion.trim());
+  useEffect(() => {
+    const id = setTimeout(() => setDireccionDebounced(direccion.trim()), MS_DEBOUNCE_DIRECCION);
+    return () => clearTimeout(id);
+  }, [direccion]);
+
+  const pinVigente =
+    pin && pin.direccion === direccionDebounced && pin.provincia === ubicacion?.provincia && pin.departamento === ubicacion?.departamento
+      ? pin
+      : null;
+
+  function moverPin(coords: { lat: number; lng: number }) {
+    setPin({ ...coords, direccion: direccionDebounced, provincia: ubicacion?.provincia, departamento: ubicacion?.departamento });
+  }
+
+  /**
+   * Geocodifica la dirección exacta contra georef, usando la localidad
+   * elegida como contexto ("Rivadavia 5000" sin provincia devuelve
+   * cualquier Rivadavia del país). Sin localidad, o si la calle no está en
+   * el nomenclador, esto no dispara y se cae al centroide de la localidad.
+   */
+  const direccionGeocodificada = useQuery({
+    queryKey: ["georef", "direccion", direccionDebounced, ubicacion?.provincia, ubicacion?.departamento],
+    queryFn: ({ signal }) =>
+      geocodificarDireccion(
+        direccionDebounced,
+        { provincia: ubicacion!.provincia!, departamento: ubicacion?.departamento },
+        signal,
+      ),
+    enabled: direccionDebounced.length >= 5 && Boolean(ubicacion?.provincia),
+    staleTime: 60 * 60_000,
+    retry: false,
+  });
+  const geocodificado = direccionGeocodificada.data;
+
+  /**
+   * El "el pin" que se guarda y se muestra en el mapa: gana el arrastre
+   * manual, después la dirección geocodificada, después el centroide de la
+   * localidad, y en modo edición, la coordenada que ya tenía el complejo.
+   */
+  const coords =
+    pinVigente ??
+    (geocodificado ? { lat: geocodificado.lat, lng: geocodificado.lng } : null) ??
+    (ubicacion ? { lat: ubicacion.lat, lng: ubicacion.lng } : null) ??
+    (establecimiento ? { lat: establecimiento.latitud, lng: establecimiento.longitud } : null);
 
   /**
    * El backend hace `esPlanLimitado(plan) || request.requiereSena()`: en TRIAL y
@@ -61,20 +137,17 @@ export function FormDatosComplejo({
    */
   const senaForzada = plan === "TRIAL" || plan === "FREE";
 
-  const latitud = ubicacion?.lat ?? establecimiento?.latitud;
-  const longitud = ubicacion?.lng ?? establecimiento?.longitud;
-
   function guardar(e: FormEvent) {
     e.preventDefault();
     if (!nombre.trim()) return setError("Falta el nombre del complejo.");
     if (!direccion.trim()) return setError("Falta la dirección.");
-    if (latitud == null || longitud == null) return setError("Elegí la localidad del complejo.");
+    if (!coords) return setError("Elegí una localidad para ubicar el complejo.");
     setError(null);
     onGuardar({
       nombre: nombre.trim(),
       direccion: direccion.trim(),
-      latitud,
-      longitud,
+      latitud: coords.lat,
+      longitud: coords.lng,
       requiereSena: senaForzada ? true : requiereSena,
     });
   }
@@ -102,18 +175,29 @@ export function FormDatosComplejo({
         <div className="rounded-input bg-humo px-3 py-1.5">
           <SelectorUbicacion id="config-ubicacion" value={ubicacion} onChange={setUbicacion} />
         </div>
-        {/* La dirección es texto libre y el backend no la geocodifica: las
-            coordenadas se eligen aparte, y son las que deciden si el complejo
-            aparece en una búsqueda "cerca mío". El centroide de la localidad
-            alcanza para eso; "usar mi ubicación", parado en el complejo, es
-            más preciso. */}
+        {/* La localidad ubica la dirección con precisión (georef necesita
+            provincia/departamento para no confundir, p. ej., "Rivadavia
+            5000" de Wilde con el de Cañuelas) y es el respaldo si esa calle
+            no está en el nomenclador. El pin del mapa es el ajuste final. */}
         <p className="mt-1 text-xs text-grafito">
-          {ubicacion
-            ? `Se va a guardar en ${ubicacion.etiqueta} (${latitud!.toFixed(4)}, ${longitud!.toFixed(4)}).`
-            : establecimiento
-              ? `Ubicación actual: ${latitud!.toFixed(4)}, ${longitud!.toFixed(4)}. Buscá una localidad sólo si querés cambiarla.`
-              : "Buscá la localidad donde está el complejo."}
+          {pinVigente
+            ? `Ajustaste el pin a mano: se va a guardar ahí (${pinVigente.lat.toFixed(4)}, ${pinVigente.lng.toFixed(4)}).`
+            : direccionGeocodificada.isFetching
+              ? "Buscando la dirección exacta…"
+              : geocodificado
+                ? `Se va a guardar en ${geocodificado.etiqueta} (${geocodificado.lat.toFixed(4)}, ${geocodificado.lng.toFixed(4)}).`
+                : ubicacion
+                  ? `No encontramos esa calle: se va a guardar cerca del centro de ${ubicacion.etiqueta} (${ubicacion.lat.toFixed(4)}, ${ubicacion.lng.toFixed(4)}). Arrastrá el pin para afinarlo.`
+                  : establecimiento
+                    ? `Ubicación actual: ${establecimiento.latitud.toFixed(4)}, ${establecimiento.longitud.toFixed(4)}. Elegí una localidad para ubicar la dirección con precisión.`
+                    : "Buscá la localidad donde está el complejo."}
         </p>
+
+        {coords && (
+          <div className="mt-3 h-56 w-full overflow-hidden rounded-input">
+            <MapaUbicacion lat={coords.lat} lng={coords.lng} onMover={moverPin} />
+          </div>
+        )}
       </div>
 
       <div className="rounded-input bg-humo p-3.5">

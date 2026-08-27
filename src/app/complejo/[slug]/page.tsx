@@ -6,7 +6,7 @@ import { FooterPublico } from "@/components/saque/footer-publico";
 import { GaleriaFotos } from "@/components/saque/galeria-fotos";
 import { GrillaDisponibilidad } from "@/components/saque/grilla-disponibilidad";
 import { ReservaBlock } from "@/components/saque/reserva-block";
-import { LineasDeCancha } from "@/components/saque/lineas-de-cancha";
+import { MapaComplejo } from "@/components/saque/mapa-complejo";
 import { etiquetaDeporte } from "@/lib/deportes";
 import { servicio as buscarServicio } from "@/lib/servicios";
 import { publico } from "@/lib/api/endpoints/publico";
@@ -171,13 +171,13 @@ export default async function FichaComplejo({ params }: { params: Promise<{ slug
               <h2 className="mb-4 font-display text-[1.75rem] font-extrabold tracking-[-0.02em] text-tinta">
                 Cómo llegar
               </h2>
-              <div className="relative h-64 overflow-hidden rounded-card bg-tinta">
-                <LineasDeCancha className="opacity-[0.16]" />
+              <div className="relative h-64 overflow-hidden rounded-card bg-humo">
+                <MapaComplejo lat={complejo.latitud} lng={complejo.longitud} />
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${complejo.latitud},${complejo.longitud}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="absolute bottom-5 left-5 flex items-center gap-3 rounded-card bg-white px-4 py-3 transition-transform hover:scale-[1.02]"
+                  className="absolute bottom-5 left-5 z-[1000] flex items-center gap-3 rounded-card bg-white px-4 py-3 shadow-card transition-transform hover:scale-[1.02]"
                 >
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-celeste-suave text-azul">
                     <Navigation className="size-5" aria-hidden />
