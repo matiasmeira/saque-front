@@ -1,9 +1,10 @@
-import { apiFetch } from "../cliente";
+import { apiFetch, subirArchivo } from "../cliente";
 import { construirQuery } from "../query";
 import type { DisponibilidadEstablecimientoResponse } from "../tipos/disponibilidad";
 import type {
   EstablecimientoRequest,
   EstablecimientoResponse,
+  FotoEstablecimiento,
 } from "../tipos/establecimientos";
 
 /** EstablecimientoController — base /api/v1/establecimientos. OWNER / ADMIN. */
@@ -44,4 +45,24 @@ export const establecimientos = {
     apiFetch<DisponibilidadEstablecimientoResponse>(
       `/api/v1/establecimientos/${estId}/disponibilidad${construirQuery({ fecha, fechaFin })}`,
     ),
+
+  /** Sub-recurso propio: NO viene embebido en `EstablecimientoResponse`. */
+  listarFotos: (estId: number) =>
+    apiFetch<FotoEstablecimiento[]>(`/api/v1/establecimientos/${estId}/fotos`),
+
+  subirFoto: (estId: number, archivo: File, onProgress?: (fraccion: number) => void) =>
+    subirArchivo<FotoEstablecimiento>(`/api/v1/establecimientos/${estId}/fotos`, archivo, {
+      campo: "archivo",
+      onProgress,
+    }),
+
+  borrarFoto: (estId: number, fileId: string) =>
+    apiFetch<void>(`/api/v1/establecimientos/${estId}/fotos/${fileId}`, { method: "DELETE" }),
+
+  /** El nuevo orden completo de fileIds. El primero queda como foto principal. */
+  ordenarFotos: (estId: number, fileIds: string[]) =>
+    apiFetch<FotoEstablecimiento[]>(`/api/v1/establecimientos/${estId}/fotos/orden`, {
+      method: "PUT",
+      body: { fileIds },
+    }),
 };

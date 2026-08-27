@@ -30,6 +30,18 @@ export type EstablecimientoRequest = {
   servicios?: Servicio[];
 };
 
+/** Foto del complejo. `fileId` es el id de ImageKit — lo pide el DELETE y el PUT /orden. */
+export type FotoEstablecimiento = {
+  url: string;
+  fileId: string;
+};
+
+/**
+ * OJO: no trae `fotos`. FotoEstablecimientoController es un sub-recurso propio
+ * (`/establecimientos/{id}/fotos`, ver `establecimientos.listarFotos`), no un
+ * campo embebido acá — mandarlo como obligatorio en este tipo hizo que el
+ * panel mostrara "sin fotos" siempre, sin importar cuántas hubiera.
+ */
 export type EstablecimientoResponse = {
   id: number;
   nombre: string;

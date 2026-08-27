@@ -5,9 +5,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { LineasDeCancha } from "@/components/saque/lineas-de-cancha";
 
 /**
- * Galería de fotos de la ficha (A3). Placeholder tinta + líneas de
- * cancha en cada foto — todavía no hay fotos reales cargadas para
- * ningún complejo mock (Parte 4: nunca un rectángulo gris).
+ * Galería de fotos de la ficha (A3). `LineasDeCancha` queda de fondo bajo
+ * cada `<img>`: si una URL tarda en cargar o se corta, no se ve un
+ * rectángulo gris (Parte 4: nunca un rectángulo gris).
  *
  * Accesible por teclado de verdad: flechas para navegar con el
  * carrusel enfocado, más los botones prev/siguiente/puntos, cada
@@ -50,14 +50,18 @@ export function GaleriaFotos({ fotos, nombreComplejo }: { fotos: string[]; nombr
             key={foto}
             role="group"
             aria-roledescription="foto"
-            aria-label={`${i + 1} de ${fotos.length}: ${foto}`}
+            aria-label={`${i + 1} de ${fotos.length}`}
             aria-hidden={i !== indice}
             className="relative h-full w-full shrink-0"
           >
             <LineasDeCancha className="opacity-[0.16]" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="rounded-full bg-tinta/60 px-4 py-1.5 text-sm text-white/80">{foto}</span>
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element -- URL externa de ImageKit, no un asset local que next/image pueda optimizar en build */}
+            <img
+              src={foto}
+              alt={`Foto ${i + 1} de ${nombreComplejo}`}
+              className="absolute inset-0 size-full object-cover"
+              draggable={false}
+            />
           </div>
         ))}
       </div>
