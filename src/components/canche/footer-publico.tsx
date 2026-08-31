@@ -1,37 +1,57 @@
 import Link from "next/link";
 import { LogoMarca } from "@/components/canche/logo";
 
+const ENLACE_CLASE =
+  "text-[#9DB6D6] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-celeste focus-visible:ring-offset-2 focus-visible:ring-offset-[#071730] rounded-sm";
+
+const NAVEGACION = [
+  { href: "/buscar", label: "Buscar canchas" },
+  { href: "/#como-funciona", label: "Cómo funciona" },
+];
+
+const SOPORTE = [
+  { href: "/contacto", label: "Contacto" },
+  { href: "/privacidad", label: "Privacidad" },
+  { href: "/terminos", label: "Términos" },
+];
+
 /**
- * Footer de zona A y B. Comparte fondo tinta con el hero de A1,
- * así el sitio abre y cierra con la misma marca — no son dos
- * sistemas de color distintos conviviendo en una sola pantalla.
+ * Footer de zona A y B. Un tono más oscuro que el tinta del hero/CTA
+ * de arriba: la diferencia sutil de fondo es la que separa "cierre de
+ * página" de "sección de contenido" sin necesitar un borde duro.
  */
 export function FooterPublico({ ancho = "5xl" }: { ancho?: "5xl" | "7xl" }) {
   const maxWidth = ancho === "7xl" ? "max-w-7xl" : "max-w-5xl";
 
   return (
-    <footer className="bg-tinta">
-      <div
-        className={`mx-auto flex ${maxWidth} flex-col items-center gap-6 px-5 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-8`}
-      >
-        <div className="flex flex-col items-center gap-2 sm:items-start">
-          <LogoMarca className="h-14 w-auto" />
-          <p className="text-sm text-[#9DB6D6]">
-            © {new Date().getFullYear()} canche.ar. Todos los derechos reservados.
-          </p>
+    <footer className="bg-[#071730]">
+      <div className={`mx-auto ${maxWidth} px-5 py-12 sm:px-8`}>
+        <div className="grid grid-cols-1 gap-10 text-center sm:grid-cols-3 sm:text-left">
+          <div className="flex flex-col items-center gap-3 sm:items-start">
+            <LogoMarca className="h-11 w-auto" />
+            <p className="text-sm text-[#9DB6D6]">Armá el grupo. Nosotros ponemos la cancha.</p>
+          </div>
+
+          <nav aria-label="Navegación" className="flex flex-col items-center gap-3 text-sm sm:items-start">
+            {NAVEGACION.map((item) => (
+              <Link key={item.href} href={item.href} className={ENLACE_CLASE}>
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          <nav aria-label="Soporte y legal" className="flex flex-col items-center gap-3 text-sm sm:items-start">
+            {SOPORTE.map((item) => (
+              <Link key={item.href} href={item.href} className={ENLACE_CLASE}>
+                {item.label}
+              </Link>
+            ))}
+          </nav>
         </div>
 
-        <nav className="flex gap-6 text-sm">
-          <Link href="/privacidad" className="text-[#9DB6D6] transition-colors hover:text-white">
-            Privacidad
-          </Link>
-          <Link href="/terminos" className="text-[#9DB6D6] transition-colors hover:text-white">
-            Términos
-          </Link>
-          <Link href="/contacto" className="text-[#9DB6D6] transition-colors hover:text-white">
-            Contacto
-          </Link>
-        </nav>
+        <div className="mt-10 border-t border-white/10 pt-6 text-center">
+          <p className="text-sm text-[#9DB6D6]">© 2026 canche.ar. Todos los derechos reservados.</p>
+        </div>
       </div>
     </footer>
   );
