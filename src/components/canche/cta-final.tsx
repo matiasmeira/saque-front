@@ -82,8 +82,14 @@ function PatronDecorativo() {
         {PUNTOS_ARRIBA_IZQUIERDA.map(([cx, cy]) => (
           <circle key={`ai-${cx}-${cy}`} cx={cx} cy={cy} r={3} />
         ))}
+        {PUNTOS_ARRIBA_DERECHA.map(([cx, cy]) => (
+          <circle key={`ad2-${cx}-${cy}`} cx={cx} cy={cy} r={3} />
+        ))}
         {PUNTOS_ABAJO_DERECHA.map(([cx, cy]) => (
           <circle key={`ad-${cx}-${cy}`} cx={cx} cy={cy} r={3} />
+        ))}
+        {PUNTOS_ABAJO_IZQUIERDA.map(([cx, cy]) => (
+          <circle key={`ai2-${cx}-${cy}`} cx={cx} cy={cy} r={3} />
         ))}
         {PUNTOS_SUELTOS.map(([cx, cy]) => (
           <circle key={`s-${cx}-${cy}`} cx={cx} cy={cy} r={2.5} />
@@ -93,12 +99,14 @@ function PatronDecorativo() {
       <g fill="none" stroke="#5CC5F2" strokeWidth={2.5} opacity={0.25}>
         <circle cx={200} cy={70} r={28} />
         <circle cx={1220} cy={150} r={20} />
+        <circle cx={800} cy={340} r={16} />
       </g>
 
       <g stroke="#5CC5F2" strokeWidth={9} strokeLinecap="round" opacity={0.2}>
         <line x1={258} y1={20} x2={306} y2={88} />
         <line x1={288} y1={20} x2={336} y2={88} />
         <line x1={1058} y1={262} x2={1096} y2={330} />
+        <line x1={120} y1={300} x2={158} y2={358} />
       </g>
 
       <g transform="translate(1440,150) skewX(-9)" fill="none" stroke="#5CC5F2" opacity={0.28}>
