@@ -20,7 +20,7 @@ const publicSans = Public_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Saque — Reservá tu cancha en 30 segundos",
+  title: "Canche.ar — Reservá tu cancha en 30 segundos",
   description:
     "Encontrá canchas de fútbol, pádel y tenis cerca tuyo y reservá al instante. Sin llamadas ni WhatsApp.",
 };

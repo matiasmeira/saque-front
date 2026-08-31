@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { BarChart3, Calendar, CreditCard, History, LayoutGrid, LogOut, Receipt, Settings, Tag, User, Users, Utensils, Wallet } from "lucide-react";
-import { Isotipo } from "@/components/saque/logo";
+import { LogoMarca } from "@/components/canche/logo";
 import { useRolPanel } from "@/lib/rol-panel";
 import { usePermisos } from "@/lib/permisos";
 import { PERMISOS_DE_AGENDA } from "@/lib/permisos-empleado";
@@ -127,9 +127,8 @@ export function SidebarPanel() {
 
   return (
     <aside className="flex h-full w-56 shrink-0 flex-col bg-tinta">
-      <div className="flex h-16 items-center gap-2 px-5">
-        <Isotipo variant="blanco" className="h-6 w-auto" />
-        <span className="font-display text-base font-extrabold text-white">saque</span>
+      <div className="flex h-16 items-center px-5">
+        <LogoMarca className="h-8 w-auto" />
       </div>
 
       <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-5">

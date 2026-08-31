@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useRef, useState, type ClipboardEvent, type FormEvent, type KeyboardEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { HeaderMinimo } from "@/components/saque/header-minimo";
+import { HeaderMinimo } from "@/components/canche/header-minimo";
 import { auth } from "@/lib/api/endpoints/auth";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { esPasswordValida, passwordsCoinciden, POLITICA_PASSWORD_DESCRIPCION } from "@/lib/password";

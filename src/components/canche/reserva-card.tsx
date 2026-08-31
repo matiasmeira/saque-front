@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CalendarDays, MapPin } from "lucide-react";
 
-import { StatusBadge, type Estado } from "@/components/saque/status-badge";
+import { StatusBadge, type Estado } from "@/components/canche/status-badge";
 import { partirFechaHora } from "@/lib/api/fechas";
 import { etiquetaDeporte } from "@/lib/deportes";
 import { fechaLarga, formatearPrecio } from "@/lib/formato";

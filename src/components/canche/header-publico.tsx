@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Isotipo } from "@/components/saque/logo";
-import { NavSesion } from "@/components/saque/nav-sesion";
+import { Isotipo, LogoMarca } from "@/components/canche/logo";
+import { NavSesion } from "@/components/canche/nav-sesion";
 
 /**
  * Header de zona A y B.
@@ -25,12 +25,14 @@ export function HeaderPublico({ variant = "claro", ancho = "5xl" }: HeaderPublic
     <header className="relative z-10">
       <div className={`mx-auto flex ${maxWidth} items-center justify-between px-5 py-5 sm:px-8`}>
         <Link href="/" className="flex min-h-11 items-center gap-2">
-          <Isotipo variant={oscuro ? "blanco" : "color"} className="h-7 w-auto" />
-          <span
-            className={`font-display text-lg font-extrabold tracking-tight ${texto}`}
-          >
-            saque
-          </span>
+          {oscuro ? (
+            <LogoMarca className="h-11 w-auto" />
+          ) : (
+            <>
+              <Isotipo className="h-9 w-auto" />
+              <span className={`font-display text-xl font-extrabold tracking-tight ${texto}`}>canche</span>
+            </>
+          )}
         </Link>
 
         <NavSesion texto={texto} textoSecundario={textoSecundario} oscuro={oscuro} />

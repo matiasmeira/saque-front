@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { CalendarDays, Clock, Dumbbell, MapPin } from "lucide-react";
 import { DEPORTES } from "@/lib/deportes";
 import { FRANJAS } from "@/lib/franjas";
-import { CampoFormulario } from "@/components/saque/campo-formulario";
-import { Selector } from "@/components/saque/selector";
-import { SelectorFecha, proximosDias } from "@/components/saque/selector-fecha";
-import { SelectorUbicacion, type Ubicacion } from "@/components/saque/selector-ubicacion";
+import { CampoFormulario } from "@/components/canche/campo-formulario";
+import { Selector } from "@/components/canche/selector";
+import { SelectorFecha, proximosDias } from "@/components/canche/selector-fecha";
+import { SelectorUbicacion, type Ubicacion } from "@/components/canche/selector-ubicacion";
 
 /**
  * El buscador de la home.

@@ -3,9 +3,9 @@
 import { useRouter } from "next/navigation";
 import { Info, LogOut, Mail, User } from "lucide-react";
 
-import { HeaderPublico } from "@/components/saque/header-publico";
-import { FooterPublico } from "@/components/saque/footer-publico";
-import { EmptyState } from "@/components/saque/empty-state";
+import { HeaderPublico } from "@/components/canche/header-publico";
+import { FooterPublico } from "@/components/canche/footer-publico";
+import { EmptyState } from "@/components/canche/empty-state";
 import { Dato } from "@/components/perfil/dato";
 import { Insignia } from "@/components/perfil/insignia";
 import { VerificacionTelefono } from "@/components/perfil/verificacion-telefono";

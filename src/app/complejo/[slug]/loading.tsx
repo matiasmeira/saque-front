@@ -1,4 +1,4 @@
-import { HeaderPublico } from "@/components/saque/header-publico";
+import { HeaderPublico } from "@/components/canche/header-publico";
 
 /**
  * Estado de carga de A3. Next envuelve page.tsx en Suspense solo;

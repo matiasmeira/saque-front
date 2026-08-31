@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { CalendarDays, Clock, Dumbbell, MapPin } from "lucide-react";
 import { DEPORTES } from "@/lib/deportes";
 import { FRANJAS } from "@/lib/franjas";
-import { Selector } from "@/components/saque/selector";
-import { SelectorFecha } from "@/components/saque/selector-fecha";
-import { SelectorUbicacion, type Ubicacion } from "@/components/saque/selector-ubicacion";
+import { Selector } from "@/components/canche/selector";
+import { SelectorFecha } from "@/components/canche/selector-fecha";
+import { SelectorUbicacion, type Ubicacion } from "@/components/canche/selector-ubicacion";
 
 /**
  * Barra de filtros compacta de A2 — versión horizontal de los

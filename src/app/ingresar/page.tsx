@@ -4,12 +4,12 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, X } from "lucide-react";
-import { HeaderPublico } from "@/components/saque/header-publico";
+import { HeaderPublico } from "@/components/canche/header-publico";
 import {
   CompletarRegistro,
   TITULOS_REGISTRO,
   type PasoRegistro,
-} from "@/components/saque/completar-registro";
+} from "@/components/canche/completar-registro";
 import { guardarBooking, urlCheckout, useIntencion } from "@/lib/reserva-intencion";
 import { useQuery } from "@tanstack/react-query";
 import { publico } from "@/lib/api/endpoints/publico";

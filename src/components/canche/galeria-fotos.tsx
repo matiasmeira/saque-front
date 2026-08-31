@@ -2,7 +2,7 @@
 
 import { useState, type KeyboardEvent } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { LineasDeCancha } from "@/components/saque/lineas-de-cancha";
+import { LineasDeCancha } from "@/components/canche/lineas-de-cancha";
 
 /**
  * Galería de fotos de la ficha (A3). `LineasDeCancha` queda de fondo bajo

@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
-import { SelectorUbicacion, type Ubicacion } from "@/components/saque/selector-ubicacion";
+import { SelectorUbicacion, type Ubicacion } from "@/components/canche/selector-ubicacion";
 import { geocodificarDireccion } from "@/lib/api/georef";
 import type { EstablecimientoResponse } from "@/lib/api/tipos/establecimientos";
 import type { PlanSuscripcion } from "@/lib/api/tipos/comunes";
@@ -15,7 +15,7 @@ import type { PlanSuscripcion } from "@/lib/api/tipos/comunes";
  * (fuera de un Client Component, Next tira error al usarlo).
  */
 const MapaUbicacion = dynamic(
-  () => import("@/components/saque/mapa-ubicacion").then((mod) => mod.MapaUbicacion),
+  () => import("@/components/canche/mapa-ubicacion").then((mod) => mod.MapaUbicacion),
   { ssr: false },
 );
 

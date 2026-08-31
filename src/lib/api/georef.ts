@@ -3,7 +3,7 @@
  * de normalización geográfica del Estado. Es público, sin API key y responde
  * con `Access-Control-Allow-Origin: *`, así que se consume desde el browser.
  *
- * A propósito NO usa apiFetch: ese cliente resuelve la base URL de Saque,
+ * A propósito NO usa apiFetch: ese cliente resuelve la base URL de Canche,
  * adjunta el JWT y traduce las tres formas de error del backend propio. Nada
  * de eso aplica acá — es otro host y otro contrato.
  *

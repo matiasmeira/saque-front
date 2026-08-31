@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ArrowRightLeft, Calendar, Clock, Phone, User } from "lucide-react";
-import { StatusBadge } from "@/components/saque/status-badge";
+import { StatusBadge } from "@/components/canche/status-badge";
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { useHoraActual } from "@/lib/hora-actual";
 import { fechaLarga, formatearPrecio } from "@/lib/formato";

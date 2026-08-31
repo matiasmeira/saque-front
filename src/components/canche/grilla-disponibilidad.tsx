@@ -9,7 +9,7 @@ import { publico } from "@/lib/api/endpoints/publico";
 import { keys } from "@/lib/api/keys";
 import { partirFechaHora } from "@/lib/api/fechas";
 import { abreviaturaDeporte, etiquetaDeporte } from "@/lib/deportes";
-import { proximosDias } from "@/components/saque/selector-fecha";
+import { proximosDias } from "@/components/canche/selector-fecha";
 import type { ComplejoDetalleResponse } from "@/lib/api/tipos/publico";
 import type { DisponibilidadCanchaResponse } from "@/lib/api/tipos/disponibilidad";
 

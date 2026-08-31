@@ -1,5 +1,5 @@
-import { HeaderPublico } from "@/components/saque/header-publico";
-import { VenueCardSkeleton } from "@/components/saque/venue-card-skeleton";
+import { HeaderPublico } from "@/components/canche/header-publico";
+import { VenueCardSkeleton } from "@/components/canche/venue-card-skeleton";
 
 /**
  * Estado de carga de A2. Next.js envuelve page.tsx en Suspense

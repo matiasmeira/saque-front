@@ -1,4 +1,4 @@
-import { Selector } from "@/components/saque/selector";
+import { Selector } from "@/components/canche/selector";
 
 /**
  * Selector de fecha, consistente con el resto de los campos.

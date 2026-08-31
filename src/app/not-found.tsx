@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { HeaderPublico } from "@/components/saque/header-publico";
-import { FooterPublico } from "@/components/saque/footer-publico";
-import { LineasDeCancha } from "@/components/saque/lineas-de-cancha";
-import { Isotipo } from "@/components/saque/logo";
+import { HeaderPublico } from "@/components/canche/header-publico";
+import { FooterPublico } from "@/components/canche/footer-publico";
+import { LineasDeCancha } from "@/components/canche/lineas-de-cancha";
+import { Isotipo } from "@/components/canche/logo";
 
 /**
  * 404 de toda la app (Next la muestra sola con cualquier ruta que no

@@ -8,7 +8,7 @@ import { AlertTriangle, ArrowLeft, Ban, Calendar, Mail, Phone, Plus } from "luci
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
 import { ModalPanel } from "@/components/panel/modal-panel";
-import { StatusBadge } from "@/components/saque/status-badge";
+import { StatusBadge } from "@/components/canche/status-badge";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useBloqueadoPorCaja, usePerfilPendiente } from "@/lib/permisos";
 import { fechaLarga, formatearPrecio } from "@/lib/formato";

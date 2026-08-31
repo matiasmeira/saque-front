@@ -1,7 +1,7 @@
-import { HeaderPublico } from "@/components/saque/header-publico";
-import { Buscador } from "@/components/saque/buscador";
-import { LineasDeCancha } from "@/components/saque/lineas-de-cancha";
-import { FooterPublico } from "@/components/saque/footer-publico";
+import { HeaderPublico } from "@/components/canche/header-publico";
+import { Buscador } from "@/components/canche/buscador";
+import { LineasDeCancha } from "@/components/canche/lineas-de-cancha";
+import { FooterPublico } from "@/components/canche/footer-publico";
 
 export default function Home() {
   return (

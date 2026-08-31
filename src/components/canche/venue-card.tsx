@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Navigation, Star } from "lucide-react";
-import { LineasDeCancha } from "@/components/saque/lineas-de-cancha";
+import { LineasDeCancha } from "@/components/canche/lineas-de-cancha";
 import { formatearPrecio } from "@/lib/formato";
 import { abreviaturaDeporte } from "@/lib/deportes";
 import type { ComplejoCardResponse } from "@/lib/api/tipos/publico";

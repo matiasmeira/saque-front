@@ -1,11 +1,13 @@
 /**
- * Logo de Saque.
+ * Logo de Canche.
  *
  * OJO con el chevron: el skewX(-9) inclina el dibujo pero no
  * recalcula el origen, asi que el translate(14.7, 15) es un valor
  * medido para que quede centrado. Si cambias el angulo o el grosor
  * del trazo, hay que volver a centrarlo.
  */
+
+import Image from "next/image";
 
 type LogoProps = {
   /** "color" para fondo claro, "blanco" para fondo oscuro */
@@ -36,7 +38,7 @@ export function Isotipo({ variant = "color", className }: LogoProps) {
       viewBox="0 0 64 64"
       className={className}
       role="img"
-      aria-label="Saque"
+      aria-label="Canche"
     >
       <Chevron variant={variant} />
     </svg>
@@ -51,7 +53,7 @@ export function Logo({ variant = "color", className }: LogoProps) {
       viewBox="0 0 253 64"
       className={className}
       role="img"
-      aria-label="Saque"
+      aria-label="Canche"
     >
       <Chevron variant={variant} />
       <text
@@ -63,8 +65,36 @@ export function Logo({ variant = "color", className }: LogoProps) {
         letterSpacing={-1.8}
         style={{ fontFamily: "var(--font-archivo), sans-serif" }}
       >
-        saque
+        canche
       </text>
     </svg>
+  );
+}
+
+/**
+ * Isologo completo (canche + pill ".ar") para fondos oscuros.
+ *
+ * Es un PNG, no vectorial: el archivo trae el fondo tinta (#0A1F3D)
+ * "horneado" en el lienzo en vez de transparente, así que solo
+ * queda prolijo sobre bg-tinta (donde el fondo del archivo se
+ * funde con el de la página). No usar sobre fondo claro: se ve un
+ * recuadro azul marino alrededor del logo.
+ *
+ * Usa `canche-horizontal-dark-crop.png`, un recorte de
+ * `canche-horizontal-dark.png` (el original queda intacto en
+ * public/logos/): el archivo entregado tenía tanto margen "horneado"
+ * en el lienzo que el isologo real ocupaba solo ~33% del alto total,
+ * y se veía diminuto a cualquier tamaño razonable de header/footer.
+ */
+export function LogoMarca({ className }: { className?: string }) {
+  return (
+    <Image
+      src="/logos/canche-horizontal-dark-crop.png"
+      alt="Canche.ar"
+      width={904}
+      height={176}
+      preload
+      className={className}
+    />
   );
 }
