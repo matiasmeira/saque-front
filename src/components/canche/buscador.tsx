@@ -19,12 +19,12 @@ import { SelectorUbicacion, type Ubicacion } from "@/components/canche/selector-
  * protagonista. Buscar sin ubicación es válido: el backend devuelve
  * entonces todos los complejos ordenados por calificación.
  *
- * La hoja es de ancho completo (no un "card" angosto) y sube sobre
- * el hero con margen negativo: así el corte entre el panel tinta y
- * el fondo claro queda cubierto de punta a punta, sin línea dura.
- * z-10 explícito es necesario porque el hero tiene position:relative
- * (por el SVG de fondo) y un elemento posicionado siempre pinta por
- * encima de uno sin posición, sin importar el orden en el HTML.
+ * Es un card flotante (no de ancho completo) que sube sobre el hero
+ * con margen negativo, para que quede "flotando" sobre la foto/panel
+ * tinta en vez de cortar la pantalla en dos franjas. z-10 explícito es
+ * necesario porque el hero tiene position:relative (por el SVG de
+ * fondo) y un elemento posicionado siempre pinta por encima de uno
+ * sin posición, sin importar el orden en el HTML.
  *
  * Los chips de fecha son atajos, no un segundo lugar donde vive el
  * estado: solo escriben en el campo "Cuándo" y no muestran
@@ -72,37 +72,45 @@ export function Buscador() {
   return (
     <section
       aria-label="Buscador de canchas"
-      className="relative z-10 -mt-10 rounded-t-card bg-white sm:-mt-16"
+      className="relative z-10 mx-auto -mt-12 w-[calc(100%-2.5rem)] max-w-4xl rounded-card bg-white shadow-card sm:-mt-16 sm:w-[calc(100%-4rem)]"
     >
-      <div className="mx-auto max-w-5xl px-5 pb-8 pt-7 sm:px-8">
-        <div className="divide-y divide-borde">
-          <CampoFormulario icon={<Dumbbell className="size-[18px]" aria-hidden />} label="Deporte" htmlFor="deporte">
+      <div className="px-5 pb-8 pt-7 sm:px-6">
+        <div className="grid grid-cols-1 divide-y divide-borde sm:grid-cols-4 sm:divide-x sm:divide-y-0">
+          <CampoFormulario
+            icon={<Dumbbell className="size-[18px]" aria-hidden />}
+            label="Deporte"
+            htmlFor="deporte"
+            className="sm:px-4"
+          >
             <Selector id="deporte" value={deporte} onChange={setDeporte} opciones={DEPORTES} />
           </CampoFormulario>
 
-          <CampoFormulario icon={<MapPin className="size-[18px]" aria-hidden />} label="Dónde" htmlFor="ubicacion">
+          <CampoFormulario
+            icon={<MapPin className="size-[18px]" aria-hidden />}
+            label="Dónde"
+            htmlFor="ubicacion"
+            className="sm:px-4"
+          >
             <SelectorUbicacion id="ubicacion" value={ubicacion} onChange={setUbicacion} />
           </CampoFormulario>
 
-          <div className="grid grid-cols-2 divide-x divide-borde">
-            <CampoFormulario
-              icon={<CalendarDays className="size-[18px]" aria-hidden />}
-              label="Cuándo"
-              htmlFor="fecha"
-              className="pr-4"
-            >
-              <SelectorFecha id="fecha" value={fecha} onChange={setFecha} />
-            </CampoFormulario>
+          <CampoFormulario
+            icon={<CalendarDays className="size-[18px]" aria-hidden />}
+            label="Cuándo"
+            htmlFor="fecha"
+            className="sm:px-4"
+          >
+            <SelectorFecha id="fecha" value={fecha} onChange={setFecha} />
+          </CampoFormulario>
 
-            <CampoFormulario
-              icon={<Clock className="size-[18px]" aria-hidden />}
-              label="Franja"
-              htmlFor="franja"
-              className="pl-4"
-            >
-              <Selector id="franja" value={franja} onChange={setFranja} opciones={FRANJAS} />
-            </CampoFormulario>
-          </div>
+          <CampoFormulario
+            icon={<Clock className="size-[18px]" aria-hidden />}
+            label="Franja"
+            htmlFor="franja"
+            className="sm:px-4"
+          >
+            <Selector id="franja" value={franja} onChange={setFranja} opciones={FRANJAS} />
+          </CampoFormulario>
         </div>
 
         <div className="border-t border-borde pt-5">
