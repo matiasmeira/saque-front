@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { AlertTriangle, Mail, Send, ShieldAlert } from "lucide-react";
-import { HeaderMinimo } from "@/components/saque/header-minimo";
+import { HeaderMinimo } from "@/components/canche/header-minimo";
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { adminMails } from "@/lib/api/endpoints/mails";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
@@ -20,7 +20,7 @@ const campoClase =
  *
  * El motivo es el alcance del endpoint, no una preferencia de menú:
  * `POST /api/v1/admin/mails/oferta` le manda el mail a TODOS los usuarios de
- * Saque con opt-in de marketing, sin filtrar por establecimiento. Un dueño que
+ * Canche con opt-in de marketing, sin filtrar por establecimiento. Un dueño que
  * lo disparara le estaría escribiendo a los clientes de los demás complejos.
  * El backend lo sabe y valida rol ADMIN dentro de OfertaMarketingService: a un
  * OWNER le contesta 403. La pantalla estaba gateada por `esDueno`, así que
@@ -74,7 +74,7 @@ export default function AdminOfertas() {
             <ShieldAlert className="mx-auto size-8 text-grafito" aria-hidden />
             <h1 className="mt-3 font-display text-lg font-bold text-tinta">Esto es de administración</h1>
             <p className="mt-2 text-sm text-grafito">
-              El envío de ofertas alcanza a todos los usuarios de Saque, no a los clientes de un complejo. Sólo un
+              El envío de ofertas alcanza a todos los usuarios de Canche, no a los clientes de un complejo. Sólo un
               administrador de la plataforma puede dispararlo.
             </p>
           </div>
@@ -97,7 +97,7 @@ export default function AdminOfertas() {
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
         <h1 className="font-display text-2xl font-extrabold tracking-tight text-tinta">Enviar oferta</h1>
         <p className="mt-1 text-sm text-grafito">
-          Va a todos los usuarios de Saque con opt-in de marketing, de cualquier complejo. No se puede deshacer.
+          Va a todos los usuarios de Canche con opt-in de marketing, de cualquier complejo. No se puede deshacer.
         </p>
 
         <section className="mt-6 rounded-card bg-white p-6 shadow-card">
@@ -187,7 +187,7 @@ export default function AdminOfertas() {
         <ModalPanel titulo="Confirmar envío" subtitulo={asunto} onClose={() => setConfirmando(false)}>
           <div className="space-y-4">
             <p className="text-sm text-tinta">
-              Este mail sale a todos los usuarios de Saque con opt-in de marketing. No hay forma de frenarlo una vez
+              Este mail sale a todos los usuarios de Canche con opt-in de marketing. No hay forma de frenarlo una vez
               encolado.
             </p>
             <div className="flex gap-2">

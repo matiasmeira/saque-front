@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Logo } from "@/components/saque/logo";
+import { Logo } from "@/components/canche/logo";
 
 /**
  * Layout compartido de toda la zona E (/caja/*). A propósito no se

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle, RotateCcw } from "lucide-react";
-import { HeaderMinimo } from "@/components/saque/header-minimo";
+import { HeaderMinimo } from "@/components/canche/header-minimo";
 
 /**
  * Error boundary de toda la app — Next exige "use client" y la firma

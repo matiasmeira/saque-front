@@ -5,12 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 
-import { HeaderMinimo } from "@/components/saque/header-minimo";
+import { HeaderMinimo } from "@/components/canche/header-minimo";
 import {
   CompletarRegistro,
   TITULOS_REGISTRO,
   type PasoRegistro,
-} from "@/components/saque/completar-registro";
+} from "@/components/canche/completar-registro";
 import { auth } from "@/lib/api/endpoints/auth";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { urlCheckout, useIntencion } from "@/lib/reserva-intencion";

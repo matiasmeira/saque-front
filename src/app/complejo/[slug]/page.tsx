@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MapPin, Navigation } from "lucide-react";
-import { HeaderPublico } from "@/components/saque/header-publico";
-import { FooterPublico } from "@/components/saque/footer-publico";
-import { GaleriaFotos } from "@/components/saque/galeria-fotos";
-import { GrillaDisponibilidad } from "@/components/saque/grilla-disponibilidad";
-import { ReservaBlock } from "@/components/saque/reserva-block";
-import { MapaComplejo } from "@/components/saque/mapa-complejo";
+import { HeaderPublico } from "@/components/canche/header-publico";
+import { FooterPublico } from "@/components/canche/footer-publico";
+import { GaleriaFotos } from "@/components/canche/galeria-fotos";
+import { GrillaDisponibilidad } from "@/components/canche/grilla-disponibilidad";
+import { ReservaBlock } from "@/components/canche/reserva-block";
+import { MapaComplejo } from "@/components/canche/mapa-complejo";
 import { etiquetaDeporte } from "@/lib/deportes";
 import { servicio as buscarServicio } from "@/lib/servicios";
 import { publico } from "@/lib/api/endpoints/publico";
@@ -49,10 +49,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const complejo = await buscarComplejo(slug);
-  if (!complejo) return { title: "Complejo no encontrado — saque" };
+  if (!complejo) return { title: "Complejo no encontrado — Canche.ar" };
 
   const deportesLabel = complejo.deportes.map(etiquetaDeporte).join(", ");
-  const titulo = `${complejo.nombre} — Reservá tu cancha | saque`;
+  const titulo = `${complejo.nombre} — Reservá tu cancha | Canche.ar`;
   const descripcion = `${complejo.nombre}, en ${complejo.direccion}. Reservá ${deportesLabel} online y el turno queda confirmado al instante.`;
 
   return {

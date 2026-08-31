@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { HeaderMinimo } from "@/components/saque/header-minimo";
+import { HeaderMinimo } from "@/components/canche/header-minimo";
 import { auth } from "@/lib/api/endpoints/auth";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 

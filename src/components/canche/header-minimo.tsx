@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { Isotipo } from "@/components/saque/logo";
+import { Isotipo } from "@/components/canche/logo";
 
 /**
  * Header liviano para el flujo de registro (A4). HeaderPublico no
@@ -21,8 +21,8 @@ export function HeaderMinimo({ volver }: { volver?: string }) {
         </Link>
       )}
       <Link href="/" className="flex items-center gap-1.5">
-        <Isotipo className="h-5 w-auto" />
-        <span className="font-display text-sm font-extrabold tracking-tight text-tinta">saque</span>
+        <Isotipo className="h-6 w-auto" />
+        <span className="font-display text-base font-extrabold tracking-tight text-tinta">canche</span>
       </Link>
     </header>
   );

@@ -6,9 +6,9 @@ import Link from "next/link";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, CalendarDays, CheckCircle2, Clock, Info, Loader2, Phone } from "lucide-react";
 
-import { HeaderPublico } from "@/components/saque/header-publico";
-import { FooterPublico } from "@/components/saque/footer-publico";
-import { CountdownBadge } from "@/components/saque/countdown-badge";
+import { HeaderPublico } from "@/components/canche/header-publico";
+import { FooterPublico } from "@/components/canche/footer-publico";
+import { CountdownBadge } from "@/components/canche/countdown-badge";
 import { publico } from "@/lib/api/endpoints/publico";
 import { reservas } from "@/lib/api/endpoints/reservas";
 import { keys } from "@/lib/api/keys";

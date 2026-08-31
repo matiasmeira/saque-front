@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { HeaderMinimo } from "@/components/saque/header-minimo";
+import { HeaderMinimo } from "@/components/canche/header-minimo";
 import { mails } from "@/lib/api/endpoints/mails";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 

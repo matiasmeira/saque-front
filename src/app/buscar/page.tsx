@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Map } from "lucide-react";
-import { HeaderPublico } from "@/components/saque/header-publico";
-import { FooterPublico } from "@/components/saque/footer-publico";
-import { FiltrosResultados } from "@/components/saque/filtros-resultados";
-import { VenueCard } from "@/components/saque/venue-card";
-import { EmptyState } from "@/components/saque/empty-state";
-import { LineasDeCancha } from "@/components/saque/lineas-de-cancha";
-import { proximosDias, etiquetaDeFecha } from "@/components/saque/selector-fecha";
+import { HeaderPublico } from "@/components/canche/header-publico";
+import { FooterPublico } from "@/components/canche/footer-publico";
+import { FiltrosResultados } from "@/components/canche/filtros-resultados";
+import { VenueCard } from "@/components/canche/venue-card";
+import { EmptyState } from "@/components/canche/empty-state";
+import { LineasDeCancha } from "@/components/canche/lineas-de-cancha";
+import { proximosDias, etiquetaDeFecha } from "@/components/canche/selector-fecha";
 import { DEPORTES, esDeporte, etiquetaDeporte } from "@/lib/deportes";
 import { FRANJAS } from "@/lib/franjas";
 import { publico } from "@/lib/api/endpoints/publico";
@@ -15,7 +15,7 @@ import type { ComplejoCardResponse } from "@/lib/api/tipos/publico";
 import type { Page } from "@/lib/api/tipos/comunes";
 
 export const metadata: Metadata = {
-  title: "Buscar canchas — saque",
+  title: "Buscar canchas — Canche.ar",
 };
 
 /**

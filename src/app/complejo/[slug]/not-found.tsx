@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { SearchX } from "lucide-react";
-import { HeaderPublico } from "@/components/saque/header-publico";
-import { FooterPublico } from "@/components/saque/footer-publico";
+import { HeaderPublico } from "@/components/canche/header-publico";
+import { FooterPublico } from "@/components/canche/footer-publico";
 
 /**
  * Estado de error de A3: complejo inexistente o slug viejo. Next

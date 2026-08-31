@@ -1,6 +1,6 @@
 "use client";
 
-import { Selector } from "@/components/saque/selector";
+import { Selector } from "@/components/canche/selector";
 import { usePerfil, useEstablecimientoActivo } from "@/hooks/api/use-perfil";
 
 const OPCION_CREAR = "__crear__";

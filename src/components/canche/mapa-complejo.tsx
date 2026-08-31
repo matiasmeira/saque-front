@@ -10,7 +10,7 @@ import dynamic from "next/dynamic";
  * página.
  */
 const MapaUbicacion = dynamic(
-  () => import("@/components/saque/mapa-ubicacion").then((mod) => mod.MapaUbicacion),
+  () => import("@/components/canche/mapa-ubicacion").then((mod) => mod.MapaUbicacion),
   { ssr: false },
 );
 

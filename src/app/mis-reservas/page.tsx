@@ -4,10 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { HeaderPublico } from "@/components/saque/header-publico";
-import { FooterPublico } from "@/components/saque/footer-publico";
-import { ReservaCard } from "@/components/saque/reserva-card";
-import { EmptyState } from "@/components/saque/empty-state";
+import { HeaderPublico } from "@/components/canche/header-publico";
+import { FooterPublico } from "@/components/canche/footer-publico";
+import { ReservaCard } from "@/components/canche/reserva-card";
+import { EmptyState } from "@/components/canche/empty-state";
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { reservas as endpointReservas } from "@/lib/api/endpoints/reservas";
 import { keys } from "@/lib/api/keys";

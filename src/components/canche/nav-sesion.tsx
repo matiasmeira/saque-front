@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { usePerfil } from "@/hooks/api/use-perfil";
 import { useHaySesion } from "@/hooks/api/use-sesion";
-import { MenuUsuario } from "@/components/saque/menu-usuario";
+import { MenuUsuario } from "@/components/canche/menu-usuario";
 
 /**
  * Slot derecho del header público. "Software para negocios" es un link
