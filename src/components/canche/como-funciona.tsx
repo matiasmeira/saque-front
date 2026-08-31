@@ -32,7 +32,7 @@ const PASOS = [
  */
 export function ComoFunciona() {
   return (
-    <section className="border-t border-borde bg-white px-5 py-16 sm:px-8 sm:py-20">
+    <section id="como-funciona" className="border-t border-borde bg-white px-5 py-16 sm:px-8 sm:py-20">
       <div className="mx-auto max-w-5xl">
         <h2 className="text-center text-3xl text-tinta sm:text-4xl">Reservar nunca fue tan fácil</h2>
 

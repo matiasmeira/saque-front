@@ -74,22 +74,20 @@ export function Logo({ variant = "color", className }: LogoProps) {
 /**
  * Isologo completo (canche + pill ".ar") para fondos oscuros.
  *
- * Es un PNG, no vectorial: el archivo trae el fondo tinta (#0A1F3D)
- * "horneado" en el lienzo en vez de transparente, así que solo
- * queda prolijo sobre bg-tinta (donde el fondo del archivo se
- * funde con el de la página). No usar sobre fondo claro: se ve un
- * recuadro azul marino alrededor del logo.
+ * Es un PNG, no vectorial, en blanco con fondo transparente (bordes
+ * de la ".ar" quedan blancos): solo queda prolijo sobre bg-tinta u
+ * otro fondo oscuro. No usar sobre fondo claro: el trazo blanco
+ * desaparece.
  *
- * Usa `canche-horizontal-dark-crop.png`, un recorte de
- * `canche-horizontal-dark.png` (el original queda intacto en
- * public/logos/): el archivo entregado tenía tanto margen "horneado"
- * en el lienzo que el isologo real ocupaba solo ~33% del alto total,
- * y se veía diminuto a cualquier tamaño razonable de header/footer.
+ * Usa `canche-horizontal-dark-crop-removebg-preview.png`, versión
+ * sin fondo de `canche-horizontal-dark-crop.png` (que a su vez es un
+ * recorte de `canche-horizontal-dark.png`; los originales quedan
+ * intactos en public/logos/).
  */
 export function LogoMarca({ className }: { className?: string }) {
   return (
     <Image
-      src="/logos/canche-horizontal-dark-crop.png"
+      src="/logos/canche-horizontal-dark-crop-removebg-preview.png"
       alt="Canche.ar"
       width={904}
       height={176}
