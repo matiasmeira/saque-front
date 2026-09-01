@@ -165,7 +165,7 @@ export function SelectorUbicacion({
         <ul
           id={`${idInput}-sugerencias`}
           role="listbox"
-          className="absolute left-0 right-0 top-full z-20 mt-2 max-h-64 overflow-auto rounded-card border border-borde bg-white py-1 shadow-lg"
+          className="absolute left-0 right-0 top-full z-20 mt-2 max-h-64 origin-top animate-desplegar overflow-auto rounded-card border border-borde bg-white py-1 shadow-lg"
         >
           {sugerencias.isPending && (
             <li className="px-4 py-2 text-sm text-grafito">Buscando...</li>

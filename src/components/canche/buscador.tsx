@@ -26,32 +26,19 @@ import { SelectorUbicacion, type Ubicacion } from "@/components/canche/selector-
  * fondo) y un elemento posicionado siempre pinta por encima de uno
  * sin posición, sin importar el orden en el HTML.
  *
- * Los chips de fecha son atajos, no un segundo lugar donde vive el
- * estado: solo escriben en el campo "Cuándo" y no muestran
- * seleccionado — si mostraran estado propio, "Hoy" competiría con
- * el mismo valor ya visible en el campo.
+ * Neumorfismo: la card y cada campo comparten el mismo fondo (humo),
+ * la separación la dan --shadow-neu-raised/-inset en vez de un borde.
+ * Por eso no hay chips de atajo de fecha ("Hoy"/"Mañana"/etc.): en
+ * este lenguaje visual un chip aislado no tiene contra qué "hundirse"
+ * o "sobresalir" de forma consistente con el resto, y el campo
+ * Cuándo ya cubre lo mismo.
  */
 export function Buscador() {
   const router = useRouter();
-  const dias = proximosDias(14);
-  // "Próximo sábado/domingo" puede caer en "Hoy" o "Mañana" (ej. hoy viernes
-  // -> mañana YA es el próximo sábado): sin el dedupe por valor, esos dos
-  // chips quedan con la misma key y React tira el warning de keys duplicadas.
-  const valoresVistos = new Set<string>();
-  const chips = [
-    dias[0],
-    dias[1],
-    dias.find((d) => d.fecha.getDay() === 6)!,
-    dias.find((d) => d.fecha.getDay() === 0)!,
-  ].filter((chip) => {
-    if (valoresVistos.has(chip.valor)) return false;
-    valoresVistos.add(chip.valor);
-    return true;
-  });
 
   const [deporte, setDeporte] = useState<string>(DEPORTES[0].valor);
   const [ubicacion, setUbicacion] = useState<Ubicacion | null>(null);
-  const [fecha, setFecha] = useState(dias[0].valor);
+  const [fecha, setFecha] = useState(proximosDias(1)[0].valor);
   const [franja, setFranja] = useState(FRANJAS[2].valor);
 
   /**
@@ -74,13 +61,13 @@ export function Buscador() {
       aria-label="Buscador de canchas"
       className="relative z-10 mx-auto -mt-12 w-[calc(100%-2.5rem)] max-w-4xl rounded-card bg-white shadow-card sm:-mt-16 sm:w-[calc(100%-4rem)]"
     >
-      <div className="px-5 pb-8 pt-7 sm:px-6">
-        <div className="grid grid-cols-1 divide-y divide-borde sm:grid-cols-4 sm:divide-x sm:divide-y-0">
+      <div className="px-5 py-6 sm:px-6">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
           <CampoFormulario
             icon={<Dumbbell className="size-[18px]" aria-hidden />}
             label="Deporte"
             htmlFor="deporte"
-            className="sm:px-4"
+            className="rounded-input border border-borde px-4 transition-colors duration-200 hover:border-azul"
           >
             <Selector id="deporte" value={deporte} onChange={setDeporte} opciones={DEPORTES} />
           </CampoFormulario>
@@ -89,7 +76,7 @@ export function Buscador() {
             icon={<MapPin className="size-[18px]" aria-hidden />}
             label="Dónde"
             htmlFor="ubicacion"
-            className="sm:px-4"
+            className="rounded-input border border-borde px-4 transition-colors duration-200 hover:border-azul"
           >
             <SelectorUbicacion id="ubicacion" value={ubicacion} onChange={setUbicacion} />
           </CampoFormulario>
@@ -98,7 +85,7 @@ export function Buscador() {
             icon={<CalendarDays className="size-[18px]" aria-hidden />}
             label="Cuándo"
             htmlFor="fecha"
-            className="sm:px-4"
+            className="rounded-input border border-borde px-4 transition-colors duration-200 hover:border-azul"
           >
             <SelectorFecha id="fecha" value={fecha} onChange={setFecha} />
           </CampoFormulario>
@@ -107,34 +94,19 @@ export function Buscador() {
             icon={<Clock className="size-[18px]" aria-hidden />}
             label="Franja"
             htmlFor="franja"
-            className="sm:px-4"
+            className="rounded-input border border-borde px-4 transition-colors duration-200 hover:border-azul"
           >
             <Selector id="franja" value={franja} onChange={setFranja} opciones={FRANJAS} />
           </CampoFormulario>
         </div>
 
-        <div className="border-t border-borde pt-5">
-          <div className="flex flex-wrap gap-2">
-            {chips.map((chip) => (
-              <button
-                key={chip.valor}
-                type="button"
-                onClick={() => setFecha(chip.valor)}
-                className="h-11 rounded-full border border-borde bg-white px-4 text-sm font-semibold text-grafito transition-colors hover:border-azul hover:text-azul"
-              >
-                {chip.etiqueta}
-              </button>
-            ))}
-          </div>
-
-          <button
-            type="button"
-            onClick={buscar}
-            className="mt-4 flex h-14 w-full items-center justify-center rounded-full bg-azul font-display text-base font-bold text-white transition-colors hover:bg-azul-oscuro"
-          >
-            Buscar canchas
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={buscar}
+          className="mt-5 flex h-14 w-full items-center justify-center rounded-full border border-azul-oscuro bg-azul font-display text-base font-bold text-white transition-all duration-150 ease-out hover:bg-azul-oscuro active:scale-[0.98]"
+        >
+          Buscar canchas
+        </button>
       </div>
     </section>
   );
