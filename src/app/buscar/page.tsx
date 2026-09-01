@@ -113,10 +113,14 @@ export default async function Resultados({
               titulo={`No hay ${deporteLabel.toLowerCase()} en ${lugarLabel} para ${diaFrase}.`}
               descripcion="Pero seguro hay lugar si corrés alguno de estos criterios:"
               salidas={[
-                {
-                  label: "Buscar en todo el país",
-                  href: `/buscar?deporte=${deporte}&fecha=${fecha}&franja=${franja}`,
-                },
+                ...(ubicacion
+                  ? [
+                      {
+                        label: "Buscar en todo el país",
+                        href: `/buscar?deporte=${deporte}&fecha=${fecha}&franja=${franja}`,
+                      },
+                    ]
+                  : []),
                 {
                   label: "Mañana probablemente haya más opciones",
                   href: `/buscar?deporte=${deporte}&fecha=${proximosDias(2)[1].valor}&franja=${franja}`,
