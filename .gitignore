@@ -38,6 +38,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# worktrees aislados de subagent-driven-development
+/.worktrees
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
