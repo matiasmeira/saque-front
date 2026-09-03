@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent, type DragEvent, type FormEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type FormEvent } from "react";
 import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Trash2, Upload } from "lucide-react";
@@ -62,13 +62,21 @@ export function PasoIdentidad({
     return () => clearTimeout(id);
   }, [direccion]);
 
+  // fotosRef refleja el último `fotos` en cada render, para que el cleanup
+  // de desmontaje (abajo) no quede atado al array que existía en el montaje.
+  const fotosRef = useRef(fotos);
+  useEffect(() => {
+    fotosRef.current = fotos;
+  }, [fotos]);
+
   // Al desmontar (avanzar de paso o salir del wizard) se liberan los blob: URL
   // de las miniaturas — si no, quedan colgados hasta recargar la página.
+  // Lee fotosRef.current (no `fotos`) para no revocar en cada add/remove,
+  // sólo en el desmontaje real, mientras sigue viendo el último valor.
   useEffect(() => {
     return () => {
-      fotos.forEach((f) => URL.revokeObjectURL(f.previewUrl));
+      fotosRef.current.forEach((f) => URL.revokeObjectURL(f.previewUrl));
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const pinVigente =
