@@ -14,6 +14,7 @@ import { TablaDispositivos } from "@/components/panel/tabla-dispositivos";
 import { GenerarLinkCaja } from "@/components/panel/generar-link-caja";
 import { SkeletonConfig } from "@/components/panel/skeleton-config";
 import { ModalPanel } from "@/components/panel/modal-panel";
+import { SeccionPoliticaCancelacion } from "@/components/panel/seccion-politica-cancelacion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { dispositivos as endpointDispositivos } from "@/lib/api/endpoints/caja";
 import { establecimientos as endpointEstablecimientos } from "@/lib/api/endpoints/establecimientos";
@@ -248,12 +249,9 @@ export default function PanelConfiguracion() {
                 <FormFotos establecimientoId={establecimiento.id} />
               </Seccion>
 
-              <SeccionSinEndpoint
-                icono={CalendarClock}
-                titulo="Política de cancelación"
-                descripcion="Hasta cuándo se puede cancelar sin perder la seña."
-                falta="Rige el valor por defecto: 24 horas de anticipación, con 30 minutos de gracia desde que se creó la reserva. Está en la entidad pero no se expone ni para leerlo ni para cambiarlo."
-              />
+              <Seccion icono={CalendarClock} titulo="Política de cancelación" descripcion="Hasta cuándo se puede cancelar sin perder la seña.">
+                <SeccionPoliticaCancelacion establecimientoId={establecimiento.id} />
+              </Seccion>
 
               <SeccionSinEndpoint
                 icono={Wallet}
