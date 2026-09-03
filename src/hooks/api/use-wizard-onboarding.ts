@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { establecimientos as endpointEstablecimientos } from "@/lib/api/endpoints/establecimientos";
@@ -23,6 +23,7 @@ export function useWizardOnboarding() {
   const [datosIdentidad, setDatosIdentidad] = useState<DatosPasoIdentidad | null>(null);
   const [establecimientoCreado, setEstablecimientoCreado] = useState<EstablecimientoResponse | null>(null);
   const [erroresFotos, setErroresFotos] = useState<string[]>([]);
+  const establecimientoRef = useRef<EstablecimientoResponse | null>(null);
 
   const crear = useMutation<EstablecimientoResponse, ApiError, DatosPasoPoliticas>({
     mutationFn: async (politicas) => {
@@ -30,16 +31,20 @@ export function useWizardOnboarding() {
         throw new ApiError({ status: 0, mensaje: "Falta completar el paso 1." });
       }
 
-      const establecimiento = await endpointEstablecimientos.crear({
-        nombre: datosIdentidad.nombre,
-        direccion: datosIdentidad.direccion,
-        latitud: datosIdentidad.latitud,
-        longitud: datosIdentidad.longitud,
-        requiereSena: politicas.requiereSena,
-        requiereTelefonoVerificado: politicas.requiereTelefonoVerificado,
-        horariosAtencion: [],
-        servicios: datosIdentidad.servicios,
-      });
+      let establecimiento = establecimientoRef.current;
+      if (!establecimiento) {
+        establecimiento = await endpointEstablecimientos.crear({
+          nombre: datosIdentidad.nombre,
+          direccion: datosIdentidad.direccion,
+          latitud: datosIdentidad.latitud,
+          longitud: datosIdentidad.longitud,
+          requiereSena: politicas.requiereSena,
+          requiereTelefonoVerificado: politicas.requiereTelefonoVerificado,
+          horariosAtencion: [],
+          servicios: datosIdentidad.servicios,
+        });
+        establecimientoRef.current = establecimiento;
+      }
 
       const fotosFallidas: string[] = [];
       for (const archivo of datosIdentidad.fotos) {
