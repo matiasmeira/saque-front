@@ -2,9 +2,13 @@ import { apiFetch, subirArchivo } from "../cliente";
 import { construirQuery } from "../query";
 import type { DisponibilidadEstablecimientoResponse } from "../tipos/disponibilidad";
 import type {
+  ActualizarPoliticaCancelacionRequest,
+  DiaNoLaborableRequest,
+  DiaNoLaborableResponse,
   EstablecimientoRequest,
   EstablecimientoResponse,
   FotoEstablecimiento,
+  PoliticaCancelacionResponse,
 } from "../tipos/establecimientos";
 
 /** EstablecimientoController — base /api/v1/establecimientos. OWNER / ADMIN. */
@@ -64,5 +68,29 @@ export const establecimientos = {
     apiFetch<FotoEstablecimiento[]>(`/api/v1/establecimientos/${estId}/fotos/orden`, {
       method: "PUT",
       body: { fileIds },
+    }),
+
+  /** Sub-recurso propio, igual que las fotos. Sin editar: se borra y se crea de nuevo. */
+  listarDiasNoLaborables: (estId: number) =>
+    apiFetch<DiaNoLaborableResponse[]>(`/api/v1/establecimientos/${estId}/dias-no-laborables`),
+
+  crearDiaNoLaborable: (estId: number, body: DiaNoLaborableRequest) =>
+    apiFetch<DiaNoLaborableResponse>(`/api/v1/establecimientos/${estId}/dias-no-laborables`, {
+      method: "POST",
+      body,
+    }),
+
+  eliminarDiaNoLaborable: (estId: number, id: number) =>
+    apiFetch<void>(`/api/v1/establecimientos/${estId}/dias-no-laborables/${id}`, { method: "DELETE" }),
+
+  /** Sub-recurso propio, igual que fotos y días no laborables. Sin "crear": siempre existe. */
+  obtenerPoliticaCancelacion: (estId: number) =>
+    apiFetch<PoliticaCancelacionResponse>(`/api/v1/establecimientos/${estId}/politicas-cancelacion`),
+
+  /** PATCH real: manda siempre los dos campos, así que la semántica "null = no modificar" del back no aplica acá. */
+  actualizarPoliticaCancelacion: (estId: number, body: ActualizarPoliticaCancelacionRequest) =>
+    apiFetch<PoliticaCancelacionResponse>(`/api/v1/establecimientos/${estId}/politicas-cancelacion`, {
+      method: "PATCH",
+      body,
     }),
 };

@@ -3,13 +3,15 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { AlertTriangle, Building2, CalendarClock, Check, ChevronRight, Clock, Images, Plus, Smartphone, Sparkles, Users, Wallet } from "lucide-react";
+import { AlertTriangle, Building2, CalendarClock, CalendarOff, Check, ChevronRight, Clock, Images, Plus, Smartphone, Sparkles, Users, Wallet } from "lucide-react";
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
 import { FormDatosComplejo, type DatosEstablecimiento } from "@/components/panel/form-datos-complejo";
 import { FormFotos } from "@/components/panel/form-fotos";
 import { FormHorariosAtencion } from "@/components/panel/form-horarios-atencion";
 import { FormServicios } from "@/components/panel/form-servicios";
+import { SeccionDiasNoLaborables } from "@/components/panel/seccion-dias-no-laborables";
+import { SeccionPoliticaCancelacion } from "@/components/panel/seccion-politica-cancelacion";
 import { TablaDispositivos } from "@/components/panel/tabla-dispositivos";
 import { GenerarLinkCaja } from "@/components/panel/generar-link-caja";
 import { SkeletonConfig } from "@/components/panel/skeleton-config";
@@ -235,6 +237,14 @@ export default function PanelConfiguracion() {
                 {guardado === "horarios" && <Guardado />}
               </Seccion>
 
+              <Seccion
+                icono={CalendarOff}
+                titulo="Días no laborables"
+                descripcion="Feriados o cierres puntuales: esos días quedan cerrados enteros, sin turnos disponibles en la agenda ni en el buscador."
+              >
+                <SeccionDiasNoLaborables establecimientoId={establecimiento.id} />
+              </Seccion>
+
               <Seccion icono={Sparkles} titulo="Servicios" descripcion="Lo que el jugador ve en la ficha del complejo: parrilla, duchas, estacionamiento.">
                 <FormServicios
                   servicios={establecimiento.servicios}
@@ -248,12 +258,9 @@ export default function PanelConfiguracion() {
                 <FormFotos establecimientoId={establecimiento.id} />
               </Seccion>
 
-              <SeccionSinEndpoint
-                icono={CalendarClock}
-                titulo="Política de cancelación"
-                descripcion="Hasta cuándo se puede cancelar sin perder la seña."
-                falta="Rige el valor por defecto: 24 horas de anticipación, con 30 minutos de gracia desde que se creó la reserva. Está en la entidad pero no se expone ni para leerlo ni para cambiarlo."
-              />
+              <Seccion icono={CalendarClock} titulo="Política de cancelación" descripcion="Hasta cuándo se puede cancelar sin perder la seña.">
+                <SeccionPoliticaCancelacion establecimientoId={establecimiento.id} />
+              </Seccion>
 
               <SeccionSinEndpoint
                 icono={Wallet}
