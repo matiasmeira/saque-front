@@ -22,6 +22,12 @@ const MS_DEBOUNCE_DIRECCION = 400;
 const TIPOS_ACEPTADOS = ["image/jpeg", "image/png", "image/webp"];
 const TAMANO_MAXIMO = 5 * 1024 * 1024;
 
+function validarFoto(archivo: File): string | null {
+  if (!TIPOS_ACEPTADOS.includes(archivo.type)) return "Solo se aceptan imágenes JPG, PNG o WEBP.";
+  if (archivo.size > TAMANO_MAXIMO) return "El archivo no puede pesar más de 5MB.";
+  return null;
+}
+
 type FotoEnCola = { id: string; archivo: File; previewUrl: string };
 
 export function PasoIdentidad({
@@ -45,6 +51,7 @@ export function PasoIdentidad({
       previewUrl: URL.createObjectURL(archivo),
     })),
   );
+  const [fotosRechazadas, setFotosRechazadas] = useState<string[]>([]);
   const [ubicacion, setUbicacion] = useState<Ubicacion | null>(null);
   const [pin, setPin] = useState<{
     lat: number;
@@ -101,7 +108,8 @@ export function PasoIdentidad({
   const coords =
     pinVigente ??
     (geocodificado ? { lat: geocodificado.lat, lng: geocodificado.lng } : null) ??
-    (ubicacion ? { lat: ubicacion.lat, lng: ubicacion.lng } : null);
+    (ubicacion ? { lat: ubicacion.lat, lng: ubicacion.lng } : null) ??
+    (datosIniciales ? { lat: datosIniciales.latitud, lng: datosIniciales.longitud } : null);
 
   const slugPreview = calcularSlugPreview(nombre);
 
@@ -110,10 +118,18 @@ export function PasoIdentidad({
   }
 
   function agregarFotos(archivos: File[]) {
-    const nuevas = archivos
-      .filter((a) => TIPOS_ACEPTADOS.includes(a.type) && a.size <= TAMANO_MAXIMO)
-      .map((archivo) => ({ id: crypto.randomUUID(), archivo, previewUrl: URL.createObjectURL(archivo) }));
+    const nuevas: FotoEnCola[] = [];
+    const rechazadas: string[] = [];
+    for (const archivo of archivos) {
+      const error = validarFoto(archivo);
+      if (error) {
+        rechazadas.push(`${archivo.name}: ${error}`);
+      } else {
+        nuevas.push({ id: crypto.randomUUID(), archivo, previewUrl: URL.createObjectURL(archivo) });
+      }
+    }
     setFotos((prev) => [...prev, ...nuevas]);
+    setFotosRechazadas(rechazadas);
   }
 
   function quitarFoto(id: string) {
@@ -221,7 +237,9 @@ export function PasoIdentidad({
                 ? `Se va a guardar en ${geocodificado.etiqueta} (${geocodificado.lat.toFixed(4)}, ${geocodificado.lng.toFixed(4)}).`
                 : ubicacion
                   ? `No encontramos esa calle: se va a guardar cerca del centro de ${ubicacion.etiqueta}. Arrastrá el pin para afinarlo.`
-                  : "Buscá la localidad donde está el complejo."}
+                  : datosIniciales
+                    ? `Ubicación guardada: ${datosIniciales.latitud.toFixed(4)}, ${datosIniciales.longitud.toFixed(4)}. Elegí una localidad si querés cambiarla.`
+                    : "Buscá la localidad donde está el complejo."}
         </p>
         {errores.ubicacion && (
           <p className="mt-1 text-xs text-cancelado" role="alert">
@@ -279,6 +297,15 @@ export function PasoIdentidad({
         <p className="mt-1 text-xs text-grafito">
           Se suben apenas se crea el complejo, al confirmar el paso 2 — no hace falta esperar acá.
         </p>
+        {fotosRechazadas.length > 0 && (
+          <ul className="mt-2 space-y-0.5">
+            {fotosRechazadas.map((msg, i) => (
+              <li key={i} className="text-xs text-cancelado" role="alert">
+                {msg}
+              </li>
+            ))}
+          </ul>
+        )}
 
         {fotos.length > 0 && (
           <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">

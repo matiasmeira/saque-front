@@ -19,11 +19,12 @@ import { fechaLarga } from "@/lib/formato";
 import { useQuery } from "@tanstack/react-query";
 import { abreviaturaDeporte } from "@/lib/deportes";
 import { canchas as endpointCanchas } from "@/lib/api/endpoints/canchas";
+import { establecimientos as endpointEstablecimientos } from "@/lib/api/endpoints/establecimientos";
 import { keys } from "@/lib/api/keys";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { aCanchaPanel } from "@/lib/api/adaptadores/canchas";
 import { useAccionesReserva, useAgenda } from "@/hooks/api/use-agenda";
-import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
+import { useEstablecimientoActivo, usePerfil } from "@/hooks/api/use-perfil";
 import { rangoDeAgenda } from "@/lib/horarios";
 import type { TurnoConReserva } from "@/lib/api/adaptadores/agenda";
 import type { MetodoPago } from "@/lib/api/tipos/comunes";
@@ -62,6 +63,18 @@ export default function PanelAgenda() {
   const puedeCancelarTurnos = tienePermiso("CANCELAR_RESERVA");
 
   const { establecimientoId, establecimiento, cargando: cargandoEstablecimiento } = useEstablecimientoActivo();
+  const { data: perfil } = usePerfil();
+
+  // Misma query key que usa useEstablecimientoActivo internamente — TanStack
+  // Query la dedupea (no dispara un fetch extra), pero expone `isError`, que
+  // ese hook no devuelve. Sin esto, un 500/timeout al pedir la lista de
+  // establecimientos se confundiría con "de verdad no tiene ninguno" (ver el
+  // useEffect de más abajo).
+  const establecimientosQuery = useQuery({
+    queryKey: keys.establecimientos.mios(),
+    queryFn: () => endpointEstablecimientos.mios(),
+    enabled: rol === "dueno",
+  });
 
   const [fecha, setFecha] = useState(() => hoyISO());
   const [vista, setVista] = useState<Vista>("dia");
@@ -98,12 +111,20 @@ export default function PanelAgenda() {
 
   // Un dueño sin establecimiento todavía no puede usar ningún otro panel:
   // se lo manda al wizard de alta en cuanto se sabe con certeza que no tiene
-  // uno (después de que useEstablecimientoActivo termine de cargar).
+  // uno (después de que useEstablecimientoActivo termine de cargar, y sólo
+  // si la lista realmente cargó bien — no ante un error de red). Sólo para
+  // OWNER: un ADMIN de plataforma también resuelve a rol "dueno" acá pero no
+  // tiene por qué tener (ni crear) un establecimiento propio.
   useEffect(() => {
-    if (!cargandoEstablecimiento && rol === "dueno" && establecimientoId === null) {
+    if (
+      !cargandoEstablecimiento &&
+      !establecimientosQuery.isError &&
+      perfil?.rol === "OWNER" &&
+      establecimientoId === null
+    ) {
       router.replace("/panel/bienvenida");
     }
-  }, [cargandoEstablecimiento, rol, establecimientoId, router]);
+  }, [cargandoEstablecimiento, establecimientosQuery.isError, perfil?.rol, establecimientoId, router]);
 
   const dias = diasVisibles(fecha, vista);
   const canchaSeleccionada = canchas.find((c) => c.id === canchaSemana) ?? canchas[0];

@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { establecimientos as endpointEstablecimientos } from "@/lib/api/endpoints/establecimientos";
 import { ApiError } from "@/lib/api/errores";
 import { keys } from "@/lib/api/keys";
+import { guardarEstablecimientoSeleccionado } from "@/lib/establecimiento-seleccionado";
 import { usePerfil } from "@/hooks/api/use-perfil";
 import type { DatosPasoIdentidad, DatosPasoPoliticas } from "@/lib/panel/wizard-onboarding";
 import type { EstablecimientoResponse } from "@/lib/api/tipos/establecimientos";
@@ -21,6 +22,7 @@ export function useWizardOnboarding() {
 
   const [pasoActual, setPasoActual] = useState<1 | 2>(1);
   const [datosIdentidad, setDatosIdentidad] = useState<DatosPasoIdentidad | null>(null);
+  const [establecimientoParcial, setEstablecimientoParcial] = useState<EstablecimientoResponse | null>(null);
   const [establecimientoCreado, setEstablecimientoCreado] = useState<EstablecimientoResponse | null>(null);
   const [erroresFotos, setErroresFotos] = useState<string[]>([]);
   const establecimientoRef = useRef<EstablecimientoResponse | null>(null);
@@ -44,6 +46,21 @@ export function useWizardOnboarding() {
           servicios: datosIdentidad.servicios,
         });
         establecimientoRef.current = establecimiento;
+        setEstablecimientoParcial(establecimiento);
+        // Refleja el alta en la cache al instante: invalidateQueries no
+        // refetchea queries sin observadores activos (TanStack Query v5,
+        // refetchType "active" por defecto), y nada en /panel/bienvenida
+        // observa esta query. Sin esto, "Ir al panel" — o un reintento
+        // tras un fallo parcial — vuelve a leer [] cacheado en
+        // /panel/agenda y rebota de nuevo al wizard, arriesgando un
+        // establecimiento duplicado. Mismo patrón que
+        // ModalCrearEstablecimiento (modal-crear-establecimiento.tsx).
+        const nuevo = establecimiento;
+        queryClient.setQueryData<EstablecimientoResponse[]>(
+          keys.establecimientos.mios(),
+          (previos) => [...(previos ?? []), nuevo],
+        );
+        guardarEstablecimientoSeleccionado(establecimiento.id);
       }
 
       const fotosFallidas: string[] = [];
@@ -64,7 +81,6 @@ export function useWizardOnboarding() {
       return establecimiento;
     },
     onSuccess: (establecimiento) => {
-      queryClient.invalidateQueries({ queryKey: keys.establecimientos.mios() });
       setEstablecimientoCreado(establecimiento);
     },
   });
@@ -86,6 +102,7 @@ export function useWizardOnboarding() {
     pasoActual,
     plan: perfil?.planSuscripcion,
     datosIdentidad,
+    establecimientoParcial,
     establecimientoCreado,
     creando: crear.isPending,
     errorCreacion: crear.isError ? crear.error : null,
