@@ -61,7 +61,7 @@ export default function PanelAgenda() {
   const puedeCobrarTurnos = tienePermiso("FINALIZAR_RESERVA");
   const puedeCancelarTurnos = tienePermiso("CANCELAR_RESERVA");
 
-  const { establecimientoId, establecimiento } = useEstablecimientoActivo();
+  const { establecimientoId, establecimiento, cargando: cargandoEstablecimiento } = useEstablecimientoActivo();
 
   const [fecha, setFecha] = useState(() => hoyISO());
   const [vista, setVista] = useState<Vista>("dia");
@@ -95,6 +95,15 @@ export default function PanelAgenda() {
   useEffect(() => {
     if (!bloqueadoPorCaja && !perfilPendiente && !puedeVerAgenda) router.replace("/panel/caja");
   }, [bloqueadoPorCaja, perfilPendiente, puedeVerAgenda, router]);
+
+  // Un dueño sin establecimiento todavía no puede usar ningún otro panel:
+  // se lo manda al wizard de alta en cuanto se sabe con certeza que no tiene
+  // uno (después de que useEstablecimientoActivo termine de cargar).
+  useEffect(() => {
+    if (!cargandoEstablecimiento && rol === "dueno" && establecimientoId === null) {
+      router.replace("/panel/bienvenida");
+    }
+  }, [cargandoEstablecimiento, rol, establecimientoId, router]);
 
   const dias = diasVisibles(fecha, vista);
   const canchaSeleccionada = canchas.find((c) => c.id === canchaSemana) ?? canchas[0];
