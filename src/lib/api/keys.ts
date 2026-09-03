@@ -28,6 +28,7 @@ export const keys = {
   establecimientos: {
     mios: () => ["establecimientos", "mios"] as const,
     fotos: (estId: number) => ["establecimientos", estId, "fotos"] as const,
+    politicaCancelacion: (estId: number) => ["establecimientos", estId, "politica-cancelacion"] as const,
   },
 
   publico: {

@@ -58,3 +58,23 @@ export type EstablecimientoResponse = {
   cantidadCalificaciones: number | null;
   comentarioDestacado: FeedbackDestacadoDto | null;
 };
+
+/**
+ * Política de cancelación del establecimiento. Sub-recurso propio
+ * (`/establecimientos/{id}/politicas-cancelacion`), no viene embebida en
+ * `EstablecimientoResponse`. No hay "crear": siempre existe (default 24h /
+ * 30min), solo se lee y se actualiza.
+ */
+export type PoliticaCancelacionResponse = {
+  /** Horas de anticipación mínimas para que un jugador pueda cancelar. 0-168. */
+  horasCancelacionAntesPartido: number;
+  /** Minutos de gracia tras crear la reserva en los que se puede cancelar libremente. 0-1440. */
+  minutosGraciaCancelacion: number;
+  /** null en el GET; en la respuesta del PATCH, cuántas reservas futuras (CONFIRMADA/PENDIENTE_SENA) quedan bajo la nueva política. */
+  reservasFuturasAfectadas: number | null;
+};
+
+export type ActualizarPoliticaCancelacionRequest = {
+  horasCancelacionAntesPartido: number;
+  minutosGraciaCancelacion: number;
+};
