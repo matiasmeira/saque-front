@@ -7,10 +7,14 @@ import { PasoIdentidad } from "./paso-identidad";
 import { PasoPoliticas } from "./paso-politicas";
 import { useWizardOnboarding } from "@/hooks/api/use-wizard-onboarding";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
+import { useBloqueadoPorCaja } from "@/lib/permisos";
 
 export function WizardOnboarding() {
   const router = useRouter();
+  const bloqueadoPorCaja = useBloqueadoPorCaja();
   const wizard = useWizardOnboarding();
+
+  if (bloqueadoPorCaja) return <div className="min-h-dvh bg-humo" />;
 
   if (wizard.establecimientoCreado) {
     return (
@@ -66,6 +70,7 @@ export function WizardOnboarding() {
             plan={wizard.plan}
             guardando={wizard.creando}
             error={errorCreacion}
+            establecimientoParcial={wizard.establecimientoParcial}
             onAtras={wizard.volverAIdentidad}
             onConfirmar={wizard.confirmarPoliticas}
           />

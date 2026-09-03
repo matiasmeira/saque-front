@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { validarPasoPoliticas, type DatosPasoPoliticas } from "@/lib/panel/wizard-onboarding";
 import type { PlanSuscripcion } from "@/lib/api/tipos/comunes";
+import type { EstablecimientoResponse } from "@/lib/api/tipos/establecimientos";
 
 const campoClase =
   "w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste";
@@ -12,12 +14,14 @@ export function PasoPoliticas({
   plan,
   guardando,
   error,
+  establecimientoParcial,
   onAtras,
   onConfirmar,
 }: {
   plan: PlanSuscripcion | undefined;
   guardando: boolean;
   error: string | null;
+  establecimientoParcial: EstablecimientoResponse | null;
   onAtras: () => void;
   onConfirmar: (datos: DatosPasoPoliticas) => void;
 }) {
@@ -93,8 +97,8 @@ export function PasoPoliticas({
               className={campoClase}
             />
             <p className="mt-1 text-xs text-grafito">
-              Sólo un valor de referencia: se va a usar para prellenar la seña de cada cancha nueva, que después
-              podés cambiar cancha por cancha.
+              Sólo queda guardado como referencia por ahora — todavía no autocompleta nada. Vas a cargar la seña
+              de cada cancha a mano cuando las crees.
             </p>
             {errores.montoSenaDefault && (
               <p className="mt-1 text-xs text-cancelado" role="alert">
@@ -143,7 +147,23 @@ export function PasoPoliticas({
         </div>
       </div>
 
-      {error && (
+      {error && establecimientoParcial && (
+        <div className="rounded-input bg-pendiente-suave p-4 text-sm">
+          <p className="font-semibold text-tinta">
+            Ya creamos &quot;{establecimientoParcial.nombre}&quot;, pero no pudimos terminar de guardar la
+            política de cancelación: {error}
+          </p>
+          <p className="mt-1 text-grafito">
+            Los datos de arriba no se vuelven a enviar en un reintento — sólo la política de cancelación. Si
+            preferís, podés completarla más tarde desde Configuración.
+          </p>
+          <Link href="/panel/agenda" className="mt-2 inline-block font-semibold text-azul hover:underline">
+            Ir al panel de todos modos
+          </Link>
+        </div>
+      )}
+
+      {error && !establecimientoParcial && (
         <p className="text-sm text-cancelado" role="alert">
           {error}
         </p>
@@ -153,7 +173,7 @@ export function PasoPoliticas({
         <button
           type="button"
           onClick={onAtras}
-          disabled={guardando}
+          disabled={guardando || Boolean(establecimientoParcial)}
           className="flex h-11 items-center rounded-full border border-borde px-6 font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste disabled:opacity-60"
         >
           Atrás
