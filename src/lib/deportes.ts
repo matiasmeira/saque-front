@@ -73,3 +73,53 @@ export function abreviaturaDeporte(valor: string): string {
 export function esDeporte(valor: string | undefined): valor is Deporte {
   return DEPORTES.some((d) => d.valor === valor);
 }
+
+export type FamiliaDeporte = {
+  /** No es un `Deporte`: es la clave del grupo ("FUTBOL") o, para deportes sin
+   *  variantes, el propio valor del enum. Nombrado `valor` (no `clave`) para
+   *  calzar estructuralmente con `OpcionSelector` y pasarse directo a
+   *  `<Selector opciones={...}>`, igual que ya hace `buscador.tsx` con `DEPORTES`. */
+  valor: string;
+  etiqueta: string;
+  icono: IconoDeporte;
+  /** Todos los valores del enum que caen bajo esta familia. */
+  miembros: Deporte[];
+};
+
+/**
+ * Deportes cuya cantidad de jugadores es una variante del mismo juego, no un
+ * deporte distinto: la ficha de un complejo los agrupa bajo una sola pestaña
+ * ("Fútbol") en vez de una por modalidad ("Fútbol 5", "Fútbol 7", ...).
+ */
+const GRUPOS: { valor: string; etiqueta: string; miembros: Deporte[] }[] = [
+  {
+    valor: "FUTBOL",
+    etiqueta: "Fútbol",
+    miembros: ["FUTBOL_4", "FUTBOL_5", "FUTBOL_6", "FUTBOL_7", "FUTBOL_8", "FUTBOL_9", "FUTBOL_10", "FUTBOL_11"],
+  },
+  { valor: "BASQUET", etiqueta: "Básquet", miembros: ["BASQUET_3VS3", "BASQUET_5VS5"] },
+];
+
+/**
+ * Familias distintas entre los deportes que ofrece un complejo. Cada familia
+ * de grupo (Fútbol, Básquet) lleva SIEMPRE todos sus miembros, no sólo los que
+ * el complejo ofrece: así, al elegir "Fútbol", el filtro de canchas trae
+ * juntas las de Fútbol 5 y Fútbol 7 aunque el complejo no tenga las 8
+ * modalidades. Recorre `DEPORTES` en su propio orden de catálogo, no el de
+ * `deportes`, que no está garantizado.
+ */
+export function familiasDeDeportes(deportes: Deporte[]): FamiliaDeporte[] {
+  const familias: FamiliaDeporte[] = [];
+  for (const d of DEPORTES) {
+    if (!deportes.includes(d.valor)) continue;
+    const grupo = GRUPOS.find((g) => g.miembros.includes(d.valor));
+    const valorFamilia = grupo?.valor ?? d.valor;
+    if (familias.some((f) => f.valor === valorFamilia)) continue;
+    familias.push(
+      grupo
+        ? { valor: grupo.valor, etiqueta: grupo.etiqueta, icono: d.icono, miembros: grupo.miembros }
+        : { valor: d.valor, etiqueta: d.etiqueta, icono: d.icono, miembros: [d.valor] },
+    );
+  }
+  return familias;
+}

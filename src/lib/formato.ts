@@ -39,3 +39,9 @@ export function fechaLarga(fechaISO: string): string {
   const fecha = new Date(`${fechaISO}T00:00:00`);
   return `${DIAS[fecha.getDay()]} ${fecha.getDate()} de ${MESES[fecha.getMonth()]}`;
 }
+
+/** "25 de diciembre de 2026" — sin día de la semana, con año (días no laborables pueden estar a meses de distancia). */
+export function fechaCompleta(fechaISO: string): string {
+  const fecha = new Date(`${fechaISO}T00:00:00`);
+  return `${fecha.getDate()} de ${MESES[fecha.getMonth()]} de ${fecha.getFullYear()}`;
+}
