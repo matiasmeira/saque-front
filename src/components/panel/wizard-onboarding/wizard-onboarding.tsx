@@ -5,6 +5,10 @@ import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { BarraProgresoWizard } from "./barra-progreso-wizard";
 import { PasoIdentidad } from "./paso-identidad";
 import { PasoPoliticas } from "./paso-politicas";
+import { PasoHorarios } from "./paso-horarios";
+import { PasoCanchas } from "./paso-canchas";
+import { PasoTarifas } from "./paso-tarifas";
+import { PasoCobros } from "./paso-cobros";
 import { useWizardOnboarding } from "@/hooks/api/use-wizard-onboarding";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { useBloqueadoPorCaja } from "@/lib/permisos";
@@ -16,17 +20,17 @@ export function WizardOnboarding() {
 
   if (bloqueadoPorCaja) return <div className="min-h-dvh bg-humo" />;
 
-  if (wizard.establecimientoCreado) {
+  if (wizard.publicado) {
     return (
       <div className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center gap-6 p-6 text-center">
         <div className="flex size-20 items-center justify-center rounded-full bg-disponible-suave">
           <CheckCircle2 className="size-10 text-disponible" aria-hidden />
         </div>
         <div>
-          <h1 className="font-display text-2xl font-extrabold text-tinta">¡Tu complejo está creado!</h1>
+          <h1 className="font-display text-2xl font-extrabold text-tinta">¡Tu complejo está listo!</h1>
           <p className="mt-2 text-sm text-grafito">
-            {wizard.establecimientoCreado.nombre} ya existe en Saque. Para terminar de configurarlo —horarios,
-            canchas, tarifas y cobros— entrá a tu panel: cada sección ya está lista para usar.
+            {wizard.establecimientoParcial?.nombre} ya existe en Saque, con sus horarios, canchas y tarifas
+            cargados. Entrá a tu panel para revisar todo o seguir editando cuando quieras.
           </p>
           {wizard.erroresFotos.length > 0 && (
             <p className="mt-3 text-sm text-pendiente">
@@ -73,6 +77,62 @@ export function WizardOnboarding() {
             establecimientoParcial={wizard.establecimientoParcial}
             onAtras={wizard.volverAIdentidad}
             onConfirmar={wizard.confirmarPoliticas}
+          />
+        )}
+
+        {wizard.pasoActual === 3 && wizard.establecimientoParcial && (
+          <PasoHorarios
+            horarios={wizard.establecimientoParcial.horariosAtencion}
+            guardando={wizard.guardandoHorarios}
+            error={wizard.errorHorarios}
+            onGuardar={wizard.confirmarHorarios}
+          />
+        )}
+
+        {wizard.pasoActual === 4 && wizard.establecimientoParcial && (
+          <PasoCanchas
+            canchas={wizard.canchasPanel}
+            canchasCrudas={wizard.canchas}
+            requiereSena={wizard.establecimientoParcial.requiereSena}
+            montoSenaDefault={wizard.montoSenaDefault}
+            bloqueosDeCanchaEnEdicion={wizard.bloqueosDeCanchaEnEdicion}
+            guardando={wizard.guardandoCancha}
+            desactivando={wizard.desactivandoCanchaId !== null}
+            error={wizard.errorCanchas}
+            onAbrirEdicion={wizard.abrirEdicionCancha}
+            onCrear={wizard.crearCancha}
+            onActualizar={wizard.actualizarCancha}
+            onDesactivar={wizard.desactivarCancha}
+            onAgregarBloqueo={wizard.agregarBloqueo}
+            onQuitarBloqueo={wizard.quitarBloqueo}
+            onContinuar={wizard.confirmarCanchas}
+          />
+        )}
+
+        {wizard.pasoActual === 5 && (
+          <PasoTarifas
+            canchas={wizard.canchasPanel}
+            tarifasPorCancha={wizard.tarifasPorCancha}
+            error={wizard.errorTarifas}
+            onCrearTarifa={wizard.crearTarifa}
+            onEditarTarifa={wizard.editarTarifa}
+            onQuitarTarifa={wizard.quitarTarifa}
+            onAtras={wizard.volverACanchas}
+            onContinuar={wizard.confirmarTarifas}
+          />
+        )}
+
+        {wizard.pasoActual === 6 && wizard.establecimientoParcial && (
+          <PasoCobros
+            requiereSena={wizard.establecimientoParcial.requiereSena}
+            estadoMercadoPago={wizard.estadoMercadoPago}
+            cargandoEstado={wizard.cargandoEstadoMercadoPago}
+            conectando={wizard.conectandoMercadoPago}
+            publicando={false}
+            error={wizard.errorMercadoPago}
+            onConectar={wizard.iniciarConexionMercadoPago}
+            onAtras={wizard.volverATarifas}
+            onPublicar={wizard.publicarComplejo}
           />
         )}
       </div>
