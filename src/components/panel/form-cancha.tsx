@@ -49,6 +49,7 @@ function chipClase(activo: boolean) {
 export function FormCancha({
   cancha,
   canchasExistentes,
+  montoSenaSugerido,
   onGuardar,
   onCancelar,
   onAgregarBloqueo,
@@ -57,6 +58,8 @@ export function FormCancha({
   cancha: Cancha | null;
   /** para elegir el pool: solo físicas, sin incluirse a sí misma */
   canchasExistentes: Cancha[];
+  /** sólo se usa cuando `cancha === null` — ej. el wizard de onboarding prellena con la seña por defecto del paso 2 */
+  montoSenaSugerido?: number;
   onGuardar: (datos: DatosCancha) => void;
   onCancelar: () => void;
   /** los bloqueos se aplican al toque, no esperan al Guardar del resto del form */
@@ -69,7 +72,7 @@ export function FormCancha({
   const [preciosPorDuracion, setPreciosPorDuracion] = useState<Record<number, number>>(() =>
     Object.fromEntries((cancha?.preciosBase ?? []).map((p) => [p.duracionMinutos, p.precio])),
   );
-  const [montoSena, setMontoSena] = useState(cancha?.montoSena ?? 0);
+  const [montoSena, setMontoSena] = useState(cancha?.montoSena ?? montoSenaSugerido ?? 0);
   const [duraciones, setDuraciones] = useState<number[]>(cancha?.duracionesPermitidas ?? [60]);
   const [mediaHora, setMediaHora] = useState(cancha?.permiteInicioMediaHora ?? false);
   const [esPool, setEsPool] = useState(cancha ? esCompuesta(cancha) : false);
