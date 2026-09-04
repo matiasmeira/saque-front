@@ -97,8 +97,8 @@ export function PasoPoliticas({
               className={campoClase}
             />
             <p className="mt-1 text-xs text-grafito">
-              Sólo queda guardado como referencia por ahora — todavía no autocompleta nada. Vas a cargar la seña
-              de cada cancha a mano cuando las crees.
+              Se usa para prellenar la seña cuando crees una cancha nueva en el paso siguiente — después la
+              podés cambiar cancha por cancha.
             </p>
             {errores.montoSenaDefault && (
               <p className="mt-1 text-xs text-cancelado" role="alert">

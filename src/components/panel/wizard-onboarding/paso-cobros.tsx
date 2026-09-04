@@ -1,6 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
+import Link from "next/link";
 import { ArrowRight, CheckCircle2, ExternalLink, Wallet } from "lucide-react";
 import type { EstadoMercadoPagoResponse } from "@/lib/api/tipos/mercadopago";
 
@@ -98,6 +99,10 @@ export function PasoCobros({
           {error}
         </p>
       )}
+
+      <Link href="/panel/agenda" className="inline-block font-semibold text-azul hover:underline">
+        Ir al panel y conectar Mercado Pago más tarde
+      </Link>
 
       <div className="flex items-center justify-between pt-2">
         <button

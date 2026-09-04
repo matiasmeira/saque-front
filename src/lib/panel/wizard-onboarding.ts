@@ -5,8 +5,8 @@ import type { CanchaResponse } from "@/lib/api/tipos/canchas";
 /**
  * Datos que entrega cada paso al confirmarlo. `fotos`/`montoSenaDefault` no
  * viajan en ningún DTO del backend — fotos se sube aparte por su propio
- * endpoint, montoSenaDefault es un valor local que solo sirve para prellenar
- * el formulario de cancha en el paso 4 (fuera del alcance de esta fase).
+ * endpoint, montoSenaDefault es un valor local que se usa para prellenar el
+ * campo de seña de `FormCancha` al crear una cancha nueva en el paso 4.
  */
 export type DatosPasoIdentidad = {
   nombre: string;

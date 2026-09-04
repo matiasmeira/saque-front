@@ -105,6 +105,7 @@ export function WizardOnboarding() {
             onDesactivar={wizard.desactivarCancha}
             onAgregarBloqueo={wizard.agregarBloqueo}
             onQuitarBloqueo={wizard.quitarBloqueo}
+            onAtras={wizard.volverAHorarios}
             onContinuar={wizard.confirmarCanchas}
           />
         )}
@@ -113,6 +114,7 @@ export function WizardOnboarding() {
           <PasoTarifas
             canchas={wizard.canchasPanel}
             tarifasPorCancha={wizard.tarifasPorCancha}
+            guardando={wizard.guardandoTarifas}
             error={wizard.errorTarifas}
             onCrearTarifa={wizard.crearTarifa}
             onEditarTarifa={wizard.editarTarifa}

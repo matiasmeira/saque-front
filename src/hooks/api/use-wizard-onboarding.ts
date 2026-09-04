@@ -216,12 +216,14 @@ export function useWizardOnboarding() {
         motivo: bloqueo.motivo?.trim() || "Mantenimiento",
       }),
     onSuccess: (_nuevo, { canchaId }) => refrescarBloqueos(canchaId),
+    onError: (e) => setErrorCanchas(e instanceof ApiError ? mensajeVisible(e) : "No pudimos guardar el bloqueo."),
   });
 
   const quitarBloqueoMut = useMutation({
     mutationFn: ({ canchaId, bloqueoId }: { canchaId: number; bloqueoId: number }) =>
       endpointBloqueos.eliminar(establecimientoParcial!.id, canchaId, bloqueoId),
     onSuccess: (_vacio, { canchaId }) => refrescarBloqueos(canchaId),
+    onError: (e) => setErrorCanchas(e instanceof ApiError ? mensajeVisible(e) : "No pudimos quitar el bloqueo."),
   });
 
   function agregarBloqueo(bloqueo: Bloqueo) {
@@ -343,11 +345,13 @@ export function useWizardOnboarding() {
       .then(({ urlAutorizacion }) => {
         window.location.href = urlAutorizacion;
       })
-      .catch((e) => {
+      .catch(() => {
         setConectandoMercadoPago(false);
-        setErrorMercadoPago(
-          e instanceof ApiError ? mensajeVisible(e) : "No pudimos iniciar la conexión con Mercado Pago.",
-        );
+        // No usamos mensajeVisible(e) acá a propósito: este endpoint es una
+        // convención sin backend real todavía (ver comentario más arriba),
+        // así que su forma de error es desconocida y no debe mostrarse cruda
+        // (p. ej. el "Not Found" en inglés que devuelve Spring en un 404).
+        setErrorMercadoPago("No pudimos conectar con Mercado Pago. Intentá de nuevo más tarde.");
       });
   }
 
@@ -408,6 +412,7 @@ export function useWizardOnboarding() {
 
     // Paso 5
     tarifasPorCancha: Object.fromEntries(canchas.map((c) => [c.id, aTarifasPanel(c.tarifas, c.id)])),
+    guardandoTarifas: guardarTarifas.isPending,
     errorTarifas,
     crearTarifa,
     editarTarifa,
