@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { BarraProgresoWizard } from "./barra-progreso-wizard";
@@ -10,15 +11,52 @@ import { PasoCanchas } from "./paso-canchas";
 import { PasoTarifas } from "./paso-tarifas";
 import { PasoCobros } from "./paso-cobros";
 import { useWizardOnboarding } from "@/hooks/api/use-wizard-onboarding";
+import { useEstablecimientoActivo, usePerfil } from "@/hooks/api/use-perfil";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { useBloqueadoPorCaja } from "@/lib/permisos";
 
 export function WizardOnboarding() {
   const router = useRouter();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
+  const { data: perfil } = usePerfil();
+  const { establecimientoId, cargando: cargandoEstablecimiento } = useEstablecimientoActivo();
   const wizard = useWizardOnboarding();
 
+  /**
+   * Esta ruta no tiene guard propio: sólo se llega acá por el redirect de
+   * /panel/agenda para un OWNER sin establecimiento (agenda/page.tsx), pero
+   * eso no protege contra entrar directo por URL o por un F5 a mitad del
+   * wizard (pasos 3-6), donde el establecimiento YA se creó en el paso 2.
+   * Sin este guard, recargar ahí vuelve a mostrar el wizard desde el paso 1
+   * y, al completarlo, crea un SEGUNDO establecimiento real.
+   *
+   * Se captura `yaTeniaEstablecimiento` una única vez, la primera vez que
+   * `useEstablecimientoActivo` termina de cargar — nunca más después de esa
+   * captura. Es necesario: el propio wizard siembra esa misma query
+   * (`keys.establecimientos.mios()`) al crear el establecimiento en el paso
+   * 2 (ver use-wizard-onboarding.ts), así que si el chequeo fuera reactivo
+   * en vez de una foto única al montar, expulsaría al dueño a mitad de los
+   * pasos 3-6 que todavía le quedan por completar.
+   */
+  const [yaTeniaEstablecimiento, setYaTeniaEstablecimiento] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (cargandoEstablecimiento || yaTeniaEstablecimiento !== null) return;
+    setYaTeniaEstablecimiento(establecimientoId !== null);
+  }, [cargandoEstablecimiento, establecimientoId, yaTeniaEstablecimiento]);
+
+  const debeRedirigir = perfil?.rol === "OWNER" && yaTeniaEstablecimiento === true;
+
+  useEffect(() => {
+    if (debeRedirigir) router.replace("/panel/agenda");
+  }, [debeRedirigir, router]);
+
   if (bloqueadoPorCaja) return <div className="min-h-dvh bg-humo" />;
+
+  // Mientras se resuelve si ya tenía establecimiento, o mientras se redirige
+  // por tenerlo, no se muestra el wizard — evita el flash del paso 1.
+  if (cargandoEstablecimiento || yaTeniaEstablecimiento === null || debeRedirigir) {
+    return <div className="min-h-dvh bg-humo" />;
+  }
 
   if (wizard.publicado) {
     return (
