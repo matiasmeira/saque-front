@@ -134,12 +134,13 @@ export function FormDatosComplejo({
     (establecimiento ? { lat: establecimiento.latitud, lng: establecimiento.longitud } : null);
 
   /**
-   * El backend hace `esPlanLimitado(plan) || request.requiereSena()`: en TRIAL y
-   * FREE la seña queda en true SIEMPRE, mande lo que mande el front. Se
-   * deshabilita el control en vez de dejar que alguien lo destilde, guarde, y
-   * vea que vuelve a encenderse solo sin ninguna explicación.
+   * El backend hace `esPlanLimitado(plan) || request.requiereSena()`: en FREE la
+   * seña queda en true SIEMPRE, mande lo que mande el front (TRIAL puede
+   * elegir libremente). Se deshabilita el control en vez de dejar que alguien
+   * lo destilde, guarde, y vea que vuelve a encenderse solo sin ninguna
+   * explicación.
    */
-  const senaForzada = plan === "TRIAL" || plan === "FREE";
+  const senaForzada = plan === "FREE";
 
   function guardar(e: FormEvent) {
     e.preventDefault();

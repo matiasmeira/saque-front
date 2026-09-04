@@ -1,17 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { publico } from "@/lib/api/endpoints/publico";
+import { reservas } from "@/lib/api/endpoints/reservas";
 import { keys } from "@/lib/api/keys";
 import { partirFechaHora } from "@/lib/api/fechas";
-import { abreviaturaDeporte, etiquetaDeporte } from "@/lib/deportes";
+import { aMinutos } from "@/lib/disponibilidad";
+import { rangoDeAgenda } from "@/lib/horarios";
+import { familiasDeDeportes } from "@/lib/deportes";
+import { useHaySesion } from "@/hooks/api/use-sesion";
+import { usePerfil } from "@/hooks/api/use-perfil";
 import { proximosDias } from "@/components/canche/selector-fecha";
+import { Selector } from "@/components/canche/selector";
+import { GrillaHorarios } from "@/components/canche/grilla-horarios";
 import type { ComplejoDetalleResponse } from "@/lib/api/tipos/publico";
-import type { DisponibilidadCanchaResponse } from "@/lib/api/tipos/disponibilidad";
 
 /**
  * Grilla de turnos libres del complejo.
@@ -25,34 +30,66 @@ import type { DisponibilidadCanchaResponse } from "@/lib/api/tipos/disponibilida
  * Cada slot trae `inicio` y `fin`, que son exactamente los dos campos que pide
  * ReservaRequest: viajan tal cual al checkout. Recalcular el fin a partir de
  * una duración es la forma de terminar con un 400 por duración no permitida.
+ *
+ * La grilla visual (horas en columnas, canchas en filas) vive en
+ * GrillaHorarios; acá sólo se arman los filtros (día, familia de deporte,
+ * duración) y los datos que esa grilla necesita: el rango horario del día
+ * (rangoDeAgenda) y, para un jugador logueado, sus propias reservas del día
+ * para pintar "Tu reserva" en verde.
  */
 const DIAS_VISIBLES = 7;
 
 export function GrillaDisponibilidad({ complejo }: { complejo: ComplejoDetalleResponse }) {
   const dias = proximosDias(DIAS_VISIBLES);
   const [indiceDia, setIndiceDia] = useState(0);
-  const [deporteFiltro, setDeporteFiltro] = useState<string | null>(null);
+  const familias = familiasDeDeportes(complejo.deportes);
+  const [familiaFiltro, setFamiliaFiltro] = useState<string | null>(null);
   const [duracion, setDuracion] = useState<number | null>(null);
 
   const fecha = dias[indiceDia].valor;
+  const familiaActiva = familias.find((f) => f.valor === familiaFiltro) ?? familias[0] ?? null;
 
   const disponibilidad = useQuery({
     queryKey: keys.publico.disponibilidad(complejo.slug, fecha),
     queryFn: () => publico.disponibilidad(complejo.slug, fecha),
   });
 
+  const haySesion = useHaySesion();
+  const { data: perfil } = usePerfil();
+  // Sólo PLAYER puede pegarle a /mis-reservas (un OWNER recibe 403), y esta
+  // ficha la puede ver cualquier rol logueado — sin este chequeo, un dueño
+  // mirando su propio complejo (o el de otro) dispararía un 403 en cada visita.
+  const esJugador = haySesion && perfil?.rol === "PLAYER";
+
+  const misReservas = useQuery({
+    queryKey: keys.reservas.mias(),
+    queryFn: () => reservas.mias({ size: 50 }),
+    enabled: esJugador,
+  });
+
   const dia = disponibilidad.data?.dias[0];
   const canchas = (dia?.canchas ?? []).filter(
-    (cancha) => !deporteFiltro || cancha.deportes.includes(deporteFiltro as never),
+    (cancha) => !familiaActiva || cancha.deportes.some((d) => familiaActiva.miembros.includes(d)),
   );
 
-  // Las duraciones que ofrece este complejo, para el selector de arriba.
+  // Las duraciones que ofrece este complejo (ya filtrado por familia), para el selector de arriba.
   const duraciones = [
-    ...new Set(
-      (dia?.canchas ?? []).flatMap((c) => c.opcionesDuracion.map((o) => o.duracionMinutos)),
-    ),
+    ...new Set(canchas.flatMap((c) => c.opcionesDuracion.map((o) => o.duracionMinutos))),
   ].sort((a, b) => a - b);
   const duracionActiva = duracion ?? duraciones[0] ?? 60;
+
+  const rango = rangoDeAgenda(complejo.horariosAtencion, [fecha], []);
+
+  const reservasPropiasPorCancha = new Map<number, { desde: number; hasta: number }[]>();
+  for (const r of misReservas.data?.content ?? []) {
+    if (r.estado !== "CONFIRMADA" && r.estado !== "PENDIENTE_SENA") continue;
+    if (partirFechaHora(r.fechaHoraInicio).fecha !== fecha) continue;
+    const desde = aMinutos(partirFechaHora(r.fechaHoraInicio).hora);
+    const hastaCruda = aMinutos(partirFechaHora(r.fechaHoraFin).hora);
+    const lista = reservasPropiasPorCancha.get(r.canchaId) ?? [];
+    lista.push({ desde, hasta: hastaCruda <= desde ? hastaCruda + 1440 : hastaCruda });
+    reservasPropiasPorCancha.set(r.canchaId, lista);
+  }
 
   return (
     <div>
@@ -81,38 +118,33 @@ export function GrillaDisponibilidad({ complejo }: { complejo: ComplejoDetalleRe
           </button>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {complejo.deportes.length > 1 &&
-            complejo.deportes.map((deporte) => (
-              <button
-                key={deporte}
-                type="button"
-                onClick={() => setDeporteFiltro((d) => (d === deporte ? null : deporte))}
-                className={`h-9 rounded-full border px-3 text-xs font-bold uppercase transition-colors ${
-                  deporteFiltro === deporte
-                    ? "border-azul bg-azul text-white"
-                    : "border-borde bg-white text-grafito hover:border-azul hover:text-azul"
-                }`}
-              >
-                {abreviaturaDeporte(deporte)}
-              </button>
-            ))}
+        <div className="flex flex-wrap items-center gap-3">
+          {familias.length > 1 && (
+            <Selector
+              id="familia-deporte"
+              value={familiaActiva?.valor ?? ""}
+              onChange={setFamiliaFiltro}
+              opciones={familias}
+            />
+          )}
 
-          {duraciones.length > 1 &&
-            duraciones.map((minutos) => (
-              <button
-                key={minutos}
-                type="button"
-                onClick={() => setDuracion(minutos)}
-                className={`h-9 rounded-full border px-3 text-xs font-semibold transition-colors ${
-                  duracionActiva === minutos
-                    ? "border-azul bg-azul text-white"
-                    : "border-borde bg-white text-grafito hover:border-azul hover:text-azul"
-                }`}
-              >
-                {minutos} min
-              </button>
-            ))}
+          <div className="flex flex-wrap gap-2">
+            {duraciones.length > 1 &&
+              duraciones.map((minutos) => (
+                <button
+                  key={minutos}
+                  type="button"
+                  onClick={() => setDuracion(minutos)}
+                  className={`h-9 rounded-full border px-3 text-xs font-semibold transition-colors ${
+                    duracionActiva === minutos
+                      ? "border-azul bg-azul text-white"
+                      : "border-borde bg-white text-grafito hover:border-azul hover:text-azul"
+                  }`}
+                >
+                  {minutos} min
+                </button>
+              ))}
+          </div>
         </div>
       </div>
 
@@ -138,63 +170,15 @@ export function GrillaDisponibilidad({ complejo }: { complejo: ComplejoDetalleRe
         </p>
       )}
 
-      <div className="space-y-4">
-        {dia?.abierto &&
-          canchas.map((cancha) => (
-            <FilaCancha
-              key={cancha.canchaId}
-              cancha={cancha}
-              slug={complejo.slug}
-              duracion={duracionActiva}
-            />
-          ))}
-      </div>
-    </div>
-  );
-}
-
-function FilaCancha({
-  cancha,
-  slug,
-  duracion,
-}: {
-  cancha: DisponibilidadCanchaResponse;
-  slug: string;
-  duracion: number;
-}) {
-  const opcion = cancha.opcionesDuracion.find((o) => o.duracionMinutos === duracion);
-  const slots = opcion?.slotsLibres ?? [];
-
-  return (
-    <div className="rounded-card bg-white p-5">
-      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="font-display text-base font-bold text-tinta">{cancha.canchaNombre}</h3>
-        <span className="text-xs text-grafito">
-          {cancha.deportes.map(etiquetaDeporte).join(" · ")}
-        </span>
-      </div>
-
-      {slots.length === 0 ? (
-        <p className="text-sm text-grafito">
-          Sin turnos de {duracion} min disponibles este día.
-        </p>
-      ) : (
-        <div className="flex flex-wrap gap-2">
-          {slots.map((slot) => {
-            const { hora } = partirFechaHora(slot.inicio);
-            // El slot viaja entero: inicio y fin son lo que pide ReservaRequest.
-            const href = `/reservar/${slug}?cancha=${cancha.canchaId}&inicio=${slot.inicio}&fin=${slot.fin}&deporte=${cancha.deportes[0]}`;
-            return (
-              <Link
-                key={slot.inicio}
-                href={href}
-                className="inline-flex h-11 min-w-[64px] items-center justify-center rounded-input border border-borde bg-white px-3 text-sm font-semibold text-tinta transition-colors hover:border-azul hover:bg-celeste-suave hover:text-azul"
-              >
-                {hora}
-              </Link>
-            );
-          })}
-        </div>
+      {dia?.abierto && canchas.length > 0 && (
+        <GrillaHorarios
+          canchas={canchas}
+          slug={complejo.slug}
+          duracion={duracionActiva}
+          rango={rango}
+          reservasPropiasPorCancha={reservasPropiasPorCancha}
+          mostrarLeyendaPropia={esJugador}
+        />
       )}
     </div>
   );

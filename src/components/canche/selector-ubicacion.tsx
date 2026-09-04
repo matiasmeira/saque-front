@@ -124,7 +124,7 @@ export function SelectorUbicacion({
     abierto && termino.length >= 3 && (sugerencias.isPending || sugerencias.data || sugerencias.isError);
 
   return (
-    <div ref={contenedorRef} className="relative">
+    <div ref={contenedorRef} className="relative mt-0.5">
       <div className="flex items-center gap-2">
         <input
           id={idInput}
@@ -145,12 +145,12 @@ export function SelectorUbicacion({
           disabled={buscandoUbicacion}
           title="Usar mi ubicación"
           aria-label="Usar mi ubicación"
-          className="flex size-9 shrink-0 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo hover:text-azul disabled:text-borde"
+          className="flex size-6 shrink-0 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo hover:text-azul disabled:text-borde"
         >
           {buscandoUbicacion ? (
-            <Loader2 className="size-[18px] animate-spin" aria-hidden />
+            <Loader2 className="size-4 animate-spin" aria-hidden />
           ) : (
-            <Crosshair className="size-[18px]" aria-hidden />
+            <Crosshair className="size-4" aria-hidden />
           )}
         </button>
       </div>
