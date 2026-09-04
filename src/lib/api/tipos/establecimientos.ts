@@ -60,6 +60,25 @@ export type EstablecimientoResponse = {
 };
 
 /**
+ * Día entero cerrado (feriado, cierre puntual) — sin rangos ni horarios
+ * parciales. Sub-recurso propio (`/establecimientos/{id}/dias-no-laborables`),
+ * igual que las fotos: no viene embebido en `EstablecimientoResponse`.
+ * No hay editar: para cambiar uno se borra y se crea de nuevo.
+ */
+export type DiaNoLaborableRequest = {
+  /** ISO "YYYY-MM-DD". Obligatoria y no puede ser pasada (@FutureOrPresent). */
+  fecha: string;
+  /** Máx. 255 caracteres. */
+  motivo?: string;
+};
+
+export type DiaNoLaborableResponse = {
+  id: number;
+  fecha: string;
+  motivo: string | null;
+};
+
+/**
  * Política de cancelación del establecimiento. Sub-recurso propio
  * (`/establecimientos/{id}/politicas-cancelacion`), no viene embebida en
  * `EstablecimientoResponse`. No hay "crear": siempre existe (default 24h /

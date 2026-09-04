@@ -1,12 +1,16 @@
 /**
  * Matemática de horarios sobre rangos ocupados + duración del turno.
  *
- * La zona pública YA NO usa esto: /complejo/[slug] consume la grilla real de
- * GET /publico/complejos/{slug}/disponibilidad, que el backend devuelve
- * cruzada contra horarios de atención, días no laborables, bloqueos y
- * reservas. Lo que queda acá sólo lo consume el panel (form-turno-rapido,
- * timeline-agenda y el generador de mocks/agenda), y se va cuando la agenda
- * se migre en la Fase 4.
+ * La zona pública YA NO usa segmentosDelDia/horariosLibres: /complejo/[slug]
+ * consume la grilla real de GET /publico/complejos/{slug}/disponibilidad, que
+ * el backend devuelve cruzada contra horarios de atención, días no
+ * laborables, bloqueos y reservas. Esas dos funciones sólo las consume el
+ * panel (form-turno-rapido, timeline-agenda y el generador de mocks/agenda),
+ * y se van cuando la agenda se migre en la Fase 4.
+ *
+ * aMinutos/aHHMM sí siguen compartidos con la zona pública: src/lib/agenda-publica.ts
+ * (grilla horaria de la ficha del complejo) los reusa para su propia
+ * matemática de posicionamiento.
  */
 export type RangoOcupado = { desde: string; hasta: string };
 

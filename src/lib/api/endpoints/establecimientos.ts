@@ -3,6 +3,8 @@ import { construirQuery } from "../query";
 import type { DisponibilidadEstablecimientoResponse } from "../tipos/disponibilidad";
 import type {
   ActualizarPoliticaCancelacionRequest,
+  DiaNoLaborableRequest,
+  DiaNoLaborableResponse,
   EstablecimientoRequest,
   EstablecimientoResponse,
   FotoEstablecimiento,
@@ -68,7 +70,20 @@ export const establecimientos = {
       body: { fileIds },
     }),
 
-  /** Sub-recurso propio, igual que las fotos. Sin "crear": siempre existe. */
+  /** Sub-recurso propio, igual que las fotos. Sin editar: se borra y se crea de nuevo. */
+  listarDiasNoLaborables: (estId: number) =>
+    apiFetch<DiaNoLaborableResponse[]>(`/api/v1/establecimientos/${estId}/dias-no-laborables`),
+
+  crearDiaNoLaborable: (estId: number, body: DiaNoLaborableRequest) =>
+    apiFetch<DiaNoLaborableResponse>(`/api/v1/establecimientos/${estId}/dias-no-laborables`, {
+      method: "POST",
+      body,
+    }),
+
+  eliminarDiaNoLaborable: (estId: number, id: number) =>
+    apiFetch<void>(`/api/v1/establecimientos/${estId}/dias-no-laborables/${id}`, { method: "DELETE" }),
+
+  /** Sub-recurso propio, igual que fotos y días no laborables. Sin "crear": siempre existe. */
   obtenerPoliticaCancelacion: (estId: number) =>
     apiFetch<PoliticaCancelacionResponse>(`/api/v1/establecimientos/${estId}/politicas-cancelacion`),
 
