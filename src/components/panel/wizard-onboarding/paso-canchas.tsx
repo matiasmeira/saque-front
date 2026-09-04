@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, LayoutGrid, Plus } from "lucide-react";
 import { DrawerPanel } from "@/components/panel/drawer-panel";
 import { ModalPanel } from "@/components/panel/modal-panel";
@@ -83,6 +83,7 @@ export function PasoCanchas({
   onDesactivar,
   onAgregarBloqueo,
   onQuitarBloqueo,
+  onAtras,
   onContinuar,
 }: {
   /** ya adaptadas a la forma del panel, listas para FormCancha/la lista */
@@ -101,6 +102,7 @@ export function PasoCanchas({
   onDesactivar: (id: number) => void;
   onAgregarBloqueo: (bloqueo: Bloqueo) => void;
   onQuitarBloqueo: (indice: number) => void;
+  onAtras: () => void;
   onContinuar: () => void;
 }) {
   const [panelAbierto, setPanelAbierto] = useState<PanelAbierto>(null);
@@ -109,6 +111,20 @@ export function PasoCanchas({
 
   const canchaEditandoId = panelAbierto?.tipo === "editar" ? panelAbierto.canchaId : null;
   const canchaEnEdicion = canchaEditandoId ? canchas.find((c) => c.id === canchaEditandoId) : undefined;
+
+  // Cierra el drawer sólo cuando el guardado realmente terminó bien (transición
+  // true→false de `guardando` sin `error`), no de forma optimista dentro de
+  // `onGuardar` — así un 400 del backend deja el formulario abierto para
+  // corregir, igual que panel/canchas/page.tsx. Un guardado exitoso también es
+  // buen momento para limpiar un `errorGate` que ya no aplica.
+  const prevGuardandoRef = useRef(guardando);
+  useEffect(() => {
+    if (prevGuardandoRef.current && !guardando && !error) {
+      setPanelAbierto(null);
+      setErrorGate(null);
+    }
+    prevGuardandoRef.current = guardando;
+  }, [guardando, error]);
 
   function abrirEdicion(cancha: Cancha) {
     onAbrirEdicion(cancha.id);
@@ -160,7 +176,13 @@ export function PasoCanchas({
       )}
 
       <div className="flex items-center justify-between pt-2">
-        <span />
+        <button
+          type="button"
+          onClick={onAtras}
+          className="flex h-11 items-center rounded-full border border-borde px-6 font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+        >
+          Atrás
+        </button>
         <button
           type="button"
           onClick={continuar}
@@ -177,10 +199,7 @@ export function PasoCanchas({
             cancha={null}
             canchasExistentes={canchas}
             montoSenaSugerido={montoSenaDefault}
-            onGuardar={(datos) => {
-              onCrear(datos);
-              setPanelAbierto(null);
-            }}
+            onGuardar={onCrear}
             onCancelar={() => setPanelAbierto(null)}
             onAgregarBloqueo={() => {}}
             onQuitarBloqueo={() => {}}
@@ -193,10 +212,7 @@ export function PasoCanchas({
           <FormCancha
             cancha={{ ...canchaEnEdicion, mantenimientos: bloqueosDeCanchaEnEdicion }}
             canchasExistentes={canchas}
-            onGuardar={(datos) => {
-              onActualizar(canchaEnEdicion.id, datos);
-              setPanelAbierto(null);
-            }}
+            onGuardar={(datos) => onActualizar(canchaEnEdicion.id, datos)}
             onCancelar={() => setPanelAbierto(null)}
             onAgregarBloqueo={onAgregarBloqueo}
             onQuitarBloqueo={onQuitarBloqueo}

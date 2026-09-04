@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { DrawerPanel } from "@/components/panel/drawer-panel";
 import { ListaTarifas } from "@/components/panel/lista-tarifas";
@@ -20,6 +20,7 @@ export type DatosTarifaForm = { dias: DiaSemana[]; horaDesde: string; horaHasta:
 export function PasoTarifas({
   canchas,
   tarifasPorCancha,
+  guardando,
   error,
   onCrearTarifa,
   onEditarTarifa,
@@ -29,6 +30,7 @@ export function PasoTarifas({
 }: {
   canchas: Cancha[];
   tarifasPorCancha: Record<number, Tarifa[]>;
+  guardando: boolean;
   error: string | null;
   onCrearTarifa: (canchaId: number, datos: DatosTarifaForm) => void;
   onEditarTarifa: (canchaId: number, tarifaId: number, datos: DatosTarifaForm) => void;
@@ -43,6 +45,18 @@ export function PasoTarifas({
   const tarifasDeCancha = cancha ? (tarifasPorCancha[cancha.id] ?? []) : [];
   const tarifaEnEdicion =
     panelAbierto?.tipo === "editar" ? tarifasDeCancha.find((t) => t.id === panelAbierto.tarifaId) : undefined;
+
+  // Mismo patrón que PasoCanchas: cierra el drawer sólo cuando el guardado
+  // terminó bien, no de forma optimista dentro de `onGuardar` — un 400 deja
+  // el formulario abierto para corregir, y evita la carrera donde crear la
+  // tarifa B antes de que vuelva el PUT de A pisa la lista completa.
+  const prevGuardandoRef = useRef(guardando);
+  useEffect(() => {
+    if (prevGuardandoRef.current && !guardando && !error) {
+      setPanelAbierto(null);
+    }
+    prevGuardandoRef.current = guardando;
+  }, [guardando, error]);
 
   return (
     <div className="space-y-6">
@@ -88,8 +102,16 @@ export function PasoTarifas({
 
           <ListaTarifas
             tarifas={tarifasDeCancha}
-            onAgregar={() => setPanelAbierto({ tipo: "nueva" })}
-            onEditar={(tarifa) => setPanelAbierto({ tipo: "editar", tarifaId: tarifa.id })}
+            onAgregar={() => {
+              // ListaTarifas no soporta un estado deshabilitado en su botón —
+              // en vez de eso, el trigger se vuelve un no-op mientras hay un
+              // guardado en curso, para no abrir un segundo drawer y disparar
+              // la carrera del PUT que reemplaza la lista completa.
+              if (!guardando) setPanelAbierto({ tipo: "nueva" });
+            }}
+            onEditar={(tarifa) => {
+              if (!guardando) setPanelAbierto({ tipo: "editar", tarifaId: tarifa.id });
+            }}
             onQuitar={(tarifa) => onQuitarTarifa(cancha.id, tarifa)}
           />
         </>
@@ -125,10 +147,7 @@ export function PasoTarifas({
             tarifa={null}
             cancha={cancha}
             otrasTarifasDeLaCancha={tarifasDeCancha}
-            onGuardar={(datos) => {
-              onCrearTarifa(cancha.id, datos);
-              setPanelAbierto(null);
-            }}
+            onGuardar={(datos) => onCrearTarifa(cancha.id, datos)}
             onCancelar={() => setPanelAbierto(null)}
           />
         </DrawerPanel>
@@ -144,10 +163,7 @@ export function PasoTarifas({
             tarifa={tarifaEnEdicion}
             cancha={cancha}
             otrasTarifasDeLaCancha={tarifasDeCancha.filter((t) => t.id !== tarifaEnEdicion.id)}
-            onGuardar={(datos) => {
-              onEditarTarifa(cancha.id, tarifaEnEdicion.id, datos);
-              setPanelAbierto(null);
-            }}
+            onGuardar={(datos) => onEditarTarifa(cancha.id, tarifaEnEdicion.id, datos)}
             onCancelar={() => setPanelAbierto(null)}
           />
         </DrawerPanel>
