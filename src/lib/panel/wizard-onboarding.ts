@@ -1,4 +1,6 @@
-import type { Servicio } from "@/lib/api/tipos/comunes";
+import type { Servicio, HorarioAtencionDto } from "@/lib/api/tipos/comunes";
+import type { DiaSemanaBack } from "@/lib/api/fechas";
+import type { CanchaResponse } from "@/lib/api/tipos/canchas";
 
 /**
  * Datos que entrega cada paso al confirmarlo. `fotos`/`montoSenaDefault` no
@@ -78,4 +80,71 @@ export function validarPasoPoliticas(datos: {
     errores.montoSenaDefault = "Tiene que ser un número entero mayor o igual a 0.";
   }
   return errores;
+}
+
+/**
+ * Paso 4 — Canchas. No hay llamada al backend al confirmar: cada cancha ya se
+ * creó individualmente al agregarla (ver useWizardOnboarding). Esto sólo
+ * valida que haya al menos una, y — si el plan fuerza seña — que al menos una
+ * cobre algo, igual que exige CanchaService.validarMontoSena en el backend.
+ */
+export function validarPasoCanchas(canchas: CanchaResponse[], requiereSena: boolean): ErroresCampo {
+  const errores: ErroresCampo = {};
+  if (canchas.length === 0) {
+    errores.canchas = "Cargá al menos una cancha para continuar.";
+    return errores;
+  }
+  if (requiereSena && !canchas.some((c) => (c.montoSena ?? 0) > 0)) {
+    errores.sena = "Con seña obligatoria, al menos una cancha necesita un monto de seña mayor a 0.";
+  }
+  return errores;
+}
+
+/**
+ * Paso 3 — Horarios. Los 3 radios de patrón rápido que Stitch mockeó y
+ * `FormHorariosAtencion` no tiene: son sólo una PRE-CARGA del valor inicial
+ * con el que ese formulario arranca (se remonta vía `key={patron}` — ver
+ * PasoHorarios) — la validación y el guardado se heredan sin tocarlos, así
+ * que nada impide seguir editando una fila suelta después de elegir un
+ * patrón.
+ */
+export type PatronHorario = "mismo" | "semana-finde" | "dia-por-dia";
+
+const DEFAULT_APERTURA = "09:00:00";
+const DEFAULT_CIERRE = "23:00:00";
+const DEFAULT_APERTURA_FINDE = "10:00:00";
+const DEFAULT_CIERRE_FINDE = "20:00:00";
+
+const DIAS_SEMANA_BACK: DiaSemanaBack[] = [
+  "MONDAY",
+  "TUESDAY",
+  "WEDNESDAY",
+  "THURSDAY",
+  "FRIDAY",
+  "SATURDAY",
+  "SUNDAY",
+];
+const DIAS_FINDE_BACK: DiaSemanaBack[] = ["SATURDAY", "SUNDAY"];
+
+export function horariosDelPatron(patron: PatronHorario, base: HorarioAtencionDto[]): HorarioAtencionDto[] {
+  if (patron === "dia-por-dia") return base;
+
+  const referencia = base[0] ?? { horaApertura: DEFAULT_APERTURA, horaCierre: DEFAULT_CIERRE };
+
+  if (patron === "mismo") {
+    return DIAS_SEMANA_BACK.map((diaSemana) => ({
+      diaSemana,
+      horaApertura: referencia.horaApertura,
+      horaCierre: referencia.horaCierre,
+    }));
+  }
+
+  return DIAS_SEMANA_BACK.map((diaSemana) => {
+    const esFinde = DIAS_FINDE_BACK.includes(diaSemana);
+    return {
+      diaSemana,
+      horaApertura: esFinde ? DEFAULT_APERTURA_FINDE : referencia.horaApertura,
+      horaCierre: esFinde ? DEFAULT_CIERRE_FINDE : referencia.horaCierre,
+    };
+  });
 }
