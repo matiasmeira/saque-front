@@ -29,8 +29,8 @@ const campoClase =
 const etiquetaClase = "mb-1 block text-xs font-semibold text-grafito";
 
 /**
- * Alta de un turno fijo semanal: POST /reservas/semanal, que crea una reserva
- * CONFIRMADA por cada fecha del período que cae en el día elegido.
+ * Alta de un turno fijo semanal: POST /turnos-fijos, que crea la serie más una
+ * reserva CONFIRMADA por cada fecha del período que cae en el día elegido.
  *
  * A diferencia de FormTurnoRapido, NO ofrece slots de la grilla de
  * disponibilidad. Esa grilla responde por UNA fecha, y acá el alta abarca hasta

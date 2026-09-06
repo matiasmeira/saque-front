@@ -34,7 +34,7 @@ export type OpcionesRequest = {
   conCookieDispositivo?: boolean;
   /**
    * Clave de idempotencia. **Obligatoria** en los POST que mueven plata:
-   * /reservas, /reservas/manual, /reservas/semanal y /buffet/ventas. Sin ella
+   * /reservas, /reservas/manual, /turnos-fijos y /buffet/ventas. Sin ella
    * el back responde 400 sin ejecutar nada — dejó de ser opt-in, porque
    * mientras lo fue un cliente que se olvidaba de mandarla no tenía ninguna
    * protección contra el doble submit.

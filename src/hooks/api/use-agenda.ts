@@ -4,6 +4,7 @@ import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 
 import { bloqueos as endpointBloqueos } from "@/lib/api/endpoints/canchas";
 import { reservas as endpointReservas } from "@/lib/api/endpoints/reservas";
+import { turnosFijos as endpointTurnosFijos } from "@/lib/api/endpoints/turnos-fijos";
 import { keys } from "@/lib/api/keys";
 import { aTurno, type TurnoConReserva } from "@/lib/api/adaptadores/agenda";
 import { partirFechaHora } from "@/lib/api/fechas";
@@ -98,7 +99,7 @@ export function useAccionesReserva() {
     // Un turno fijo crea hasta 52 reservas de una: invalida lo mismo que las
     // demás, pero el impacto en la agenda es de todo el período, no de un día.
     crearSemanal: useMutation({
-      mutationFn: (body: ReservaSemanalRequest) => endpointReservas.crearSemanal(body),
+      mutationFn: (body: ReservaSemanalRequest) => endpointTurnosFijos.crear(body),
       onSuccess: invalidar,
     }),
     finalizar: useMutation({

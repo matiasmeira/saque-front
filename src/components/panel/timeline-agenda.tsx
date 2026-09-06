@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Clock, UserX, Wrench, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, Repeat, UserX, Wrench, XCircle } from "lucide-react";
 import { aHHMM, aMinutos } from "@/lib/disponibilidad";
 import type { BloqueoDelDia, EstadoTurno, Turno } from "@/lib/panel/agenda";
 
@@ -16,12 +16,15 @@ import type { BloqueoDelDia, EstadoTurno, Turno } from "@/lib/panel/agenda";
 const ROW_MIN = 30;
 const ROW_H = 32;
 
+/** Turno + el id de la serie, sólo para dibujar el badge de turno fijo. */
+type TurnoConSerie = Turno & { turnoFijoId: number | null };
+
 export type ColumnaTimeline = {
   /** id de cancha en vista Día, fecha ISO en vista Semana */
   id: string | number;
   titulo: string;
   subtitulo?: string;
-  turnos: Turno[];
+  turnos: TurnoConSerie[];
   /** bloqueos de mantenimiento de ese día — no son turnos de cliente */
   bloqueos?: BloqueoDelDia[];
 };
@@ -197,6 +200,7 @@ function ColumnaAgenda({
           >
             <span className="flex items-center gap-1 text-[11px] font-semibold leading-tight">
               <Icono className="size-3 shrink-0" aria-hidden />
+              {turno.turnoFijoId !== null && <Repeat className="size-3 shrink-0" aria-label="Turno fijo" />}
               <span className={`truncate ${turno.estado === "cancelado" ? "line-through" : ""}`}>{turno.cliente.nombre}</span>
             </span>
             <span className="block truncate text-[10px] leading-tight text-grafito">

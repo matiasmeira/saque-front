@@ -7,7 +7,6 @@ import type {
   ReservaManualRequest,
   ReservaRequest,
   ReservaResponse,
-  ReservaSemanalRequest,
 } from "../tipos/reservas";
 
 /** ReservaController — base /api/v1/reservas. */
@@ -16,7 +15,7 @@ export const reservas = {
    * Crea la prereserva. Nace en PENDIENTE_SENA con expiraEn = ahora + 10 min.
    *
    * Manda Idempotency-Key, que en este POST es OBLIGATORIA (junto con /manual,
-   * /semanal y /buffet/ventas): sin ella el back responde 400 sin crear nada.
+   * /turnos-fijos y /buffet/ventas): sin ella el back responde 400 sin crear nada.
    * Con ella, un doble submit o un reintento no generan dos reservas — el
    * replay devuelve el mismo 201 con el header Idempotency-Replayed: true.
    *
@@ -81,30 +80,6 @@ export const reservas = {
   /** Nace en CONFIRMADA, con expiraEn null: no pasa por el hold de 10 minutos. */
   crearManual: (body: ReservaManualRequest) =>
     apiFetch<ReservaResponse>("/api/v1/reservas/manual", {
-      method: "POST",
-      body,
-      idempotencyKey: nuevaIdempotencyKey(),
-    }),
-
-  /**
-   * Turno fijo semanal: crea una reserva CONFIRMADA por cada fecha del período
-   * que cae en `diaSemana`. Devuelve TODAS las creadas, en orden cronológico.
-   *
-   * TODO-O-NADA: si una sola fecha choca (otra reserva, un bloqueo, un día no
-   * laborable, o cae fuera del horario de atención) no se crea ninguna y el 400
-   * dice cuál fue — "No se pudo crear el turno fijo para el 2026-11-17: ...".
-   * No hay opción de saltear las que chocan: el dueño tiene que acortar el
-   * período o elegir otro horario.
-   *
-   * Idempotency-Key es OBLIGATORIA acá, igual que en el resto de las rutas que
-   * mueven plata: sin ella el back responde 400 sin crear nada.
-   *
-   * Otros errores esperables: 400 si el período pasa del 31/12 del año de
-   * inicio, y 403 si el usuario no es el dueño del establecimiento de la cancha
-   * (un EMPLEADO no puede cargar turnos fijos, ni con permisos).
-   */
-  crearSemanal: (body: ReservaSemanalRequest) =>
-    apiFetch<ReservaResponse[]>("/api/v1/reservas/semanal", {
       method: "POST",
       body,
       idempotencyKey: nuevaIdempotencyKey(),
