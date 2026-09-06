@@ -1,7 +1,10 @@
 import type {
   Deporte,
+  DiaSemanaBack,
   EstadoReserva,
   FechaHoraISO,
+  FechaISO,
+  HoraISO,
   MetodoPago,
 } from "./comunes";
 
@@ -60,6 +63,32 @@ export type ReservaManualRequest = {
   nombreCliente: string;
   telefonoCliente?: string;
   senaFisicaRecibida?: boolean;
+};
+
+/**
+ * Turno fijo semanal: un pedido que crea N reservas, una por cada fecha del
+ * período que cae en `diaSemana`, todas CONFIRMADA y con seña 0 (no hay
+ * `senaFisicaRecibida` como en el manual: el back las crea sin seña).
+ *
+ * Es TODO-O-NADA: si una sola fecha choca con otra reserva, un bloqueo o un día
+ * no laborable, no se crea ninguna y el error dice cuál fue.
+ *
+ * `jugadorId` y `nombreClienteManual` son excluyentes; el panel usa siempre el
+ * segundo, igual que la carga manual.
+ */
+export type ReservaSemanalRequest = {
+  canchaId: number;
+  fechaInicioPeriodo: FechaISO;
+  /** No puede pasar del 31/12 del año de inicio (ver lib/panel/turno-fijo.ts). */
+  fechaFinPeriodo: FechaISO;
+  diaSemana: DiaSemanaBack;
+  /** LocalTime: "20:00:00". Ambos sobre la MISMA fecha, así que inicio < fin. */
+  horaInicio: HoraISO;
+  horaFin: HoraISO;
+  deporteSeleccionado: Deporte;
+  jugadorId?: number | null;
+  nombreClienteManual?: string;
+  telefonoClienteManual?: string;
 };
 
 export type FinalizarReservaRequest = {

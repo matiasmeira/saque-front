@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertTriangle, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, Plus, Repeat } from "lucide-react";
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
 import { TimelineAgenda, type ColumnaTimeline } from "@/components/panel/timeline-agenda";
 import { SkeletonAgenda } from "@/components/panel/skeleton-agenda";
 import { DrawerPanel } from "@/components/panel/drawer-panel";
 import { FormTurnoRapido, type DatosTurnoManual } from "@/components/panel/form-turno-rapido";
+import { FormTurnoFijo, type DatosTurnoFijo } from "@/components/panel/form-turno-fijo";
 import { DetalleTurno } from "@/components/panel/detalle-turno";
 import { useBloqueadoPorCaja, usePerfilPendiente, usePermisos } from "@/lib/permisos";
 import { PERMISOS_DE_AGENDA } from "@/lib/permisos-empleado";
@@ -23,6 +24,7 @@ import { establecimientos as endpointEstablecimientos } from "@/lib/api/endpoint
 import { keys } from "@/lib/api/keys";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { aCanchaPanel } from "@/lib/api/adaptadores/canchas";
+import { aHoraBack } from "@/lib/api/fechas";
 import { useAccionesReserva, useAgenda } from "@/hooks/api/use-agenda";
 import { useEstablecimientoActivo, usePerfil } from "@/hooks/api/use-perfil";
 import { rangoDeAgenda } from "@/lib/horarios";
@@ -34,6 +36,9 @@ type Vista = "dia" | "semana";
 type PanelAbierto =
   | { tipo: "nuevo"; canchaId: number; fecha: string; hora?: string; nombreInicial?: string; telefonoInicial?: string }
   | { tipo: "detalle"; turno: TurnoConReserva }
+  // El turno fijo no arranca desde una celda: no tiene fecha ni hora previa,
+  // sólo la cancha con la que precargar el selector.
+  | { tipo: "turnoFijo"; canchaId: number }
   | null;
 type EstadoCarga = "cargando" | "error" | "listo";
 
@@ -212,6 +217,39 @@ export default function PanelAgenda() {
     }
   }
 
+  /**
+   * Turno fijo semanal: POST /reservas/semanal, que crea una reserva CONFIRMADA
+   * por cada fecha del período que cae en el día elegido.
+   *
+   * Es todo-o-nada: si una sola fecha choca no se crea ninguna, y el mensaje del
+   * backend nombra la fecha. Por eso se deja subir tal cual con alFallar en vez
+   * de un texto genérico — saber CUÁL fecha es lo único que le permite al dueño
+   * corregir (acortar el período o mover el horario).
+   *
+   * El deporte sale de la primera de la cancha, igual que en la carga manual: el
+   * campo es obligatorio en el back y la UI no lo pregunta.
+   */
+  async function agregarTurnoFijo(datos: DatosTurnoFijo) {
+    const cancha = canchas.find((c) => c.id === datos.canchaId);
+    setErrorAccion(null);
+    try {
+      await acciones.crearSemanal.mutateAsync({
+        canchaId: datos.canchaId,
+        fechaInicioPeriodo: datos.fechaInicioPeriodo,
+        fechaFinPeriodo: datos.fechaFinPeriodo,
+        diaSemana: datos.diaSemana,
+        horaInicio: aHoraBack(datos.horaInicio),
+        horaFin: aHoraBack(datos.horaFin),
+        deporteSeleccionado: (cancha?.deportes[0] ?? "FUTBOL_5") as never,
+        nombreClienteManual: datos.nombre,
+        telefonoClienteManual: datos.telefono || undefined,
+      });
+      setPanelAbierto(null);
+    } catch (e) {
+      alFallar(e, "No pudimos crear el turno fijo.");
+    }
+  }
+
   async function accionSobreTurno(promesa: Promise<unknown>, porDefecto: string) {
     setErrorAccion(null);
     try {
@@ -367,6 +405,26 @@ export default function PanelAgenda() {
                 <Plus className="size-4" aria-hidden />
                 Nuevo turno
               </button>
+
+              {/*
+                Sólo el dueño: POST /reservas/semanal exige OWNER/ADMIN, un
+                EMPLEADO recibe 403 por más permisos de agenda que tenga.
+              */}
+              {rol === "dueno" && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPanelAbierto({
+                      tipo: "turnoFijo",
+                      canchaId: vista === "dia" ? (canchas[0]?.id ?? 0) : canchaSeleccionada.id,
+                    })
+                  }
+                  className="flex h-10 items-center gap-1.5 rounded-full border border-borde px-4 font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+                >
+                  <Repeat className="size-4" aria-hidden />
+                  Turno fijo
+                </button>
+              )}
             </div>
           </div>
 
@@ -469,6 +527,23 @@ export default function PanelAgenda() {
             establecimientoId={establecimientoId ?? 0}
             guardando={acciones.crearManual.isPending}
             onGuardar={agregarTurno}
+            onCancelar={() => setPanelAbierto(null)}
+          />
+        </DrawerPanel>
+      )}
+
+      {panelAbierto?.tipo === "turnoFijo" && (
+        <DrawerPanel
+          titulo="Turno fijo"
+          subtitulo="Se repite todas las semanas, hasta fin de año"
+          onClose={() => setPanelAbierto(null)}
+        >
+          <FormTurnoFijo
+            canchas={canchas}
+            canchaId={panelAbierto.canchaId}
+            horariosAtencion={establecimiento?.horariosAtencion}
+            guardando={acciones.crearSemanal.isPending}
+            onGuardar={agregarTurnoFijo}
             onCancelar={() => setPanelAbierto(null)}
           />
         </DrawerPanel>
