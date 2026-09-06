@@ -218,8 +218,8 @@ export default function PanelAgenda() {
   }
 
   /**
-   * Turno fijo semanal: POST /reservas/semanal, que crea una reserva CONFIRMADA
-   * por cada fecha del período que cae en el día elegido.
+   * Turno fijo semanal: POST /turnos-fijos, que crea la serie más una reserva
+   * CONFIRMADA por cada fecha del período que cae en el día elegido.
    *
    * Es todo-o-nada: si una sola fecha choca no se crea ninguna, y el mensaje del
    * backend nombra la fecha. Por eso se deja subir tal cual con alFallar en vez
@@ -407,7 +407,7 @@ export default function PanelAgenda() {
               </button>
 
               {/*
-                Sólo el dueño: POST /reservas/semanal exige OWNER/ADMIN, un
+                Sólo el dueño: POST /turnos-fijos exige OWNER/ADMIN, un
                 EMPLEADO recibe 403 por más permisos de agenda que tenga.
               */}
               {rol === "dueno" && (

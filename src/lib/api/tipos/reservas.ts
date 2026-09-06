@@ -49,6 +49,8 @@ export type ReservaResponse = {
   expiraEn: FechaHoraISO | null;
   /** null hasta que la reserva se finaliza. */
   metodoPago: MetodoPago | null;
+  /** Id de la serie si la reserva es una ocurrencia de un turno fijo. */
+  turnoFijoId: number | null;
 };
 
 /**

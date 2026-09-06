@@ -19,9 +19,9 @@ import type { EstadoTurno, Turno } from "@/lib/panel/agenda";
  *  - Una reserva de JUGADOR no trae teléfono: ReservaResponse no lo expone.
  *  - `senia` (el monto de la seña) no existe en la reserva: vive en la cancha
  *    (montoSena). Lo que sí viene es senaPagada, cuánto se pagó.
- *  - `repiteSemanal` no existe y por eso tampoco está en `Turno`: POST
- *    /reservas/semanal crea N reservas sueltas, sin marca de pertenencia a la
- *    serie, así que no hay forma de saber si un turno es parte de una.
+ *  - `turnoFijoId` viene con valor cuando la reserva es una ocurrencia de un
+ *    turno fijo semanal, y null cuando es puntual. La serie completa se
+ *    gestiona en /panel/turnos-fijos.
  */
 
 /**
@@ -51,6 +51,8 @@ export type TurnoConReserva = Turno & {
   /** Estado sin colapsar, para las acciones del detalle. */
   estadoReserva: EstadoReserva;
   esDeJugador: boolean;
+  /** Id de la serie si el turno es una ocurrencia de un turno fijo; ver arriba. */
+  turnoFijoId: number | null;
 };
 
 export function aTurno(reserva: ReservaResponse): TurnoConReserva {
@@ -77,5 +79,6 @@ export function aTurno(reserva: ReservaResponse): TurnoConReserva {
     seniaPagada: reserva.senaPagada > 0,
     estadoReserva: reserva.estado,
     esDeJugador: reserva.jugadorId !== null,
+    turnoFijoId: reserva.turnoFijoId,
   };
 }
