@@ -33,8 +33,15 @@ export type OpcionesRequest = {
    */
   conCookieDispositivo?: boolean;
   /**
-   * Clave de idempotencia. El back solo la respeta en POST a /reservas,
-   * /reservas/manual, /reservas/semanal y /buffet/ventas.
+   * Clave de idempotencia. **Obligatoria** en los POST que mueven plata:
+   * /reservas, /reservas/manual, /reservas/semanal y /buffet/ventas. Sin ella
+   * el back responde 400 sin ejecutar nada — dejó de ser opt-in, porque
+   * mientras lo fue un cliente que se olvidaba de mandarla no tenía ninguna
+   * protección contra el doble submit.
+   *
+   * Opcional (el back la respeta pero no la exige) en POST
+   * /establecimientos/{id}/fotos: repetir una subida deja un archivo de más,
+   * no un cobro de más.
    */
   idempotencyKey?: string;
   signal?: AbortSignal;

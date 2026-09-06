@@ -52,7 +52,11 @@ export const productosBuffet = {
  * (alta) o como query param (listado y métricas).
  */
 export const ventasBuffet = {
-  /** El backend protege este POST con Idempotency-Key: un doble tap no cobra dos veces. */
+  /**
+   * Idempotency-Key es OBLIGATORIA acá: sin ella el back responde 400 sin
+   * registrar la venta. Con ella, un doble tap no cobra dos veces ni descuenta
+   * el stock dos veces.
+   */
   crear: (body: VentaRequest) =>
     apiFetch<VentaResponse>("/api/v1/buffet/ventas", {
       method: "POST",
