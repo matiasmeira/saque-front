@@ -11,17 +11,24 @@ export type RangoHorario = { abre: string; cierra: string };
  */
 const POR_DEFECTO: RangoHorario = { abre: "08:00", cierra: "24:00" };
 
-function aMin(hhmm: string): number {
+/**
+ * Los tres se exportan para que lib/panel/turno-fijo.ts arme sus opciones de
+ * horario con la MISMA aritmética que dibuja la agenda. Lo que no puede
+ * divergir es minutosDeCierre: si el turno fijo interpretara medianoche como
+ * el principio del día, un complejo que cierra a las 00:00 no ofrecería ningún
+ * horario.
+ */
+export function aMin(hhmm: string): number {
   const [h, m] = hhmm.split(":").map(Number);
   return h * 60 + m;
 }
 
-function aHHMM(min: number): string {
+export function aHHMM(min: number): string {
   return `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
 }
 
 /** Medianoche como CIERRE es el final del día, no el principio. */
-function minutosDeCierre(hhmm: string, apertura: number): number {
+export function minutosDeCierre(hhmm: string, apertura: number): number {
   const min = aMin(hhmm);
   return min <= apertura ? min + 1440 : min;
 }

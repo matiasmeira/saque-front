@@ -9,7 +9,7 @@ import { aTurno, type TurnoConReserva } from "@/lib/api/adaptadores/agenda";
 import { partirFechaHora } from "@/lib/api/fechas";
 import type { BloqueoDelDia } from "@/lib/panel/agenda";
 import type { MetodoPago } from "@/lib/api/tipos/comunes";
-import type { ReservaManualRequest } from "@/lib/api/tipos/reservas";
+import type { ReservaManualRequest, ReservaSemanalRequest } from "@/lib/api/tipos/reservas";
 
 /**
  * Datos y acciones de la agenda.
@@ -93,6 +93,12 @@ export function useAccionesReserva() {
   return {
     crearManual: useMutation({
       mutationFn: (body: ReservaManualRequest) => endpointReservas.crearManual(body),
+      onSuccess: invalidar,
+    }),
+    // Un turno fijo crea hasta 52 reservas de una: invalida lo mismo que las
+    // demás, pero el impacto en la agenda es de todo el período, no de un día.
+    crearSemanal: useMutation({
+      mutationFn: (body: ReservaSemanalRequest) => endpointReservas.crearSemanal(body),
       onSuccess: invalidar,
     }),
     finalizar: useMutation({
