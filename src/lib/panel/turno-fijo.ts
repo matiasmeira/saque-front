@@ -69,6 +69,23 @@ export function ocurrenciasDelPeriodo(
 }
 
 /**
+ * Qué ocurrencias se van a dar de baja si se cancela la serie desde `desdeISO`. Espeja el
+ * corte del backend: fechaHoraInicio > max(ahora, desde a las 00:00). Se usa para que el
+ * diálogo diga cuántos turnos se dan de baja ANTES de confirmar.
+ *
+ * No filtra por estado: el backend omite las FINALIZADA y AUSENTE y lo informa en el
+ * resumen de la respuesta. Acá el conteo es del alcance del corte, no del resultado.
+ */
+export function ocurrenciasACancelar(
+  ocurrenciasISO: string[],
+  desdeISO: FechaISO,
+  ahoraISO: string,
+): string[] {
+  const corte = ahoraISO > `${desdeISO}T00:00:00` ? ahoraISO : `${desdeISO}T00:00:00`;
+  return ocurrenciasISO.filter((fecha) => fecha > corte);
+}
+
+/**
  * Marcas de media hora ofrecibles para un día, acotadas al horario de atención.
  * Un día sin horario cargado (el complejo no abre) no ofrece ninguna.
  *

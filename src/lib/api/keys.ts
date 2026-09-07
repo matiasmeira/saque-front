@@ -55,6 +55,10 @@ export const keys = {
 
   canchas: (estId: number) => ["canchas", estId] as const,
 
+  turnosFijos: {
+    lista: (estId: number, page = 0) => ["turnos-fijos", estId, page] as const,
+  },
+
   bloqueos: {
     delEstablecimiento: (estId: number, fecha: string) =>
       ["bloqueos", estId, fecha] as const,

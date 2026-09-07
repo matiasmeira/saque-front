@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRightLeft, Calendar, Clock, Phone, User } from "lucide-react";
+import Link from "next/link";
+import { ArrowRightLeft, Calendar, Clock, Phone, Repeat, User } from "lucide-react";
 import { StatusBadge } from "@/components/canche/status-badge";
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { useHoraActual } from "@/lib/hora-actual";
@@ -22,6 +23,11 @@ import type { Turno } from "@/lib/panel/agenda";
  * reserva en una física del pool deja sin disponibilidad a una
  * compuesta que comparte ese pool — el dueño la reubica a mano y
  * libera el bloque, sin tener que cancelarla y recrearla.
+ *
+ * Cuando la reserva es una ocurrencia de un turno fijo (`turnoFijoId` no
+ * nulo), se muestra un link a /panel/turnos-fijos: es el otro camino de
+ * entrada a esa pantalla — el dueño casi siempre llega al problema de "dar de
+ * baja la serie" desde acá, no buscando el listado a mano.
  */
 export function DetalleTurno({
   turno,
@@ -36,7 +42,7 @@ export function DetalleTurno({
   onMarcarAusente,
   onDeshacerAusencia,
 }: {
-  turno: Turno;
+  turno: Turno & { turnoFijoId: number | null };
   cancha: Cancha;
   /** físicas activas, distintas de la actual, que comparten algún deporte con ella */
   canchasCompatibles: Cancha[];
@@ -67,6 +73,16 @@ export function DetalleTurno({
   return (
     <div className="space-y-5">
       <StatusBadge estado={turno.estado} />
+
+      {turno.turnoFijoId !== null && (
+        <Link
+          href="/panel/turnos-fijos"
+          className="flex items-center gap-2 rounded-input bg-celeste-suave px-3 py-2 text-sm font-semibold text-azul transition-colors hover:underline"
+        >
+          <Repeat className="size-4 shrink-0" aria-hidden />
+          Parte de un turno fijo
+        </Link>
+      )}
 
       <dl className="space-y-3 text-sm">
         <div className="flex items-center gap-3">
