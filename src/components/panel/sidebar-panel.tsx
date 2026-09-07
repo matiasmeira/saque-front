@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, Calendar, CreditCard, History, LayoutGrid, LogOut, Receipt, Settings, Tag, User, Users, Utensils, Wallet } from "lucide-react";
+import { BarChart3, Calendar, CreditCard, History, LayoutGrid, LogOut, Receipt, Repeat, Settings, Tag, User, Users, Utensils, Wallet } from "lucide-react";
 import { LogoMarca } from "@/components/canche/logo";
 import { useRolPanel } from "@/lib/rol-panel";
 import { usePermisos } from "@/lib/permisos";
@@ -39,6 +39,9 @@ const GRUPOS: Grupo[] = [
     label: "Gestión",
     items: [
       { href: "/panel/agenda", label: "Agenda", icono: Calendar, visible: (tp, esDueno) => esDueno || PERMISOS_DE_AGENDA.some(tp) },
+      // Mismo criterio que Agenda: el listado (GET /turnos-fijos) admite OWNER/ADMIN/EMPLOYEE
+      // con permisos operativos de reserva, aunque cancelar una serie sea sólo del dueño.
+      { href: "/panel/turnos-fijos", label: "Turnos fijos", icono: Repeat, visible: (tp, esDueno) => esDueno || PERMISOS_DE_AGENDA.some(tp) },
       { href: "/panel/canchas", label: "Canchas", icono: LayoutGrid, visible: (_tp, esDueno) => esDueno },
       { href: "/panel/precios", label: "Precios", icono: Tag, visible: (_tp, esDueno) => esDueno },
       // El ClienteController entero es OWNER/ADMIN: no hay PermisoEmpleado que

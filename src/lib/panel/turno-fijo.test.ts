@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { horariosPosiblesDelDia, ocurrenciasDelPeriodo, topeDelPeriodo } from "./turno-fijo";
+import { horariosPosiblesDelDia, ocurrenciasACancelar, ocurrenciasDelPeriodo, topeDelPeriodo } from "./turno-fijo";
 import type { HorarioAtencionDto } from "@/lib/api/tipos/comunes";
 
 const horario = (horaApertura: string, horaCierre: string): HorarioAtencionDto => ({
@@ -75,5 +75,28 @@ describe("horariosPosiblesDelDia", () => {
     const marcas = horariosPosiblesDelDia(horario("22:00:00", "00:00:00"));
     expect(marcas[0]).toBe("22:00");
     expect(marcas[marcas.length - 1]).toBe("23:30");
+  });
+});
+
+describe("ocurrenciasACancelar", () => {
+  const ocurrencias = [
+    "2026-09-01T20:00:00",
+    "2026-09-08T20:00:00",
+    "2026-09-15T20:00:00",
+  ];
+
+  it("deja afuera las que ya pasaron", () => {
+    expect(ocurrenciasACancelar(ocurrencias, "2026-09-05", "2026-09-05T10:00:00"))
+      .toEqual(["2026-09-08T20:00:00", "2026-09-15T20:00:00"]);
+  });
+
+  it("respeta una fecha de corte futura", () => {
+    expect(ocurrenciasACancelar(ocurrencias, "2026-09-10", "2026-09-05T10:00:00"))
+      .toEqual(["2026-09-15T20:00:00"]);
+  });
+
+  it("no cancela un turno de hoy que ya empezo", () => {
+    expect(ocurrenciasACancelar(ocurrencias, "2026-09-08", "2026-09-08T21:30:00"))
+      .toEqual(["2026-09-15T20:00:00"]);
   });
 });
