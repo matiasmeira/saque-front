@@ -5,7 +5,8 @@ import { useRenovarTurnoFijo } from "@/hooks/api/use-turnos-fijos";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { DIA_SEMANA_DESDE_BACK } from "@/lib/api/fechas";
 import type { TurnoFijoListadoResponse } from "@/lib/api/tipos/turnos-fijos";
-import { hoyISO } from "@/lib/fecha";
+import { ahoraComoISO } from "@/lib/fecha";
+import { useHoraActual } from "@/lib/hora-actual";
 import { DIAS_SEMANA } from "@/lib/panel/tarifas";
 import { inicioDeRenovacion } from "@/lib/panel/turno-fijo";
 
@@ -19,11 +20,12 @@ function ddmmaaaa(fechaISO: string): string {
  * del año siguiente con la misma cancha, horario, día y cliente. Sin body — el backend
  * calcula el período solo.
  *
- * El período que se anticipa ANTES de confirmar espeja el cálculo del backend: arranca
- * el 1 de enero del año siguiente al de `fechaFinPeriodo` (o hoy si ese 1 de enero ya
- * pasó, vía `inicioDeRenovacion`) y llega hasta el 31 de diciembre de ese mismo año
- * destino. Es un alta todo-o-nada de hasta 52 reservas: el dueño tiene que ver a qué se
- * compromete antes de apretar el botón, igual que en DialogoCancelarTurnoFijo.
+ * El período que se anticipa ANTES de confirmar espeja el cálculo del backend: arranca el
+ * 1 de enero del año siguiente al de `fechaFinPeriodo` (o max(ese 1 de enero, hoy) si ya
+ * pasó, y si hoy es el mismo día de semana de la serie con la hora del turno ya pasada,
+ * mañana en vez de hoy — ver `inicioDeRenovacion`) y llega hasta el 31 de diciembre de ese
+ * mismo año destino. Es un alta todo-o-nada de hasta 52 reservas: el dueño tiene que ver a
+ * qué se compromete antes de apretar el botón, igual que en DialogoCancelarTurnoFijo.
  */
 export function DialogoRenovarTurnoFijo({
   turnoFijo,
@@ -33,9 +35,15 @@ export function DialogoRenovarTurnoFijo({
   onClose: () => void;
 }) {
   const renovar = useRenovarTurnoFijo();
+  const ahora = useHoraActual();
 
   const anioDestino = Number(turnoFijo.fechaFinPeriodo.slice(0, 4)) + 1;
-  const inicio = inicioDeRenovacion(turnoFijo.fechaFinPeriodo, hoyISO());
+  const inicio = inicioDeRenovacion(
+    turnoFijo.fechaFinPeriodo,
+    turnoFijo.diaSemana,
+    turnoFijo.horaInicio,
+    ahoraComoISO(ahora),
+  );
   const fin = `${anioDestino}-12-31`;
 
   const diaLabel =

@@ -1,6 +1,6 @@
 import { sumarDias } from "@/lib/fecha";
 import { aHHMM, aMin, minutosDeCierre } from "@/lib/horarios";
-import { diaSemanaBackDeFecha, type DiaSemanaBack, type FechaISO } from "@/lib/api/fechas";
+import { diaSemanaBackDeFecha, type DiaSemanaBack, type FechaISO, type HoraISO } from "@/lib/api/fechas";
 import type { HorarioAtencionDto } from "@/lib/api/tipos/comunes";
 
 /**
@@ -87,12 +87,23 @@ export function ocurrenciasACancelar(
 
 /**
  * Desde cuándo arranca la serie renovada. Espeja TurnoFijoService.renovar: el 1 de enero del
- * año siguiente, o hoy si ese 1 de enero ya pasó (renovar en febrero no puede pedir fechas
- * pasadas, que el backend rechaza).
+ * año siguiente, o max(ese 1 de enero, hoy) si ya pasó — y si hoy es el mismo día de semana
+ * de la serie y la hora del turno ya pasó, mañana en vez de hoy. Sin esa última regla, renovar
+ * tarde en el día pediría como primera ocurrencia una fecha ya vencida, y el alta (todo-o-nada)
+ * se caería entera por esa sola fecha.
  */
-export function inicioDeRenovacion(fechaFinPeriodoISO: FechaISO, hoyISO: FechaISO): FechaISO {
+export function inicioDeRenovacion(
+  fechaFinPeriodoISO: FechaISO,
+  diaSemana: DiaSemanaBack,
+  horaInicio: HoraISO,
+  ahoraISO: string,
+): FechaISO {
+  const hoy = ahoraISO.slice(0, 10);
   const primeroDeEnero = `${Number(fechaFinPeriodoISO.slice(0, 4)) + 1}-01-01`;
-  return primeroDeEnero > hoyISO ? primeroDeEnero : hoyISO;
+  if (primeroDeEnero > hoy) return primeroDeEnero;
+
+  const horaYaPaso = diaSemanaBackDeFecha(hoy) === diaSemana && `${hoy}T${horaInicio}` <= ahoraISO;
+  return horaYaPaso ? sumarDias(hoy, 1) : hoy;
 }
 
 /**
