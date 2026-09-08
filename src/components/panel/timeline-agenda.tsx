@@ -194,13 +194,18 @@ function ColumnaAgenda({
             key={turno.id}
             type="button"
             onClick={() => onClickTurno(turno)}
-            aria-label={`${turno.cliente.nombre}, ${turno.horaInicio} a ${turno.horaFin}, ${turno.estado}`}
+            aria-label={`${turno.cliente.nombre}, ${turno.horaInicio} a ${turno.horaFin}, ${turno.estado}${
+              turno.turnoFijoId !== null ? ", turno fijo" : ""
+            }`}
             className={`absolute inset-x-0.5 overflow-hidden rounded-md border-l-4 px-1.5 py-1 text-left transition-opacity hover:opacity-80 ${CLASE_BLOQUE[turno.estado]}`}
             style={{ top: inicio * ROW_H + 1, height: (fin - inicio) * ROW_H - 2 }}
           >
             <span className="flex items-center gap-1 text-[11px] font-semibold leading-tight">
               <Icono className="size-3 shrink-0" aria-hidden />
-              {turno.turnoFijoId !== null && <Repeat className="size-3 shrink-0" aria-label="Turno fijo" />}
+              {/* El "turno fijo" ya está en el aria-label del <button>: el nombre accesible
+                  del botón gana sobre el de un ícono anidado, así que uno acá adentro nunca
+                  se anuncia. El ícono queda puramente decorativo. */}
+              {turno.turnoFijoId !== null && <Repeat className="size-3 shrink-0" aria-hidden />}
               <span className={`truncate ${turno.estado === "cancelado" ? "line-through" : ""}`}>{turno.cliente.nombre}</span>
             </span>
             <span className="block truncate text-[10px] leading-tight text-grafito">
