@@ -20,6 +20,11 @@ import { DIAS_SEMANA } from "@/lib/panel/tarifas";
 
 const COLUMNAS = "grid-cols-[1.1fr_0.8fr_0.95fr_1.1fr_1.15fr_1.15fr_auto]";
 
+const FILTROS_ESTADO: { valor: "ACTIVO" | "CANCELADO"; etiqueta: string }[] = [
+  { valor: "ACTIVO", etiqueta: "Activas" },
+  { valor: "CANCELADO", etiqueta: "Canceladas" },
+];
+
 /** "2026-09-07" → "07/09" */
 function ddmm(fechaISO: string): string {
   return `${fechaISO.slice(8, 10)}/${fechaISO.slice(5, 7)}`;
@@ -50,13 +55,25 @@ function proximaOcurrenciaLabel(fechaHoraISO: string): string {
  * Cancelar, renovar y editar cliente están gateadas por su condición real, no
  * sólo por rol: mostrar el botón para que el backend conteste 400 le hace
  * apretar al dueño algo que nunca iba a funcionar.
- *   - Renovar no se ofrece si la serie ya fue renovada. El listado sólo trae
- *     ACTIVAS (nunca canceladas), así que ese caso queda cubierto solo; "ya
- *     renovada" se detecta con `renovadoDesdeId` de otra fila de la MISMA
- *     página — si la renovación quedó en otra página, el 400 del backend es
- *     el respaldo.
+ *   - Renovar no se ofrece si la serie ya fue renovada. La pestaña Activas
+ *     sólo trae ACTIVO, así que la serie vieja ya no aparece ahí una vez
+ *     renovada; "ya renovada" se detecta con `renovadoDesdeId` de otra fila
+ *     de la MISMA página — si la renovación quedó en otra página, el 400
+ *     del backend es el respaldo. Tampoco se ofrece en la pestaña
+ *     Canceladas (ver más abajo): ahí ninguna acción aplica.
  *   - Editar cliente no se ofrece si la serie está atada a un jugador
  *     (`jugadorId !== null`): ahí el nombre sale de su cuenta.
+ *
+ * Activas / Canceladas: cancelar una serie la saca del listado por defecto
+ * (el backend sólo trae ACTIVO si no se pide `estado`), incluso cuando la
+ * baja fue "desde una fecha futura" y ninguna ocurrencia se tocó todavía.
+ * Sin una forma de pedir las CANCELADO, esa serie quedaba inalcanzable — y
+ * como renovar exige ACTIVO, tampoco se podía recuperar el año siguiente.
+ * Se eligió el mismo patrón de pestañas/pill que ya usa `panel/pagos` para
+ * filtrar por estado (un `useState` + botones con `aria-pressed`) en vez de
+ * un toggle binario suelto: es el filtro que ya existe en el repo para "un
+ * estado a la vez sobre el mismo listado", y agregar un tercer valor "todas"
+ * más adelante es un elemento más en el array, no un cambio de forma.
  */
 export default function PanelTurnosFijos() {
   const rol = useRolPanel();
@@ -68,11 +85,12 @@ export default function PanelTurnosFijos() {
   const puedeGestionar = rol === "dueno";
 
   const [pagina, setPagina] = useState(0);
+  const [filtroEstado, setFiltroEstado] = useState<"ACTIVO" | "CANCELADO">("ACTIVO");
   const [aCancelar, setACancelar] = useState<TurnoFijoListadoResponse | null>(null);
   const [aRenovar, setARenovar] = useState<TurnoFijoListadoResponse | null>(null);
   const [aEditarCliente, setAEditarCliente] = useState<TurnoFijoListadoResponse | null>(null);
 
-  const consulta = useTurnosFijos(establecimientoId, pagina);
+  const consulta = useTurnosFijos(establecimientoId, pagina, filtroEstado);
 
   if (bloqueadoPorCaja || !puedeVer) return <div className="min-h-dvh bg-humo" />;
 
@@ -86,7 +104,26 @@ export default function PanelTurnosFijos() {
         <HeaderPanel />
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
-          <h1 className="mb-6 font-display text-2xl font-extrabold tracking-tight text-tinta">Turnos fijos</h1>
+          <h1 className="mb-4 font-display text-2xl font-extrabold tracking-tight text-tinta">Turnos fijos</h1>
+
+          <div className="mb-6 flex rounded-full bg-white p-1 shadow-card w-fit">
+            {FILTROS_ESTADO.map((f) => (
+              <button
+                key={f.valor}
+                type="button"
+                onClick={() => {
+                  setFiltroEstado(f.valor);
+                  setPagina(0);
+                }}
+                aria-pressed={filtroEstado === f.valor}
+                className={`h-8 rounded-full px-3.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-celeste ${
+                  filtroEstado === f.valor ? "bg-celeste-suave text-tinta" : "text-grafito hover:text-tinta"
+                }`}
+              >
+                {f.etiqueta}
+              </button>
+            ))}
+          </div>
 
           {consulta.isPending && (
             <div className="rounded-card bg-white py-20 text-center text-sm text-grafito shadow-card">
@@ -112,12 +149,29 @@ export default function PanelTurnosFijos() {
             </div>
           )}
 
-          {consulta.isSuccess && datos && datos.content.length === 0 && (
+          {consulta.isSuccess && datos && datos.content.length === 0 && filtroEstado === "ACTIVO" && (
             <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center shadow-card">
               <Repeat className="size-8 text-grafito" aria-hidden />
               <p className="font-display font-bold text-tinta">Todavía no hay turnos fijos activos</p>
               <p className="max-w-sm text-sm text-grafito">
                 Un turno fijo se carga desde la agenda, con el botón &quot;Turno fijo&quot;.
+              </p>
+              {/* Las series cargadas antes de este cambio quedaron con turno_fijo_id NULL
+                  (no se reconstruyen por heurística): siguen existiendo, sólo que no como
+                  TurnoFijo. Sin esta línea, un dueño con 20 series viejas lee un mensaje
+                  falso acá. */}
+              <p className="max-w-sm text-sm text-grafito">
+                Las series cargadas antes de esta versión no aparecen en esta lista: se siguen viendo y gestionando como reservas sueltas desde la agenda.
+              </p>
+            </div>
+          )}
+
+          {consulta.isSuccess && datos && datos.content.length === 0 && filtroEstado === "CANCELADO" && (
+            <div className="flex flex-col items-center justify-center gap-3 rounded-card bg-white py-20 text-center shadow-card">
+              <Repeat className="size-8 text-grafito" aria-hidden />
+              <p className="font-display font-bold text-tinta">Todavía no hay turnos fijos cancelados</p>
+              <p className="max-w-sm text-sm text-grafito">
+                Acá van a aparecer las series dadas de baja, con la fecha desde la que dejaron de generar turnos.
               </p>
             </div>
           )}
@@ -133,7 +187,7 @@ export default function PanelTurnosFijos() {
                   <span>Horario</span>
                   <span>Período</span>
                   <span>Cliente</span>
-                  <span>Próxima ocurrencia</span>
+                  <span>{filtroEstado === "ACTIVO" ? "Próxima ocurrencia" : "Cancelada desde"}</span>
                   <span className="sr-only">Acciones</span>
                 </div>
 
@@ -162,10 +216,21 @@ export default function PanelTurnosFijos() {
                           {tf.jugadorNombre ?? tf.nombreClienteManual ?? "Sin nombre"}
                         </span>
                         <span className="text-sm text-grafito">
-                          {tf.proximaOcurrencia ? proximaOcurrenciaLabel(tf.proximaOcurrencia) : "—"}
+                          {filtroEstado === "ACTIVO"
+                            ? tf.proximaOcurrencia
+                              ? proximaOcurrenciaLabel(tf.proximaOcurrencia)
+                              : "—"
+                            : tf.canceladoDesde
+                              ? ddmm(tf.canceladoDesde)
+                              : "—"}
                         </span>
                         <span className="flex items-center justify-end gap-2">
-                          {puedeGestionar && puedeEditarCliente && (
+                          {/* Ninguna acción aplica sobre una serie CANCELADA: renovar exige
+                              ACTIVO (400 del backend si se intenta) y cancelar/editar una
+                              serie ya dada de baja no es un flujo real. Esta pestaña es de
+                              sólo lectura — está para que la serie sea auditable, no para
+                              operarla. */}
+                          {filtroEstado === "ACTIVO" && puedeGestionar && puedeEditarCliente && (
                             <button
                               type="button"
                               onClick={() => setAEditarCliente(tf)}
@@ -174,7 +239,7 @@ export default function PanelTurnosFijos() {
                               Editar cliente
                             </button>
                           )}
-                          {puedeGestionar && !yaRenovada && (
+                          {filtroEstado === "ACTIVO" && puedeGestionar && !yaRenovada && (
                             <button
                               type="button"
                               onClick={() => setARenovar(tf)}
@@ -183,7 +248,7 @@ export default function PanelTurnosFijos() {
                               Renovar
                             </button>
                           )}
-                          {puedeGestionar && (
+                          {filtroEstado === "ACTIVO" && puedeGestionar && (
                             <button
                               type="button"
                               onClick={() => setACancelar(tf)}

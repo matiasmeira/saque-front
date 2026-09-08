@@ -56,7 +56,8 @@ export const keys = {
   canchas: (estId: number) => ["canchas", estId] as const,
 
   turnosFijos: {
-    lista: (estId: number, page = 0) => ["turnos-fijos", estId, page] as const,
+    lista: (estId: number, page = 0, estado?: "ACTIVO" | "CANCELADO") =>
+      ["turnos-fijos", estId, page, estado ?? null] as const,
   },
 
   bloqueos: {
