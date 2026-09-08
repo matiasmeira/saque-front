@@ -8,15 +8,17 @@ import type { FechaISO } from "@/lib/api/fechas";
 import type { EditarClienteTurnoFijoRequest } from "@/lib/api/tipos/turnos-fijos";
 
 /**
- * Listado de series ACTIVAS del establecimiento — el filtro por defecto del
- * backend cuando no se manda `estado`. Ver un histórico de canceladas queda
- * para cuando la pantalla lo necesite; hoy "gestionar turnos fijos" es
- * gestionar las vigentes.
+ * Listado de series del establecimiento. Sin `estado`, el backend trae sólo
+ * las ACTIVO — que es lo que la pantalla pide por defecto —, pero una serie
+ * CANCELADA tiene que seguir siendo alcanzable: es la única forma de ver
+ * `canceladoDesde` y de que el dueño entienda por qué una serie que canceló
+ * "desde una fecha futura" dejó de aparecer en la vista por defecto sin que
+ * sus ocurrencias ya jugadas desaparecieran de la agenda.
  */
-export function useTurnosFijos(estId: number | null, page = 0) {
+export function useTurnosFijos(estId: number | null, page = 0, estado?: "ACTIVO" | "CANCELADO") {
   return useQuery({
-    queryKey: keys.turnosFijos.lista(estId ?? 0, page),
-    queryFn: () => endpointTurnosFijos.listar(estId!, { page }),
+    queryKey: keys.turnosFijos.lista(estId ?? 0, page, estado),
+    queryFn: () => endpointTurnosFijos.listar(estId!, { estado, page }),
     enabled: estId !== null,
   });
 }
