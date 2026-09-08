@@ -7,16 +7,10 @@ import { useCancelarTurnoFijo } from "@/hooks/api/use-turnos-fijos";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { DIA_SEMANA_DESDE_BACK, aFechaHora } from "@/lib/api/fechas";
 import type { CancelacionTurnoFijoResponse, TurnoFijoListadoResponse } from "@/lib/api/tipos/turnos-fijos";
-import { hoyISO } from "@/lib/fecha";
+import { ahoraComoISO, hoyISO } from "@/lib/fecha";
 import { useHoraActual } from "@/lib/hora-actual";
 import { DIAS_SEMANA } from "@/lib/panel/tarifas";
 import { ocurrenciasACancelar, ocurrenciasDelPeriodo } from "@/lib/panel/turno-fijo";
-
-/** "2026-09-06T14:32:07" — hora local sin offset, en el mismo formato que ocurrenciasACancelar espera. */
-function ahoraComoISO(ahora: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${ahora.getFullYear()}-${pad(ahora.getMonth() + 1)}-${pad(ahora.getDate())}T${pad(ahora.getHours())}:${pad(ahora.getMinutes())}:${pad(ahora.getSeconds())}`;
-}
 
 type EtiquetaMotivo = { uno: string; varios: string };
 

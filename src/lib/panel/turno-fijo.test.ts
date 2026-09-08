@@ -109,10 +109,20 @@ describe("ocurrenciasACancelar", () => {
 
 describe("inicioDeRenovacion", () => {
   it("arranca el 1 de enero del anio siguiente", () => {
-    expect(inicioDeRenovacion("2026-12-31", "2026-09-06")).toBe("2027-01-01");
+    // El dia de semana y la hora no importan aca: el 1/1 del anio destino todavia no llego.
+    expect(inicioDeRenovacion("2026-12-31", "MONDAY", "20:00:00", "2026-09-06T10:00:00")).toBe("2027-01-01");
   });
 
-  it("arranca hoy si el 1 de enero ya paso", () => {
-    expect(inicioDeRenovacion("2026-12-31", "2027-02-10")).toBe("2027-02-10");
+  it("arranca hoy si el 1 de enero ya paso y hoy no es el dia de la serie", () => {
+    // 2027-02-10 es miercoles: no coincide con MONDAY, asi que la regla de "ya paso la
+    // hora" ni se evalua.
+    expect(inicioDeRenovacion("2026-12-31", "MONDAY", "20:00:00", "2027-02-10T10:00:00")).toBe("2027-02-10");
+  });
+
+  it("arranca al dia siguiente si hoy es el dia de la serie y la hora del turno ya paso", () => {
+    // 2027-02-15 es lunes: coincide con MONDAY, y a las 21:00 el turno de las 20:00 ya
+    // arranco. Sin este plusDays(1) la primera ocurrencia pedida caeria en el pasado y el
+    // backend la rechazaria, tirando abajo el alta entera (todo-o-nada).
+    expect(inicioDeRenovacion("2026-12-31", "MONDAY", "20:00:00", "2027-02-15T21:00:00")).toBe("2027-02-16");
   });
 });

@@ -11,6 +11,12 @@ export function hoyISO(): string {
   return formatearISO(new Date());
 }
 
+/** "2026-09-06T14:32:07" — hora local sin offset, en el formato que esperan los LocalDateTime del back. */
+export function ahoraComoISO(ahora: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${ahora.getFullYear()}-${pad(ahora.getMonth() + 1)}-${pad(ahora.getDate())}T${pad(ahora.getHours())}:${pad(ahora.getMinutes())}:${pad(ahora.getSeconds())}`;
+}
+
 export function sumarDias(fechaISO: string, dias: number): string {
   const d = new Date(`${fechaISO}T00:00:00`);
   d.setDate(d.getDate() + dias);
