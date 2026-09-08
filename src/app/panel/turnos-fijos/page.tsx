@@ -6,6 +6,8 @@ import { AlertTriangle, ChevronLeft, ChevronRight, Repeat } from "lucide-react";
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
 import { DialogoCancelarTurnoFijo } from "@/components/panel/dialogo-cancelar-turno-fijo";
+import { DialogoEditarClienteTurnoFijo } from "@/components/panel/dialogo-editar-cliente-turno-fijo";
+import { DialogoRenovarTurnoFijo } from "@/components/panel/dialogo-renovar-turno-fijo";
 import { useTurnosFijos } from "@/hooks/api/use-turnos-fijos";
 import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
@@ -41,8 +43,20 @@ function proximaOcurrenciaLabel(fechaHoraISO: string): string {
  *
  * Visible con el mismo criterio que la agenda: además del dueño, un empleado
  * con algún permiso operativo de reserva puede VER el listado (GET admite
- * OWNER/ADMIN/EMPLOYEE), pero sólo el dueño puede cancelar series — el
- * backend le responde 403 a un empleado aunque tenga esos permisos.
+ * OWNER/ADMIN/EMPLOYEE), pero sólo el dueño puede cancelar, renovar o editar
+ * el cliente de una serie — el backend le responde 403 a un empleado aunque
+ * tenga esos permisos.
+ *
+ * Cancelar, renovar y editar cliente están gateadas por su condición real, no
+ * sólo por rol: mostrar el botón para que el backend conteste 400 le hace
+ * apretar al dueño algo que nunca iba a funcionar.
+ *   - Renovar no se ofrece si la serie ya fue renovada. El listado sólo trae
+ *     ACTIVAS (nunca canceladas), así que ese caso queda cubierto solo; "ya
+ *     renovada" se detecta con `renovadoDesdeId` de otra fila de la MISMA
+ *     página — si la renovación quedó en otra página, el 400 del backend es
+ *     el respaldo.
+ *   - Editar cliente no se ofrece si la serie está atada a un jugador
+ *     (`jugadorId !== null`): ahí el nombre sale de su cuenta.
  */
 export default function PanelTurnosFijos() {
   const rol = useRolPanel();
@@ -51,10 +65,12 @@ export default function PanelTurnosFijos() {
   const { establecimientoId } = useEstablecimientoActivo();
 
   const puedeVer = rol === "dueno" || PERMISOS_DE_AGENDA.some(tienePermiso);
-  const puedeCancelar = rol === "dueno";
+  const puedeGestionar = rol === "dueno";
 
   const [pagina, setPagina] = useState(0);
   const [aCancelar, setACancelar] = useState<TurnoFijoListadoResponse | null>(null);
+  const [aRenovar, setARenovar] = useState<TurnoFijoListadoResponse | null>(null);
+  const [aEditarCliente, setAEditarCliente] = useState<TurnoFijoListadoResponse | null>(null);
 
   const consulta = useTurnosFijos(establecimientoId, pagina);
 
@@ -122,38 +138,64 @@ export default function PanelTurnosFijos() {
                 </div>
 
                 <div className="divide-y divide-borde/60">
-                  {datos.content.map((tf) => (
-                    <div
-                      key={tf.id}
-                      className={`grid ${COLUMNAS} items-center gap-3 px-6 py-3.5 transition-colors hover:bg-humo/60`}
-                    >
-                      <span className="truncate text-sm font-semibold text-tinta">{tf.canchaNombre}</span>
-                      <span className="truncate text-sm text-grafito">{diaLargo(tf.diaSemana)}</span>
-                      <span className="text-sm text-grafito">
-                        {tf.horaInicio.slice(0, 5)}–{tf.horaFin.slice(0, 5)}
-                      </span>
-                      <span className="text-sm text-grafito">
-                        {ddmm(tf.fechaInicioPeriodo)} al {ddmm(tf.fechaFinPeriodo)}
-                      </span>
-                      <span className="truncate text-sm text-grafito">
-                        {tf.jugadorNombre ?? tf.nombreClienteManual ?? "Sin nombre"}
-                      </span>
-                      <span className="text-sm text-grafito">
-                        {tf.proximaOcurrencia ? proximaOcurrenciaLabel(tf.proximaOcurrencia) : "—"}
-                      </span>
-                      <span className="flex items-center justify-end">
-                        {puedeCancelar && (
-                          <button
-                            type="button"
-                            onClick={() => setACancelar(tf)}
-                            className="flex h-8 items-center rounded-full border border-cancelado px-3 text-xs font-bold text-cancelado transition-colors hover:bg-cancelado-suave"
-                          >
-                            Cancelar serie
-                          </button>
-                        )}
-                      </span>
-                    </div>
-                  ))}
+                  {datos.content.map((tf) => {
+                    // "Ya renovada" sólo se puede leer de la MISMA página: la serie nueva
+                    // apunta a ésta con renovadoDesdeId. Si quedó en otra página, el 400
+                    // del backend ("la serie ya fue renovada") es el respaldo.
+                    const yaRenovada = datos.content.some((otra) => otra.renovadoDesdeId === tf.id);
+                    const puedeEditarCliente = tf.jugadorId === null;
+
+                    return (
+                      <div
+                        key={tf.id}
+                        className={`grid ${COLUMNAS} items-center gap-3 px-6 py-3.5 transition-colors hover:bg-humo/60`}
+                      >
+                        <span className="truncate text-sm font-semibold text-tinta">{tf.canchaNombre}</span>
+                        <span className="truncate text-sm text-grafito">{diaLargo(tf.diaSemana)}</span>
+                        <span className="text-sm text-grafito">
+                          {tf.horaInicio.slice(0, 5)}–{tf.horaFin.slice(0, 5)}
+                        </span>
+                        <span className="text-sm text-grafito">
+                          {ddmm(tf.fechaInicioPeriodo)} al {ddmm(tf.fechaFinPeriodo)}
+                        </span>
+                        <span className="truncate text-sm text-grafito">
+                          {tf.jugadorNombre ?? tf.nombreClienteManual ?? "Sin nombre"}
+                        </span>
+                        <span className="text-sm text-grafito">
+                          {tf.proximaOcurrencia ? proximaOcurrenciaLabel(tf.proximaOcurrencia) : "—"}
+                        </span>
+                        <span className="flex items-center justify-end gap-2">
+                          {puedeGestionar && puedeEditarCliente && (
+                            <button
+                              type="button"
+                              onClick={() => setAEditarCliente(tf)}
+                              className="flex h-8 items-center rounded-full border border-borde px-3 text-xs font-bold text-tinta transition-colors hover:bg-humo"
+                            >
+                              Editar cliente
+                            </button>
+                          )}
+                          {puedeGestionar && !yaRenovada && (
+                            <button
+                              type="button"
+                              onClick={() => setARenovar(tf)}
+                              className="flex h-8 items-center rounded-full border border-azul px-3 text-xs font-bold text-azul transition-colors hover:bg-celeste-suave"
+                            >
+                              Renovar
+                            </button>
+                          )}
+                          {puedeGestionar && (
+                            <button
+                              type="button"
+                              onClick={() => setACancelar(tf)}
+                              className="flex h-8 items-center rounded-full border border-cancelado px-3 text-xs font-bold text-cancelado transition-colors hover:bg-cancelado-suave"
+                            >
+                              Cancelar serie
+                            </button>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -190,6 +232,10 @@ export default function PanelTurnosFijos() {
       </div>
 
       {aCancelar && <DialogoCancelarTurnoFijo turnoFijo={aCancelar} onClose={() => setACancelar(null)} />}
+      {aRenovar && <DialogoRenovarTurnoFijo turnoFijo={aRenovar} onClose={() => setARenovar(null)} />}
+      {aEditarCliente && (
+        <DialogoEditarClienteTurnoFijo turnoFijo={aEditarCliente} onClose={() => setAEditarCliente(null)} />
+      )}
     </div>
   );
 }
