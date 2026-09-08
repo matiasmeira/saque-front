@@ -5,6 +5,7 @@ import type { ReservaSemanalRequest } from "../tipos/reservas";
 import type {
   CancelacionTurnoFijoResponse,
   CancelarTurnoFijoRequest,
+  EditarClienteTurnoFijoRequest,
   TurnoFijoListadoResponse,
   TurnoFijoResponse,
 } from "../tipos/turnos-fijos";
@@ -46,6 +47,29 @@ export const turnosFijos = {
   cancelar: (id: number, body: CancelarTurnoFijoRequest = {}) =>
     apiFetch<CancelacionTurnoFijoResponse>(`/api/v1/turnos-fijos/${id}/cancelar`, {
       method: "POST",
+      body,
+    }),
+
+  /**
+   * Crea la serie del año siguiente a partir de ésta. Sin body: el backend calcula el
+   * período (ver inicioDeRenovacion en lib/panel/turno-fijo.ts) y repite cancha, horario,
+   * día y cliente. TODO-O-NADA igual que el alta: si una fecha choca no se crea ninguna.
+   *
+   * 400 esperable si la serie ya fue renovada o está cancelada. Sólo OWNER/ADMIN.
+   */
+  renovar: (id: number) =>
+    apiFetch<TurnoFijoResponse>(`/api/v1/turnos-fijos/${id}/renovar`, {
+      method: "POST",
+    }),
+
+  /**
+   * Cambia nombre y teléfono del cliente de mostrador de la serie. Sólo tiene sentido
+   * cuando `jugadorId` es null: si la serie está atada a un jugador, el backend responde
+   * 400 porque el nombre sale de su cuenta. Sólo OWNER/ADMIN.
+   */
+  editarCliente: (id: number, body: EditarClienteTurnoFijoRequest) =>
+    apiFetch<TurnoFijoResponse>(`/api/v1/turnos-fijos/${id}/cliente`, {
+      method: "PATCH",
       body,
     }),
 };

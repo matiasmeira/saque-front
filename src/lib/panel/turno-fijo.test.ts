@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { horariosPosiblesDelDia, ocurrenciasACancelar, ocurrenciasDelPeriodo, topeDelPeriodo } from "./turno-fijo";
+import {
+  horariosPosiblesDelDia,
+  inicioDeRenovacion,
+  ocurrenciasACancelar,
+  ocurrenciasDelPeriodo,
+  topeDelPeriodo,
+} from "./turno-fijo";
 import type { HorarioAtencionDto } from "@/lib/api/tipos/comunes";
 
 const horario = (horaApertura: string, horaCierre: string): HorarioAtencionDto => ({
@@ -98,5 +104,15 @@ describe("ocurrenciasACancelar", () => {
   it("no cancela un turno de hoy que ya empezo", () => {
     expect(ocurrenciasACancelar(ocurrencias, "2026-09-08", "2026-09-08T21:30:00"))
       .toEqual(["2026-09-15T20:00:00"]);
+  });
+});
+
+describe("inicioDeRenovacion", () => {
+  it("arranca el 1 de enero del anio siguiente", () => {
+    expect(inicioDeRenovacion("2026-12-31", "2026-09-06")).toBe("2027-01-01");
+  });
+
+  it("arranca hoy si el 1 de enero ya paso", () => {
+    expect(inicioDeRenovacion("2026-12-31", "2027-02-10")).toBe("2027-02-10");
   });
 });

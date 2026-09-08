@@ -86,6 +86,16 @@ export function ocurrenciasACancelar(
 }
 
 /**
+ * Desde cuándo arranca la serie renovada. Espeja TurnoFijoService.renovar: el 1 de enero del
+ * año siguiente, o hoy si ese 1 de enero ya pasó (renovar en febrero no puede pedir fechas
+ * pasadas, que el backend rechaza).
+ */
+export function inicioDeRenovacion(fechaFinPeriodoISO: FechaISO, hoyISO: FechaISO): FechaISO {
+  const primeroDeEnero = `${Number(fechaFinPeriodoISO.slice(0, 4)) + 1}-01-01`;
+  return primeroDeEnero > hoyISO ? primeroDeEnero : hoyISO;
+}
+
+/**
  * Marcas de media hora ofrecibles para un día, acotadas al horario de atención.
  * Un día sin horario cargado (el complejo no abre) no ofrece ninguna.
  *

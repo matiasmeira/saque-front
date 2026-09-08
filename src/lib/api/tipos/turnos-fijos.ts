@@ -68,6 +68,17 @@ export type CancelarTurnoFijoRequest = {
 };
 
 /**
+ * Body de PATCH /turnos-fijos/{id}/cliente. Sólo tiene sentido cuando la serie es de
+ * mostrador (`jugadorId === null`): si está atada a un jugador, el nombre sale de su
+ * cuenta y el backend responde 400.
+ */
+export type EditarClienteTurnoFijoRequest = {
+  /** @NotBlank en el backend: vacío da 400. */
+  nombre: string;
+  telefono?: string;
+};
+
+/**
  * Resultado de cancelar una serie. `omitidas` no es cosmético: una ocurrencia FINALIZADA,
  * AUSENTE o ya cancelada nunca se vuelve a tocar, y si no se muestra el dueño cree que la
  * serie quedó de baja completa mientras esas ocurrencias siguen apareciendo en los reportes.
