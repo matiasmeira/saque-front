@@ -52,6 +52,18 @@ export function GrillaDisponibilidad({ complejo }: { complejo: ComplejoDetalleRe
   const disponibilidad = useQuery({
     queryKey: keys.publico.disponibilidad(complejo.slug, fecha),
     queryFn: () => publico.disponibilidad(complejo.slug, fecha),
+    // Override puntual sobre el staleTime/refetchOnWindowFocus globales
+    // (providers.tsx) — no simplificar juntándolo con la config general.
+    // Esta es la query más volátil de la app: una prereserva ajena puede
+    // liberar un slot en cualquier momento sin que ninguna mutación local
+    // lo dispare. staleTime: 0 porque el patrón típico del checkout es
+    // "dudo y vuelvo en menos de 30s", y con el default heredado ese
+    // regreso no refetcheaba. refetchOnWindowFocus: true porque es la forma
+    // barata de detectar el vencimiento de la prereserva de un tercero: no
+    // hay push posible (el endpoint de disponibilidad no expone reservas
+    // ajenas), así que hay que reconsultar al volver a mirar la pantalla.
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const haySesion = useHaySesion();
