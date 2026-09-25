@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
+import { EmptyState } from "@/components/canche/empty-state";
 import { PrecioBaseCancha } from "@/components/panel/precio-base-cancha";
 import { ListaTarifas } from "@/components/panel/lista-tarifas";
 import { FormTarifa } from "@/components/panel/form-tarifa";
@@ -101,15 +102,17 @@ export default function PanelPrecios() {
       preciosBase?: PrecioPorDuracion[];
       tarifas: Tarifa[];
     }) =>
-      endpointCanchas.actualizar(establecimientoId!, cancha.id, {
+      endpointCanchas.actualizar(establecimientoId!, cancha!.id, {
         ...aCanchaRequest({
-          ...cancha,
-          preciosBase: preciosBase ?? cancha.preciosBase,
+          ...cancha!,
+          preciosBase: preciosBase ?? cancha!.preciosBase,
         }),
         tarifas: aTarifasDto(tarifas),
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.canchas(establecimientoId ?? 0) });
+      // Por prefijo: cubre las dos variantes de la key (incluirInactivas
+      // true/false, ver panel/canchas) con una sola invalidación.
+      queryClient.invalidateQueries({ queryKey: ["canchas", establecimientoId ?? 0] });
       setPanelAbierto(null);
       setErrorAccion(null);
     },
@@ -126,7 +129,7 @@ export default function PanelPrecios() {
 
   function crearTarifa(datos: DatosTarifa) {
     guardar.mutate({
-      tarifas: [...tarifasDeCancha, { ...datos, id: tarifasDeCancha.length, canchaId: cancha.id }],
+      tarifas: [...tarifasDeCancha, { ...datos, id: tarifasDeCancha.length, canchaId: cancha!.id }],
     });
   }
 
@@ -186,7 +189,15 @@ export default function PanelPrecios() {
             </div>
           )}
 
-          {estadoCarga === "listo" && (
+          {estadoCarga === "listo" && canchas.length === 0 && (
+            <EmptyState
+              titulo="Todavía no cargaste ninguna cancha"
+              descripcion="Sin canchas no hay nada que tarifar. Cargá la primera y volvé acá para ponerle precio."
+              salidas={[{ label: "Ir a Canchas", href: "/panel/canchas" }]}
+            />
+          )}
+
+          {estadoCarga === "listo" && cancha && (
             <div className="max-w-2xl space-y-6">
               <PrecioBaseCancha key={`precio-base-${cancha.id}`} cancha={cancha} onGuardar={guardarPrecioBase} />
 
@@ -201,7 +212,7 @@ export default function PanelPrecios() {
         </main>
       </div>
 
-      {panelAbierto?.tipo === "nueva" && (
+      {panelAbierto?.tipo === "nueva" && cancha && (
         <DrawerPanel titulo="Nueva tarifa" subtitulo={cancha.nombre} onClose={() => setPanelAbierto(null)}>
           <FormTarifa
             tarifa={null}
@@ -214,6 +225,7 @@ export default function PanelPrecios() {
       )}
 
       {panelAbierto?.tipo === "editar" &&
+        cancha &&
         (() => {
           const tarifaEnEdicion = tarifasDeCancha.find((t) => t.id === panelAbierto.tarifaId);
           if (!tarifaEnEdicion) return null;
