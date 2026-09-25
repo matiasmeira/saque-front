@@ -24,11 +24,27 @@ export type DisponibilidadDuracionResponse = {
   slotsLibres: SlotDisponibleResponse[];
 };
 
+/**
+ * Rango en el que esta cancha NO es reservable porque otra cancha del mismo
+ * grupo ya consumió ese horario del pool compartido. Ya excluye los rangos
+ * cubiertos por una reserva propia de esta cancha.
+ */
+export type RangoOcupadoPoolResponse = {
+  inicio: FechaHoraISO;
+  fin: FechaHoraISO;
+};
+
 export type DisponibilidadCanchaResponse = {
   canchaId: number;
   canchaNombre: string;
   deportes: Deporte[];
   opcionesDuracion: DisponibilidadDuracionResponse[];
+  /**
+   * Sólo viene poblado si el usuario tiene acceso de panel a este
+   * establecimiento; en cualquier otro caso llega `null`. Tratar `null` y
+   * lista vacía igual: no hay nada que pintar como sin-disponibilidad-pool.
+   */
+  ocupadaPorPool: RangoOcupadoPoolResponse[] | null;
 };
 
 /** Si `abierto` es false, `canchas` viene vacío y `motivoCierre` explica por qué. */

@@ -33,6 +33,11 @@
   --color-cancelado-suave: #fdeced;
   --color-ausente: #c2410c;
   --color-ausente-suave: #fdf1e7;
+  /* Sin disponibilidad por pool: no es un turno ni un bloqueo de
+     mantenimiento, es otra cancha del mismo grupo consumiendo el cupo.
+     Violeta porque ningun otro estado de la grilla lo usa. */
+  --color-sin-cupo-pool: #7c5cd1;
+  --color-sin-cupo-pool-suave: #f1ecfb;
 
   /* --- Tipografia --- */
   --font-display: var(--font-archivo); /* titulares */

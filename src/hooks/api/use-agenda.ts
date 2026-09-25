@@ -3,12 +3,14 @@
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 
 import { bloqueos as endpointBloqueos } from "@/lib/api/endpoints/canchas";
+import { establecimientos as endpointEstablecimientos } from "@/lib/api/endpoints/establecimientos";
 import { reservas as endpointReservas } from "@/lib/api/endpoints/reservas";
 import { turnosFijos as endpointTurnosFijos } from "@/lib/api/endpoints/turnos-fijos";
 import { keys } from "@/lib/api/keys";
+import { invalidarDisponibilidad } from "@/lib/api/invalidaciones";
 import { aTurno, type TurnoConReserva } from "@/lib/api/adaptadores/agenda";
 import { partirFechaHora } from "@/lib/api/fechas";
-import type { BloqueoDelDia } from "@/lib/panel/agenda";
+import type { BloqueoDelDia, SinCupoPorPool } from "@/lib/panel/agenda";
 import type { MetodoPago } from "@/lib/api/tipos/comunes";
 import type { ReservaManualRequest, ReservaSemanalRequest } from "@/lib/api/tipos/reservas";
 
@@ -40,6 +42,19 @@ export function useAgenda(estId: number | null, fechas: string[]) {
     })),
   });
 
+  /**
+   * Misma grilla de disponibilidad que consume el form de carga rápida
+   * (keys.disponibilidad), pedida acá sólo para leer `ocupadaPorPool` de
+   * cada cancha: el resto de la respuesta (slots, duraciones) no se usa.
+   */
+  const consultasDisponibilidad = useQueries({
+    queries: fechas.map((fecha) => ({
+      queryKey: keys.disponibilidad(estId ?? 0, fecha),
+      queryFn: () => endpointEstablecimientos.disponibilidad(estId!, fecha),
+      enabled: estId !== null,
+    })),
+  });
+
   const turnosPorFecha: Record<string, TurnoConReserva[]> = {};
   fechas.forEach((fecha, i) => {
     turnosPorFecha[fecha] = (consultas[i]?.data?.content ?? []).map(aTurno);
@@ -60,9 +75,27 @@ export function useAgenda(estId: number | null, fechas: string[]) {
     }));
   });
 
+  /**
+   * `ocupadaPorPool` viaja por cancha dentro de la grilla de disponibilidad
+   * del día. Viene `null` para un usuario sin acceso de panel al
+   * establecimiento; se trata igual que lista vacía, nada que pintar.
+   */
+  const sinCupoPorPoolPorFecha: Record<string, (SinCupoPorPool & { canchaId: number })[]> = {};
+  fechas.forEach((fecha, i) => {
+    const canchas = consultasDisponibilidad[i]?.data?.dias[0]?.canchas ?? [];
+    sinCupoPorPoolPorFecha[fecha] = canchas.flatMap((c) =>
+      (c.ocupadaPorPool ?? []).map((r) => ({
+        canchaId: c.canchaId,
+        horaInicio: partirFechaHora(r.inicio).hora,
+        horaFin: partirFechaHora(r.fin).hora,
+      })),
+    );
+  });
+
   return {
     turnosPorFecha,
     bloqueosPorFecha,
+    sinCupoPorPoolPorFecha,
     cargando: consultas.some((c) => c.isPending),
     error: consultas.find((c) => c.isError)?.error ?? null,
     refetch: () => consultas.forEach((c) => c.refetch()),
@@ -86,9 +119,9 @@ export function useAccionesReserva() {
     queryClient.invalidateQueries({ queryKey: keys.reservas.todas() });
     // Finalizar mueve la caja: si hay un turno abierto, su saldo cambió.
     queryClient.invalidateQueries({ queryKey: ["caja"] });
-    // Cualquiera de estas acciones ocupa o libera un slot, y el form de carga
-    // rápida ofrece horarios leídos de la grilla de disponibilidad.
-    queryClient.invalidateQueries({ queryKey: ["disponibilidad"] });
+    // Cualquiera de estas acciones ocupa o libera un slot: hay que reflejarlo
+    // tanto en la grilla del panel (form de carga rápida) como en la pública.
+    invalidarDisponibilidad(queryClient);
   };
 
   return {

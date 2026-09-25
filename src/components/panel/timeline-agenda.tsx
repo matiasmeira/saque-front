@@ -1,8 +1,8 @@
 "use client";
 
-import { CheckCircle2, Clock, Repeat, UserX, Wrench, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, Lock, Repeat, UserX, Wrench, XCircle } from "lucide-react";
 import { aHHMM, aMinutos } from "@/lib/disponibilidad";
-import type { BloqueoDelDia, EstadoTurno, Turno } from "@/lib/panel/agenda";
+import type { BloqueoDelDia, EstadoTurno, SinCupoPorPool, Turno } from "@/lib/panel/agenda";
 
 /**
  * La grilla de C2: canchas u días en columnas (según la vista), horas
@@ -27,6 +27,12 @@ export type ColumnaTimeline = {
   turnos: TurnoConSerie[];
   /** bloqueos de mantenimiento de ese día — no son turnos de cliente */
   bloqueos?: BloqueoDelDia[];
+  /**
+   * Franjas en las que esta cancha no es reservable porque otra cancha del
+   * mismo grupo ya consumió el pool compartido — no es un turno ni un
+   * bloqueo de mantenimiento, así que se pinta distinto.
+   */
+  sinCupoPorPool?: SinCupoPorPool[];
 };
 
 /**
@@ -168,6 +174,12 @@ function ColumnaAgenda({
     const { inicio, fin } = tramo(bloqueo.horaInicio, bloqueo.horaFin);
     for (let f = inicio; f < fin; f++) cubiertas.add(f);
   }
+  // Igual que un bloqueo: un click acá terminaría en un rechazo del backend
+  // (la cancha no tiene cupo, aunque a esta hora no tenga turno propio).
+  for (const sinCupo of columna.sinCupoPorPool ?? []) {
+    const { inicio, fin } = tramo(sinCupo.horaInicio, sinCupo.horaFin);
+    for (let f = inicio; f < fin; f++) cubiertas.add(f);
+  }
 
   const filasLibres = Array.from({ length: grilla.totalFilas }, (_, f) => f).filter((f) => !cubiertas.has(f));
 
@@ -229,6 +241,24 @@ function ColumnaAgenda({
               Mantenimiento
             </span>
             <span className="block truncate text-[10px] leading-tight">{bloqueo.motivo ?? `${bloqueo.horaInicio}–${bloqueo.horaFin}`}</span>
+          </div>
+        );
+      })}
+
+      {(columna.sinCupoPorPool ?? []).map((sinCupo, indice) => {
+        const { inicio, fin } = tramo(sinCupo.horaInicio, sinCupo.horaFin);
+        return (
+          <div
+            key={indice}
+            title="Sin disponibilidad: el horario está tomado por otra cancha del mismo grupo"
+            className="absolute inset-x-0.5 overflow-hidden rounded-md border-l-4 border-sin-cupo-pool bg-sin-cupo-pool-suave px-1.5 py-1 text-left text-sin-cupo-pool"
+            style={{ top: inicio * ROW_H + 1, height: (fin - inicio) * ROW_H - 2 }}
+          >
+            <span className="flex items-center gap-1 text-[11px] font-semibold leading-tight">
+              <Lock className="size-3 shrink-0" aria-hidden />
+              Sin cupo
+            </span>
+            <span className="block truncate text-[10px] leading-tight">{sinCupo.horaInicio}–{sinCupo.horaFin}</span>
           </div>
         );
       })}

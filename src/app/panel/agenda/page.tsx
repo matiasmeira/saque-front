@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AlertTriangle, ChevronLeft, ChevronRight, Plus, Repeat } from "lucide-react";
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
+import { EmptyState } from "@/components/canche/empty-state";
 import { TimelineAgenda, type ColumnaTimeline } from "@/components/panel/timeline-agenda";
 import { SkeletonAgenda } from "@/components/panel/skeleton-agenda";
 import { DrawerPanel } from "@/components/panel/drawer-panel";
@@ -139,7 +140,7 @@ export default function PanelAgenda() {
    * La vista semanal necesita entonces 7 requests, que useQueries emite en
    * paralelo (ver useAgenda).
    */
-  const { turnosPorFecha, bloqueosPorFecha, cargando, error, refetch } = useAgenda(
+  const { turnosPorFecha, bloqueosPorFecha, sinCupoPorPoolPorFecha, cargando, error, refetch } = useAgenda(
     establecimientoId,
     dias,
   );
@@ -181,12 +182,12 @@ export default function PanelAgenda() {
     if (vista === "dia") {
       setPanelAbierto({ tipo: "nuevo", canchaId: columnaId as number, fecha, hora });
     } else {
-      setPanelAbierto({ tipo: "nuevo", canchaId: canchaSeleccionada.id, fecha: columnaId as string, hora });
+      setPanelAbierto({ tipo: "nuevo", canchaId: canchaSeleccionada?.id ?? 0, fecha: columnaId as string, hora });
     }
   }
 
   function abrirNuevoGenerico() {
-    const canchaId = vista === "dia" ? (canchas[0]?.id ?? 0) : canchaSeleccionada.id;
+    const canchaId = vista === "dia" ? (canchas[0]?.id ?? 0) : (canchaSeleccionada?.id ?? 0);
     setPanelAbierto({ tipo: "nuevo", canchaId, fecha: dias[0] });
   }
 
@@ -306,13 +307,15 @@ export default function PanelAgenda() {
           subtitulo: etiquetaDeportes(cancha),
           turnos: (turnosPorFecha[fecha] ?? []).filter((t) => t.canchaId === cancha.id),
           bloqueos: (bloqueosPorFecha[fecha] ?? []).filter((b) => b.canchaId === cancha.id),
+          sinCupoPorPool: (sinCupoPorPoolPorFecha[fecha] ?? []).filter((s) => s.canchaId === cancha.id),
         }))
       : dias.map((d) => ({
           id: d,
           titulo: `${diaCorto(d)} ${Number(d.slice(-2))}`,
           subtitulo: d === hoyISO() ? "Hoy" : undefined,
-          turnos: (turnosPorFecha[d] ?? []).filter((t) => t.canchaId === canchaSeleccionada.id),
-          bloqueos: (bloqueosPorFecha[d] ?? []).filter((b) => b.canchaId === canchaSeleccionada.id),
+          turnos: (turnosPorFecha[d] ?? []).filter((t) => t.canchaId === canchaSeleccionada?.id),
+          bloqueos: (bloqueosPorFecha[d] ?? []).filter((b) => b.canchaId === canchaSeleccionada?.id),
+          sinCupoPorPool: (sinCupoPorPoolPorFecha[d] ?? []).filter((s) => s.canchaId === canchaSeleccionada?.id),
         }));
 
   const diaVacio = vista === "dia" && estadoCarga === "listo" && (turnosPorFecha[fecha] ?? []).length === 0;
@@ -324,7 +327,7 @@ export default function PanelAgenda() {
   const { abre, cierra } = rangoDeAgenda(
     establecimiento?.horariosAtencion,
     dias,
-    columnas.flatMap((col) => [...col.turnos, ...(col.bloqueos ?? [])]),
+    columnas.flatMap((col) => [...col.turnos, ...(col.bloqueos ?? []), ...(col.sinCupoPorPool ?? [])]),
   );
 
   return (
@@ -416,7 +419,7 @@ export default function PanelAgenda() {
                   onClick={() =>
                     setPanelAbierto({
                       tipo: "turnoFijo",
-                      canchaId: vista === "dia" ? (canchas[0]?.id ?? 0) : canchaSeleccionada.id,
+                      canchaId: vista === "dia" ? (canchas[0]?.id ?? 0) : (canchaSeleccionada?.id ?? 0),
                     })
                   }
                   className="flex h-10 items-center gap-1.5 rounded-full border border-borde px-4 font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
@@ -457,7 +460,15 @@ export default function PanelAgenda() {
             </div>
           )}
 
-          {estadoCarga === "listo" && (
+          {estadoCarga === "listo" && canchas.length === 0 && (
+            <EmptyState
+              titulo="No tenés canchas para mostrar en la agenda"
+              descripcion="Cargá al menos una cancha para empezar a ver y cargar turnos acá."
+              salidas={[{ label: "Ir a Canchas", href: "/panel/canchas" }]}
+            />
+          )}
+
+          {estadoCarga === "listo" && canchas.length > 0 && (
             <div className="relative">
               {diaVacio && (
                 <div className="pointer-events-none absolute inset-x-0 top-24 z-10 flex justify-center px-4">
@@ -506,6 +517,10 @@ export default function PanelAgenda() {
                 aria-hidden
               />
               Mantenimiento
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-3 rounded border-l-2 border-sin-cupo-pool bg-sin-cupo-pool-suave" aria-hidden />
+              Sin cupo (grupo)
             </span>
           </div>
         </main>
