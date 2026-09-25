@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { turnosFijos as endpointTurnosFijos } from "@/lib/api/endpoints/turnos-fijos";
 import { keys } from "@/lib/api/keys";
+import { invalidarDisponibilidad } from "@/lib/api/invalidaciones";
 import type { FechaISO } from "@/lib/api/fechas";
 import type { EditarClienteTurnoFijoRequest } from "@/lib/api/tipos/turnos-fijos";
 
@@ -39,6 +40,8 @@ export function useCancelarTurnoFijo() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["turnos-fijos"] });
       queryClient.invalidateQueries({ queryKey: keys.reservas.todas() });
+      // Cancelar la serie libera potencialmente muchas ocurrencias futuras.
+      invalidarDisponibilidad(queryClient);
     },
   });
 }
@@ -58,6 +61,8 @@ export function useRenovarTurnoFijo() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["turnos-fijos"] });
       queryClient.invalidateQueries({ queryKey: keys.reservas.todas() });
+      // Renovar ocupa hasta 52 slots nuevos del período siguiente.
+      invalidarDisponibilidad(queryClient);
     },
   });
 }

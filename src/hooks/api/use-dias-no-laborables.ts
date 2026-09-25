@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { establecimientos as endpointEstablecimientos } from "@/lib/api/endpoints/establecimientos";
 import { keys } from "@/lib/api/keys";
+import { invalidarDisponibilidad } from "@/lib/api/invalidaciones";
 import type { DiaNoLaborableRequest } from "@/lib/api/tipos/establecimientos";
 
 /**
@@ -22,7 +23,11 @@ export function useDiasNoLaborables(estId: number | null) {
     enabled: estId !== null,
   });
 
-  const invalidar = () => queryClient.invalidateQueries({ queryKey: keys.diasNoLaborables(estId ?? 0) });
+  const invalidar = () => {
+    queryClient.invalidateQueries({ queryKey: keys.diasNoLaborables(estId ?? 0) });
+    // Marcar/desmarcar un día no laborable ocupa o libera todos sus slots.
+    invalidarDisponibilidad(queryClient);
+  };
 
   const crear = useMutation({
     mutationFn: (body: DiaNoLaborableRequest) => endpointEstablecimientos.crearDiaNoLaborable(estId!, body),

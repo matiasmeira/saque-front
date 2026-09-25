@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Clock } from "lucide-react";
 
@@ -31,6 +31,10 @@ export function CountdownBadge({
   onVencido?: () => void;
 }) {
   const [restante, setRestante] = useState(() => deadline - Date.now());
+  // onVencido dispara una invalidación de queries en el caller: debe correr
+  // una única vez por vencimiento, sin depender de que el padre desmonte el
+  // badge antes del siguiente tick.
+  const avisadoRef = useRef(false);
 
   useEffect(() => {
     const id = setInterval(() => setRestante(deadline - Date.now()), 1000);
@@ -38,7 +42,10 @@ export function CountdownBadge({
   }, [deadline]);
 
   useEffect(() => {
-    if (restante <= 0) onVencido?.();
+    if (restante <= 0 && !avisadoRef.current) {
+      avisadoRef.current = true;
+      onVencido?.();
+    }
   }, [restante, onVencido]);
 
   if (restante <= 0) {

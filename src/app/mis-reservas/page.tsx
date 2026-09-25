@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/canche/empty-state";
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { reservas as endpointReservas } from "@/lib/api/endpoints/reservas";
 import { keys } from "@/lib/api/keys";
+import { invalidarDisponibilidad } from "@/lib/api/invalidaciones";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { useHaySesion } from "@/hooks/api/use-sesion";
 import { usePerfil } from "@/hooks/api/use-perfil";
@@ -50,6 +51,7 @@ export default function MisReservas() {
     mutationFn: (id: number) => endpointReservas.cancelar(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: keys.reservas.todas() });
+      invalidarDisponibilidad(queryClient);
       setACancelar(null);
       setErrorCancelacion(null);
     },

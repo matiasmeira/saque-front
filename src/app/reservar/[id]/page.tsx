@@ -3,7 +3,7 @@
 import { use, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, CalendarDays, CheckCircle2, Clock, Info, Loader2, Phone } from "lucide-react";
 
 import { HeaderPublico } from "@/components/canche/header-publico";
@@ -12,6 +12,7 @@ import { CountdownBadge } from "@/components/canche/countdown-badge";
 import { publico } from "@/lib/api/endpoints/publico";
 import { reservas } from "@/lib/api/endpoints/reservas";
 import { keys } from "@/lib/api/keys";
+import { invalidarDisponibilidad } from "@/lib/api/invalidaciones";
 import { partirFechaHora } from "@/lib/api/fechas";
 import { ApiError, esErrorTelefonoNoVerificado, mensajeVisible } from "@/lib/api/errores";
 import { etiquetaDeporte } from "@/lib/deportes";
@@ -45,6 +46,7 @@ export default function Checkout({ params }: { params: Promise<{ id: string }> }
   const { id: slug } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const haySesion = useHaySesion();
 
   const canchaId = Number(searchParams.get("cancha"));
@@ -70,7 +72,11 @@ export default function Checkout({ params }: { params: Promise<{ id: string }> }
         fechaHoraFin: fin!,
         deporteSeleccionado: deporte!,
       }),
-    onSuccess: setReserva,
+    onSuccess: (data) => {
+      setReserva(data);
+      queryClient.invalidateQueries({ queryKey: keys.reservas.todas() });
+      invalidarDisponibilidad(queryClient);
+    },
   });
 
   const datosCompletos = Number.isFinite(canchaId) && canchaId > 0 && inicio && fin && deporte;
@@ -127,7 +133,10 @@ export default function Checkout({ params }: { params: Promise<{ id: string }> }
         <CountdownBadge
           deadline={new Date(reserva.expiraEn).getTime()}
           etiquetaTurno={`${fechaLarga(fecha)}, ${hora}`}
-          onVencido={() => setVencida(true)}
+          onVencido={() => {
+            setVencida(true);
+            invalidarDisponibilidad(queryClient);
+          }}
         />
       )}
 
