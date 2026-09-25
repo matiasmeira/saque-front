@@ -10,9 +10,11 @@ import { aBloqueoPanel, aCanchaPanel, aCanchaRequest, aFechaHoraBloqueo, type Da
 import { aTarifasDto, aTarifasPanel } from "@/lib/api/tarifas";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { keys } from "@/lib/api/keys";
+import { invalidarDisponibilidad } from "@/lib/api/invalidaciones";
 import { guardarEstablecimientoSeleccionado } from "@/lib/establecimiento-seleccionado";
 import { usePerfil } from "@/hooks/api/use-perfil";
 import type { DatosPasoIdentidad, DatosPasoPoliticas } from "@/lib/panel/wizard-onboarding";
+import type { DatosSolicitudVerificacion } from "@/lib/panel/verificacion";
 import type { EstablecimientoResponse } from "@/lib/api/tipos/establecimientos";
 import type { BloqueoCanchaResponse, CanchaResponse } from "@/lib/api/tipos/canchas";
 import type { EstadoMercadoPagoResponse } from "@/lib/api/tipos/mercadopago";
@@ -145,6 +147,11 @@ export function useWizardOnboarding() {
     },
     onSuccess: (actualizado) => {
       setEstablecimientoParcial(actualizado);
+      // Un onboarding retomado puede operar sobre un establecimiento que el
+      // dueño ya visitó en el panel esta sesión: puede haber una entrada de
+      // disponibilidad cacheada (gcTime 5 min) para este estId aunque nadie
+      // la esté mirando ahora mismo.
+      invalidarDisponibilidad(queryClient);
       setPasoActual(4);
     },
   });
@@ -187,6 +194,7 @@ export function useWizardOnboarding() {
     },
     onSuccess: (cancha, { id }) => {
       setCanchas((prev) => (id === null ? [...prev, cancha] : prev.map((c) => (c.id === cancha.id ? cancha : c))));
+      invalidarDisponibilidad(queryClient);
       setErrorCanchas(null);
     },
     onError: (e) => setErrorCanchas(e instanceof ApiError ? mensajeVisible(e) : "No pudimos guardar la cancha."),
@@ -199,6 +207,7 @@ export function useWizardOnboarding() {
     },
     onSuccess: (_vacio, canchaId) => {
       setCanchas((prev) => prev.filter((c) => c.id !== canchaId));
+      invalidarDisponibilidad(queryClient);
       setDesactivandoCanchaId(null);
       setErrorCanchas(null);
     },
@@ -215,14 +224,20 @@ export function useWizardOnboarding() {
         fechaFin: aFechaHoraBloqueo(bloqueo.hasta),
         motivo: bloqueo.motivo?.trim() || "Mantenimiento",
       }),
-    onSuccess: (_nuevo, { canchaId }) => refrescarBloqueos(canchaId),
+    onSuccess: (_nuevo, { canchaId }) => {
+      refrescarBloqueos(canchaId);
+      invalidarDisponibilidad(queryClient);
+    },
     onError: (e) => setErrorCanchas(e instanceof ApiError ? mensajeVisible(e) : "No pudimos guardar el bloqueo."),
   });
 
   const quitarBloqueoMut = useMutation({
     mutationFn: ({ canchaId, bloqueoId }: { canchaId: number; bloqueoId: number }) =>
       endpointBloqueos.eliminar(establecimientoParcial!.id, canchaId, bloqueoId),
-    onSuccess: (_vacio, { canchaId }) => refrescarBloqueos(canchaId),
+    onSuccess: (_vacio, { canchaId }) => {
+      refrescarBloqueos(canchaId);
+      invalidarDisponibilidad(queryClient);
+    },
     onError: (e) => setErrorCanchas(e instanceof ApiError ? mensajeVisible(e) : "No pudimos quitar el bloqueo."),
   });
 
@@ -359,7 +374,43 @@ export function useWizardOnboarding() {
     setPasoActual(5);
   }
 
-  function publicarComplejo() {
+  /**
+   * "Publicar complejo" ahora dispara la solicitud de verificación real
+   * (antes no mandaba ningún request — ver Ruling 6 del plan de Fase 2, ya
+   * no vale). La respuesta del POST sólo confirma la cola (ver
+   * SolicitarVerificacionResponse); el estado real que se muestra en la
+   * pantalla de cierre sale de releer `establecimientos.mios()`, no del
+   * body del POST.
+   */
+  const solicitarVerificacion = useMutation<EstablecimientoResponse, ApiError, DatosSolicitudVerificacion>({
+    mutationFn: async (datos) => {
+      const estId = establecimientoParcial!.id;
+      await endpointEstablecimientos.solicitarVerificacion(estId, datos);
+      queryClient.invalidateQueries({ queryKey: keys.establecimientos.mios() });
+      const lista = await endpointEstablecimientos.mios();
+      const actualizado = lista.find((e) => e.id === estId);
+      if (!actualizado) {
+        throw new ApiError({ status: 0, mensaje: "No pudimos confirmar el estado del complejo." });
+      }
+      return actualizado;
+    },
+    onSuccess: (actualizado) => {
+      setEstablecimientoParcial(actualizado);
+      setPublicado(true);
+    },
+  });
+
+  function confirmarVerificacion(datos: DatosSolicitudVerificacion) {
+    solicitarVerificacion.mutate(datos);
+  }
+
+  /**
+   * El dueño puede saltear la verificación y hacerla después: el
+   * establecimiento ya existe y ya se puede seguir armando, sólo queda
+   * PENDIENTE (invisible en el buscador) hasta que la mande. El banner de
+   * PENDIENTE en el panel lo espera ahí.
+   */
+  function omitirVerificacion() {
     setPublicado(true);
   }
 
@@ -427,7 +478,17 @@ export function useWizardOnboarding() {
     errorMercadoPago,
     iniciarConexionMercadoPago,
     volverATarifas,
-    publicarComplejo,
+    solicitandoVerificacion: solicitarVerificacion.isPending,
+    errorVerificacion:
+      solicitarVerificacion.error instanceof ApiError
+        ? mensajeVisible(solicitarVerificacion.error)
+        : solicitarVerificacion.isError
+          ? "No pudimos enviar la solicitud de verificación."
+          : null,
+    camposInvalidosVerificacion:
+      solicitarVerificacion.error instanceof ApiError ? solicitarVerificacion.error.camposInvalidos : undefined,
+    confirmarVerificacion,
+    omitirVerificacion,
 
     // Pantalla de éxito
     publicado,

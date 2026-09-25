@@ -12,7 +12,8 @@ import { keys } from "@/lib/api/keys";
 
 /** Mismo tope que EstablecimientoService.LIMITE_ESTABLECIMIENTOS_ACTIVOS en el backend. */
 const LIMITE_ESTABLECIMIENTOS_ACTIVOS = 3;
-const MENSAJE_LIMITE = "Ya alcanzaste el máximo de 3 establecimientos activos.";
+/** Mismo texto que tira el backend (LimiteEstablecimientosException). */
+const MENSAJE_LIMITE = "Ya alcanzaste el máximo de 3 establecimientos.";
 
 /**
  * Modal para dar de alta un complejo nuevo. Manda `horariosAtencion: []` y
@@ -28,6 +29,16 @@ const MENSAJE_LIMITE = "Ya alcanzaste el máximo de 3 establecimientos activos."
  * Si ya se llegó al límite de 3, no se muestra el formulario: el chequeo del
  * backend (fuente de verdad) igual corre si de algún modo se manda el POST,
  * pero acá se evita el viaje de ida y vuelta la mayoría de las veces.
+ *
+ * OJO: este pre-chequeo local cuenta `misEstablecimientos` (= GET
+ * /establecimientos, que trae sólo `isActive=true` — ver
+ * EstablecimientoService.obtenerMisEstablecimientos), mientras que el límite
+ * real del backend cuenta TODOS los no eliminados (`countByDuenoIdAndDeletedAtIsNull`),
+ * deshabilitados incluidos: deshabilitar un establecimiento no libera cupo,
+ * sólo eliminarlo lo hace. Hoy da lo mismo porque el front no tiene forma de
+ * deshabilitar un complejo, pero el día que exista esa función (fuera de
+ * alcance acá) este pre-chequeo va a quedar corto — el backend lo va a
+ * rechazar igual, sólo se pierde el ahorro del viaje de ida y vuelta.
  */
 export function ModalCrearEstablecimiento({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();

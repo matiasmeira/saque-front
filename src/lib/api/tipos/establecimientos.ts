@@ -1,4 +1,5 @@
 import type {
+  EstadoVerificacionEstablecimiento,
   FeedbackDestacadoDto,
   HorarioAtencionDto,
   Servicio,
@@ -41,6 +42,11 @@ export type FotoEstablecimiento = {
  * (`/establecimientos/{id}/fotos`, ver `establecimientos.listarFotos`), no un
  * campo embebido acá — mandarlo como obligatorio en este tipo hizo que el
  * panel mostrara "sin fotos" siempre, sin importar cuántas hubiera.
+ *
+ * `estadoVerificacion`/`cuit`/`razonSocial`/`telefonoContacto`/`urlRedSocial`/
+ * `motivoRechazo` son la cara del propio dueño (ver EstablecimientoVerificacionService
+ * en el backend): los últimos 5 son `null` hasta que el dueño solicita la
+ * verificación por primera vez.
  */
 export type EstablecimientoResponse = {
   id: number;
@@ -57,6 +63,38 @@ export type EstablecimientoResponse = {
   promedioCalificacion: number | null;
   cantidadCalificaciones: number | null;
   comentarioDestacado: FeedbackDestacadoDto | null;
+  estadoVerificacion: EstadoVerificacionEstablecimiento;
+  cuit: string | null;
+  razonSocial: string | null;
+  telefonoContacto: string | null;
+  urlRedSocial: string | null;
+  motivoRechazo: string | null;
+};
+
+/**
+ * Body de POST /establecimientos/{id}/solicitar-verificacion. Los 4 campos son
+ * obligatorios (@NotBlank en el backend); el CUIT se manda con guiones si el
+ * dueño los tipeó — el backend normaliza. La URL debe ser de Instagram o
+ * Facebook (el backend valida el host, no duplicar esa validación acá).
+ */
+export type SolicitarVerificacionRequest = {
+  cuit: string;
+  razonSocial: string;
+  telefonoContacto: string;
+  urlRedSocial: string;
+};
+
+/**
+ * Respuesta del POST: sólo confirma que la solicitud quedó en cola. NO trae
+ * motivoRechazo ni los datos de contacto — para eso hay que releer
+ * `establecimientos.mios()` (que ya vuelve a exponer todo, incluido lo que
+ * se acaba de guardar). No tipar el estado del establecimiento a partir de
+ * este body.
+ */
+export type SolicitarVerificacionResponse = {
+  id: number;
+  estadoVerificacion: EstadoVerificacionEstablecimiento;
+  fechaSolicitudVerificacion: string;
 };
 
 /**
@@ -96,4 +134,42 @@ export type PoliticaCancelacionResponse = {
 export type ActualizarPoliticaCancelacionRequest = {
   horasCancelacionAntesPartido: number;
   minutosGraciaCancelacion: number;
+};
+
+// ---------------------------------------------------------------------------
+// AdminEstablecimientoController — moderación de altas (rol ADMIN)
+// ---------------------------------------------------------------------------
+
+/**
+ * Item del listado de moderación (`GET /api/v1/admin/establecimientos`).
+ * Espeja `AdminEstablecimientoResponse` — el dueño viaja plano
+ * (`duenoId`/`duenoNombre`/`duenoEmail`), no anidado.
+ *
+ * cuit/razonSocial/telefonoContacto/urlRedSocial son `| null` porque un
+ * establecimiento PENDIENTE (el dueño todavía no solicitó verificación)
+ * no los tiene cargados.
+ */
+export type EstablecimientoAdminItem = {
+  id: number;
+  nombre: string;
+  direccion: string;
+  latitud: number;
+  longitud: number;
+  estadoVerificacion: EstadoVerificacionEstablecimiento;
+  cuit: string | null;
+  razonSocial: string | null;
+  telefonoContacto: string | null;
+  urlRedSocial: string | null;
+  /** LocalDateTime ISO del backend, con hora. */
+  fechaSolicitudVerificacion: string | null;
+  /** LocalDateTime ISO. La setea únicamente `verificar` — en RECHAZADO viene null. */
+  fechaVerificacion: string | null;
+  motivoRechazo: string | null;
+  duenoId: number;
+  duenoNombre: string;
+  duenoEmail: string;
+};
+
+export type RechazarEstablecimientoRequest = {
+  motivo: string;
 };

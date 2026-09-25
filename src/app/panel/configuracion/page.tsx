@@ -3,13 +3,14 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { AlertTriangle, Building2, CalendarClock, CalendarOff, Check, ChevronRight, Clock, Images, Plus, Smartphone, Sparkles, Users, Wallet } from "lucide-react";
+import { AlertTriangle, Building2, CalendarClock, CalendarOff, Check, ChevronRight, Clock, Images, Plus, Shield, ShieldCheck, Smartphone, Sparkles, Users, Wallet } from "lucide-react";
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
 import { FormDatosComplejo, type DatosEstablecimiento } from "@/components/panel/form-datos-complejo";
 import { FormFotos } from "@/components/panel/form-fotos";
 import { FormHorariosAtencion } from "@/components/panel/form-horarios-atencion";
 import { FormServicios } from "@/components/panel/form-servicios";
+import { FormSolicitudVerificacion } from "@/components/panel/form-solicitud-verificacion";
 import { SeccionDiasNoLaborables } from "@/components/panel/seccion-dias-no-laborables";
 import { SeccionPoliticaCancelacion } from "@/components/panel/seccion-politica-cancelacion";
 import { TablaDispositivos } from "@/components/panel/tabla-dispositivos";
@@ -21,20 +22,35 @@ import { dispositivos as endpointDispositivos } from "@/lib/api/endpoints/caja";
 import { establecimientos as endpointEstablecimientos } from "@/lib/api/endpoints/establecimientos";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { keys } from "@/lib/api/keys";
+import { invalidarDisponibilidad } from "@/lib/api/invalidaciones";
 import { borrarToken } from "@/lib/api/sesion";
 import { usePerfil, useEstablecimientoActivo } from "@/hooks/api/use-perfil";
+import { useSolicitarVerificacion } from "@/hooks/api/use-verificacion-establecimiento";
 import type { DispositivoCajaResponse } from "@/lib/api/tipos/caja";
 import type { EstablecimientoRequest } from "@/lib/api/tipos/establecimientos";
 import type { HorarioAtencionDto, Servicio } from "@/lib/api/tipos/comunes";
+import type { DatosSolicitudVerificacion } from "@/lib/panel/verificacion";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useBloqueadoPorCaja, usePerfilPendiente } from "@/lib/permisos";
 import { guardarDispositivo, useEmparejado } from "@/lib/sesion-caja";
 
 type SeccionGuardable = "datos" | "horarios" | "servicios";
 
-function Seccion({ icono: Icono, titulo, descripcion, children }: { icono: typeof Building2; titulo: string; descripcion: string; children: ReactNode }) {
+function Seccion({
+  id,
+  icono: Icono,
+  titulo,
+  descripcion,
+  children,
+}: {
+  id?: string;
+  icono: typeof Building2;
+  titulo: string;
+  descripcion: string;
+  children: ReactNode;
+}) {
   return (
-    <section className="rounded-card bg-white p-6 shadow-card">
+    <section id={id} className="rounded-card bg-white p-6 shadow-card">
       <div className="mb-4 flex items-start gap-2.5">
         <Icono className="mt-0.5 size-5 shrink-0 text-azul" aria-hidden />
         <div>
@@ -152,6 +168,8 @@ export default function PanelConfiguracion() {
     },
     onSuccess: (_, { seccion }) => {
       queryClient.invalidateQueries({ queryKey: keys.establecimientos.mios() });
+      // Sólo horarios redefine los slots; datos y servicios no tocan la grilla.
+      if (seccion === "horarios") invalidarDisponibilidad(queryClient);
       setErrorAccion(null);
       setGuardado(seccion);
     },
@@ -162,6 +180,21 @@ export default function PanelConfiguracion() {
   });
 
   const guardandoSeccion = guardar.isPending ? guardar.variables.seccion : null;
+
+  const solicitarVerificacion = useSolicitarVerificacion();
+  const errorVerificacion =
+    solicitarVerificacion.error instanceof ApiError
+      ? mensajeVisible(solicitarVerificacion.error)
+      : solicitarVerificacion.isError
+        ? "No pudimos enviar la solicitud."
+        : null;
+  const camposInvalidosVerificacion =
+    solicitarVerificacion.error instanceof ApiError ? solicitarVerificacion.error.camposInvalidos : undefined;
+
+  function enviarVerificacion(datos: DatosSolicitudVerificacion) {
+    if (!establecimiento) return;
+    solicitarVerificacion.mutate({ estId: establecimiento.id, datos });
+  }
 
   // "!bloqueadoPorCaja &&" evita una carrera: "Activar esta computadora como
   // caja" cambia "rol" a "empleado" en el mismo render en el que se dispara, y
@@ -227,6 +260,60 @@ export default function PanelConfiguracion() {
                 />
                 {guardado === "datos" && <Guardado />}
               </Seccion>
+
+              {perfil?.rol === "OWNER" && (
+                <Seccion
+                  id="verificacion"
+                  icono={Shield}
+                  titulo="Verificación"
+                  descripcion="Confirma que sos un dueño real. Sin esto tu complejo no aparece en el buscador ni puede recibir reservas."
+                >
+                  {establecimiento.estadoVerificacion === "PENDIENTE" && (
+                    <FormSolicitudVerificacion
+                      guardando={solicitarVerificacion.isPending}
+                      error={errorVerificacion}
+                      camposInvalidos={camposInvalidosVerificacion}
+                      onGuardar={enviarVerificacion}
+                    />
+                  )}
+
+                  {establecimiento.estadoVerificacion === "EN_REVISION" && (
+                    <div className="rounded-input bg-celeste-suave p-4 text-sm text-tinta">
+                      Tu solicitud está en revisión. Te avisamos por mail apenas la resolvamos — no hace falta que
+                      hagas nada más por ahora.
+                    </div>
+                  )}
+
+                  {establecimiento.estadoVerificacion === "RECHAZADO" && (
+                    <div className="space-y-4">
+                      <div className="rounded-input bg-cancelado-suave p-4 text-sm">
+                        <p className="font-semibold text-cancelado">Rechazamos tu solicitud</p>
+                        <p className="mt-1 text-tinta">{establecimiento.motivoRechazo}</p>
+                      </div>
+                      <FormSolicitudVerificacion
+                        datosIniciales={{
+                          cuit: establecimiento.cuit ?? "",
+                          razonSocial: establecimiento.razonSocial ?? "",
+                          telefonoContacto: establecimiento.telefonoContacto ?? "",
+                          urlRedSocial: establecimiento.urlRedSocial ?? "",
+                        }}
+                        textoBoton="Corregir y reenviar"
+                        guardando={solicitarVerificacion.isPending}
+                        error={errorVerificacion}
+                        camposInvalidos={camposInvalidosVerificacion}
+                        onGuardar={enviarVerificacion}
+                      />
+                    </div>
+                  )}
+
+                  {establecimiento.estadoVerificacion === "VERIFICADO" && (
+                    <div className="flex items-center gap-2.5 rounded-input bg-disponible-suave p-4 text-sm text-tinta">
+                      <ShieldCheck className="size-5 shrink-0 text-disponible" aria-hidden />
+                      Tu complejo está verificado. No hay nada más que hacer acá.
+                    </div>
+                  )}
+                </Seccion>
+              )}
 
               <Seccion icono={Clock} titulo="Horarios de atención" descripcion="Alimentan la disponibilidad y el % de ocupación de Reportes.">
                 <FormHorariosAtencion

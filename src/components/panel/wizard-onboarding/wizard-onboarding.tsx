@@ -59,16 +59,25 @@ export function WizardOnboarding() {
   }
 
   if (wizard.publicado) {
+    // El dueño pudo haber enviado la verificación (EN_REVISION) u omitirla
+    // (sigue PENDIENTE): el cierre tiene que decir la verdad en los dos
+    // casos, no "¡tu complejo está listo!" — eso ya no es cierto en ninguno
+    // de los dos: sin verificar no aparece en el buscador ni recibe reservas.
+    const enRevision = wizard.establecimientoParcial?.estadoVerificacion === "EN_REVISION";
     return (
       <div className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center gap-6 p-6 text-center">
         <div className="flex size-20 items-center justify-center rounded-full bg-disponible-suave">
           <CheckCircle2 className="size-10 text-disponible" aria-hidden />
         </div>
         <div>
-          <h1 className="font-display text-2xl font-extrabold text-tinta">¡Tu complejo está listo!</h1>
+          <h1 className="font-display text-2xl font-extrabold text-tinta">
+            {enRevision ? "Enviaste tu complejo a revisión" : "Tu complejo ya está armado"}
+          </h1>
           <p className="mt-2 text-sm text-grafito">
-            {wizard.establecimientoParcial?.nombre} ya existe en Saque, con sus horarios, canchas y tarifas
-            cargados. Entrá a tu panel para revisar todo o seguir editando cuando quieras.
+            {wizard.establecimientoParcial?.nombre} tiene sus horarios, canchas y tarifas cargados.{" "}
+            {enRevision
+              ? "La solicitud de verificación ya está en camino — te avisamos por mail cuando la resolvamos. Hasta entonces no aparece en el buscador ni puede recibir reservas; el mes de prueba gratis arranca recién cuando se apruebe, así que no perdés días esperando."
+              : "Todavía no enviaste la solicitud de verificación, así que no aparece en el buscador ni puede recibir reservas. Te lo vamos a recordar en el panel — podés mandarla cuando quieras desde Configuración."}
           </p>
           {wizard.erroresFotos.length > 0 && (
             <p className="mt-3 text-sm text-pendiente">
@@ -168,11 +177,14 @@ export function WizardOnboarding() {
             estadoMercadoPago={wizard.estadoMercadoPago}
             cargandoEstado={wizard.cargandoEstadoMercadoPago}
             conectando={wizard.conectandoMercadoPago}
-            publicando={false}
-            error={wizard.errorMercadoPago}
+            errorMercadoPago={wizard.errorMercadoPago}
+            solicitandoVerificacion={wizard.solicitandoVerificacion}
+            errorVerificacion={wizard.errorVerificacion}
+            camposInvalidosVerificacion={wizard.camposInvalidosVerificacion}
             onConectar={wizard.iniciarConexionMercadoPago}
             onAtras={wizard.volverATarifas}
-            onPublicar={wizard.publicarComplejo}
+            onSolicitarVerificacion={wizard.confirmarVerificacion}
+            onOmitirVerificacion={wizard.omitirVerificacion}
           />
         )}
       </div>

@@ -1,48 +1,59 @@
 "use client";
 
-import type { FormEvent } from "react";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, ExternalLink, Wallet } from "lucide-react";
+import { CheckCircle2, ExternalLink, Wallet } from "lucide-react";
+import { FormSolicitudVerificacion } from "@/components/panel/form-solicitud-verificacion";
+import type { DatosSolicitudVerificacion } from "@/lib/panel/verificacion";
 import type { EstadoMercadoPagoResponse } from "@/lib/api/tipos/mercadopago";
 
 /**
- * Paso 6, el último del wizard. El gate de "Publicar complejo" es el fix más
- * importante de este paso (spec §3): con seña obligatoria, hace falta
- * Mercado Pago conectado. Sin seña obligatoria, la card se reemplaza por un
- * texto — no hace falta conectar nada para publicar.
+ * Paso 6, el último del wizard. Dos concerns independientes:
+ *
+ *  - Mercado Pago: con seña obligatoria, hace falta conectar una cuenta
+ *    antes de terminar (spec §3). Sin seña obligatoria, la card se reemplaza
+ *    por un texto.
+ *  - Verificación: los 4 datos reales que dispara la solicitud de
+ *    verificación de verdad — antes "Publicar complejo" no mandaba ningún
+ *    request. El dueño puede saltearla ("omitir por ahora"): el complejo ya
+ *    existe y sigue armable, sólo queda PENDIENTE hasta que la mande (el
+ *    panel se lo va a recordar).
+ *
+ * El gate de seña bloquea las DOS salidas del paso (enviar y omitir), no
+ * sólo una: no tiene sentido dejar avanzar sin forma de cobrar cuando el
+ * complejo la exige.
  */
 export function PasoCobros({
   requiereSena,
   estadoMercadoPago,
   cargandoEstado,
   conectando,
-  publicando,
-  error,
+  errorMercadoPago,
+  solicitandoVerificacion,
+  errorVerificacion,
+  camposInvalidosVerificacion,
   onConectar,
   onAtras,
-  onPublicar,
+  onSolicitarVerificacion,
+  onOmitirVerificacion,
 }: {
   requiereSena: boolean;
   estadoMercadoPago: EstadoMercadoPagoResponse | null;
   cargandoEstado: boolean;
   conectando: boolean;
-  publicando: boolean;
-  error: string | null;
+  errorMercadoPago: string | null;
+  solicitandoVerificacion: boolean;
+  errorVerificacion: string | null;
+  camposInvalidosVerificacion?: Record<string, string>;
   onConectar: () => void;
   onAtras: () => void;
-  onPublicar: () => void;
+  onSolicitarVerificacion: (datos: DatosSolicitudVerificacion) => void;
+  onOmitirVerificacion: () => void;
 }) {
   const conectado = estadoMercadoPago?.conectado ?? false;
   const bloqueadoPorSena = requiereSena && !conectado;
 
-  function publicar(e: FormEvent) {
-    e.preventDefault();
-    if (bloqueadoPorSena) return;
-    onPublicar();
-  }
-
   return (
-    <form onSubmit={publicar} className="space-y-6">
+    <div className="space-y-6">
       <div>
         <h2 className="font-display text-xl font-extrabold text-tinta">Cobros</h2>
         <p className="mt-1 text-sm text-grafito">Conectá Mercado Pago para cobrar señas de forma online.</p>
@@ -94,9 +105,9 @@ export function PasoCobros({
         </div>
       )}
 
-      {error && (
+      {errorMercadoPago && (
         <p className="text-sm text-cancelado" role="alert">
-          {error}
+          {errorMercadoPago}
         </p>
       )}
 
@@ -104,24 +115,46 @@ export function PasoCobros({
         Ir al panel y conectar Mercado Pago más tarde
       </Link>
 
-      <div className="flex items-center justify-between pt-2">
+      <div className="space-y-4 border-t border-borde pt-6">
+        <div>
+          <h3 className="font-display text-lg font-bold text-tinta">Verificación</h3>
+          <p className="mt-1 text-sm text-grafito">
+            Enviá estos datos para que confirmemos que el complejo es real. Hasta que lo aprobemos no vas a aparecer
+            en el buscador ni vas a poder recibir reservas — el mes de prueba gratis arranca recién cuando se
+            apruebe, así que no perdés días esperando.
+          </p>
+        </div>
+
+        <FormSolicitudVerificacion
+          guardando={solicitandoVerificacion}
+          error={errorVerificacion}
+          camposInvalidos={camposInvalidosVerificacion}
+          textoBoton="Enviar y publicar"
+          deshabilitado={bloqueadoPorSena}
+          motivoDeshabilitado={bloqueadoPorSena ? "Conectá Mercado Pago para poder enviar la verificación." : undefined}
+          onGuardar={onSolicitarVerificacion}
+        />
+
+        <button
+          type="button"
+          onClick={onOmitirVerificacion}
+          disabled={bloqueadoPorSena || solicitandoVerificacion}
+          className="text-sm font-semibold text-azul hover:underline disabled:cursor-not-allowed disabled:text-grafito disabled:no-underline"
+        >
+          Omitir por ahora, lo hago después desde el panel
+        </button>
+      </div>
+
+      <div className="flex items-center pt-2">
         <button
           type="button"
           onClick={onAtras}
-          disabled={publicando}
+          disabled={solicitandoVerificacion}
           className="flex h-11 items-center rounded-full border border-borde px-6 font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste disabled:opacity-60"
         >
           Atrás
         </button>
-        <button
-          type="submit"
-          disabled={bloqueadoPorSena || publicando}
-          className="flex h-11 items-center gap-2 rounded-full bg-azul px-6 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste disabled:cursor-not-allowed disabled:bg-borde disabled:text-grafito"
-        >
-          {publicando ? "Publicando..." : "Publicar complejo"}
-          {!publicando && <ArrowRight className="size-4" aria-hidden />}
-        </button>
       </div>
-    </form>
+    </div>
   );
 }

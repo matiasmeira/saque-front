@@ -1,14 +1,20 @@
 import { apiFetch, subirArchivo } from "../cliente";
 import { construirQuery } from "../query";
+import type { EstadoVerificacionEstablecimiento, Page } from "../tipos/comunes";
 import type { DisponibilidadEstablecimientoResponse } from "../tipos/disponibilidad";
+import type { ComplejoDetalleResponse } from "../tipos/publico";
 import type {
   ActualizarPoliticaCancelacionRequest,
   DiaNoLaborableRequest,
   DiaNoLaborableResponse,
+  EstablecimientoAdminItem,
   EstablecimientoRequest,
   EstablecimientoResponse,
   FotoEstablecimiento,
   PoliticaCancelacionResponse,
+  RechazarEstablecimientoRequest,
+  SolicitarVerificacionRequest,
+  SolicitarVerificacionResponse,
 } from "../tipos/establecimientos";
 
 /** EstablecimientoController — base /api/v1/establecimientos. OWNER / ADMIN. */
@@ -31,6 +37,18 @@ export const establecimientos = {
   actualizar: (id: number, body: EstablecimientoRequest) =>
     apiFetch<EstablecimientoResponse>(`/api/v1/establecimientos/${id}`, {
       method: "PUT",
+      body,
+    }),
+
+  /**
+   * Solicita (o resolicita, si el estado actual es RECHAZADO) la verificación
+   * manual. Sólo OWNER (ni ADMIN ni EMPLOYEE — ver el controller del backend).
+   * La respuesta es sólo una confirmación de que quedó en cola: releer el
+   * establecimiento real desde `mios()`, no tipar el estado a partir de esto.
+   */
+  solicitarVerificacion: (id: number, body: SolicitarVerificacionRequest) =>
+    apiFetch<SolicitarVerificacionResponse>(`/api/v1/establecimientos/${id}/solicitar-verificacion`, {
+      method: "POST",
       body,
     }),
 
@@ -93,4 +111,46 @@ export const establecimientos = {
       method: "PATCH",
       body,
     }),
+
+  /**
+   * La ficha como la vería el público, aunque el establecimiento todavía no
+   * esté VERIFICADO (por eso es por `id` y no por `slug`: uno no verificado
+   * puede no tener slug público todavía). Se asume el mismo shape que
+   * `publico.detalle` — confirmar contra el backend si difiere.
+   */
+  previsualizacion: (estId: number) =>
+    apiFetch<ComplejoDetalleResponse>(`/api/v1/establecimientos/${estId}/previsualizacion`),
+};
+
+/**
+ * AdminEstablecimientoController — /api/v1/admin/establecimientos. Rol ADMIN.
+ *
+ * Moderación de altas: un establecimiento nace PENDIENTE y no aparece en el
+ * buscador ni acepta reservas hasta que un admin lo verifica. Sólo se puede
+ * verificar o rechazar desde EN_REVISION, cualquier otra transición es 400.
+ */
+export const adminEstablecimientos = {
+  listar: (
+    { estadoVerificacion, page = 0, size = 20 }: {
+      estadoVerificacion?: EstadoVerificacionEstablecimiento;
+      page?: number;
+      size?: number;
+    } = {},
+  ) =>
+    apiFetch<Page<EstablecimientoAdminItem>>(
+      `/api/v1/admin/establecimientos${construirQuery({ estadoVerificacion, page, size })}`,
+    ),
+
+  /**
+   * Arranca el trial de 1 mes del dueño si todavía no lo tenía. No es
+   * reversible desde la UI. El body de respuesta no está confirmado contra
+   * el backend — se tipa `void` y la pantalla refresca el listado por
+   * invalidación en vez de confiar en lo que devuelva este POST.
+   */
+  verificar: (id: number) =>
+    apiFetch<void>(`/api/v1/admin/establecimientos/${id}/verificar`, { method: "POST" }),
+
+  /** El motivo lo lee el dueño en su panel. */
+  rechazar: (id: number, body: RechazarEstablecimientoRequest) =>
+    apiFetch<void>(`/api/v1/admin/establecimientos/${id}/rechazar`, { method: "POST", body }),
 };

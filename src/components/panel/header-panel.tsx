@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, Clock } from "lucide-react";
+import { AlertTriangle, Clock, ShieldAlert, ShieldQuestion } from "lucide-react";
 
 import { usePerfil, useEstablecimientoActivo } from "@/hooks/api/use-perfil";
 import { SelectorEstablecimiento } from "@/components/panel/selector-establecimiento";
 import { ModalCrearEstablecimiento } from "@/components/panel/modal-crear-establecimiento";
-import type { EstadoComplejo } from "@/lib/panel/agenda";
+import { BannerVerificacionPendiente } from "@/components/panel/banner-verificacion-pendiente";
 
 /**
  * Header del panel: nombre del complejo + cartel de estado, sólo cuando
@@ -18,10 +18,12 @@ import type { EstadoComplejo } from "@/lib/panel/agenda";
  * reales. Con ellas usa lo que le pasen, que es como siguen funcionando las
  * pantallas del panel que todavía no se migraron.
  *
- * Sobre `estado`: EstadoComplejo ("borrador" | "publicado" | "despublicado" |
- * "suspendido") es un concepto del mock que el backend no tiene —
- * EstablecimientoResponse sólo expone isActive. Con datos reales se deriva a
- * "publicado" o "despublicado"; los otros dos estados no existen.
+ * Hay DOS ejes de estado independientes, y se muestran los dos a la vez si
+ * corresponde: `isActive` (publicado/despublicado) y `estadoVerificacion`
+ * (PENDIENTE/EN_REVISION/VERIFICADO/RECHAZADO). No son lo mismo — un
+ * complejo puede estar activo y sin verificar, o verificado y despublicado a
+ * mano. El cartel de PENDIENTE es sólo la píldora acá: el aviso fuerte (no
+ * descartable) es `BannerVerificacionPendiente`, montado más abajo.
  *
  * `diasRestantesTrial` tampoco se puede calcular: Usuario.fechaFinPrueba está
  * en la entidad pero no se expone en ningún DTO. Con datos reales el cartel de
@@ -29,11 +31,9 @@ import type { EstadoComplejo } from "@/lib/panel/agenda";
  */
 export function HeaderPanel({
   nombre,
-  estado,
   diasRestantesTrial,
 }: {
   nombre?: string;
-  estado?: EstadoComplejo;
   diasRestantesTrial?: number;
 } = {}) {
   const { establecimiento } = useEstablecimientoActivo();
@@ -41,13 +41,15 @@ export function HeaderPanel({
   const [creandoComplejo, setCreandoComplejo] = useState(false);
 
   const esDuenoOAdmin = perfil?.rol === "OWNER" || perfil?.rol === "ADMIN";
+  // La solicitud de verificación es OWNER puro en el backend (ni ADMIN):
+  // dejar pasar a un ADMIN acá sería autoverificarse por la ventana de atrás.
+  const esDueno = perfil?.rol === "OWNER";
   // Para OWNER/ADMIN el nombre ya lo muestra el selector de al lado: repetirlo
   // acá sería el mismo texto dos veces. Sigue mostrándose para EMPLOYEE (no
   // tiene selector) y para las pantallas viejas que mandan `nombre` a mano.
   const nombreVisible = nombre ?? (esDuenoOAdmin ? "" : establecimiento?.nombre) ?? "";
-  const estadoVisible =
-    estado ??
-    (establecimiento ? (establecimiento.isActive ? "publicado" : "despublicado") : undefined);
+  const estadoVisible = establecimiento ? (establecimiento.isActive ? "publicado" : "despublicado") : undefined;
+  const estadoVerificacion = establecimiento?.estadoVerificacion;
   const enPrueba = perfil?.planSuscripcion === "TRIAL";
   // Un complejo sin ningún horario de atención cargado no tiene ningún día
   // en el que "esté abierto": ComplejoPublicoService lo excluye de /buscar
@@ -74,17 +76,35 @@ export function HeaderPanel({
               Sin horarios cargados · no aparecés en las búsquedas
             </Link>
           )}
-          {estadoVisible === "borrador" && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-pendiente-suave px-3 py-1.5 text-xs font-semibold text-pendiente">
-              <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
-              Tu complejo está en borrador · verificando
-            </span>
-          )}
-          {(estadoVisible === "despublicado" || estadoVisible === "suspendido") && (
+          {estadoVisible === "despublicado" && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-cancelado-suave px-3 py-1.5 text-xs font-semibold text-cancelado">
               <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
-              {estadoVisible === "despublicado" ? "Complejo despublicado" : "Complejo suspendido"}
+              Complejo despublicado
             </span>
+          )}
+          {esDueno && estadoVerificacion === "PENDIENTE" && (
+            <Link
+              href="/panel/configuracion#verificacion"
+              className="inline-flex items-center gap-1.5 rounded-full bg-pendiente-suave px-3 py-1.5 text-xs font-semibold text-pendiente hover:underline"
+            >
+              <ShieldQuestion className="size-3.5 shrink-0" aria-hidden />
+              Sin verificar · completá tus datos
+            </Link>
+          )}
+          {estadoVerificacion === "EN_REVISION" && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-celeste-suave px-3 py-1.5 text-xs font-semibold text-tinta">
+              <Clock className="size-3.5 shrink-0" aria-hidden />
+              Verificación en revisión
+            </span>
+          )}
+          {esDueno && estadoVerificacion === "RECHAZADO" && (
+            <Link
+              href="/panel/configuracion#verificacion"
+              className="inline-flex items-center gap-1.5 rounded-full bg-cancelado-suave px-3 py-1.5 text-xs font-semibold text-cancelado hover:underline"
+            >
+              <ShieldAlert className="size-3.5 shrink-0" aria-hidden />
+              Verificación rechazada · corregir
+            </Link>
           )}
           {estadoVisible === "publicado" && typeof diasRestantesTrial === "number" && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-celeste-suave px-3 py-1.5 text-xs font-semibold text-tinta">
@@ -100,6 +120,8 @@ export function HeaderPanel({
           )}
         </div>
       </header>
+
+      <BannerVerificacionPendiente />
 
       {creandoComplejo && <ModalCrearEstablecimiento onClose={() => setCreandoComplejo(false)} />}
     </>

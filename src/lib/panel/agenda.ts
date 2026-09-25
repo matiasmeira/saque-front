@@ -16,10 +16,16 @@
 
 export type BloqueoDelDia = { horaInicio: string; horaFin: string; motivo?: string };
 
+/**
+ * Franja en la que la cancha no es reservable porque otra cancha del mismo
+ * grupo ya consumió ese horario del pool compartido (`ocupadaPorPool` del
+ * backend). No es un turno ni un bloqueo de mantenimiento: el timeline la
+ * pinta distinto para que el dueño no las confunda.
+ */
+export type SinCupoPorPool = { horaInicio: string; horaFin: string };
+
 /** Los 6 estados de `EstadoReserva` colapsados en los 4 que dibuja el timeline. */
 export type EstadoTurno = "ocupado" | "pendiente" | "cancelado" | "ausente";
-
-export type EstadoComplejo = "borrador" | "publicado" | "despublicado" | "suspendido";
 
 export type Turno = {
   /** El backend usa Long; acá es string porque además es la key de React. */
