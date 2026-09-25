@@ -1,4 +1,4 @@
-import type { EstadoReserva } from "./tipos/comunes";
+import type { EstadoReserva, EstadoVerificacionEstablecimiento } from "./tipos/comunes";
 import type { OrdenCliente } from "./tipos/clientes";
 
 /**
@@ -127,4 +127,11 @@ export const keys = {
 
   reportes: (estId: number, tipo: string, desde: string, hasta: string) =>
     ["reportes", estId, tipo, desde, hasta] as const,
+
+  /** Cola de moderación de /admin. Prefijo propio: no se cruza con `establecimientos.*`, que es del dueño. */
+  adminEstablecimientos: {
+    lista: (estadoVerificacion?: EstadoVerificacionEstablecimiento, page = 0) =>
+      ["admin-establecimientos", "lista", estadoVerificacion ?? null, page] as const,
+    previsualizacion: (id: number) => ["admin-establecimientos", "previsualizacion", id] as const,
+  },
 };

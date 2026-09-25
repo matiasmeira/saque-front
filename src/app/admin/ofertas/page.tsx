@@ -1,15 +1,11 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { AlertTriangle, Mail, Send, ShieldAlert } from "lucide-react";
-import { HeaderMinimo } from "@/components/canche/header-minimo";
+import { AlertTriangle, Mail, Send } from "lucide-react";
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { adminMails } from "@/lib/api/endpoints/mails";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
-import { usePerfil } from "@/hooks/api/use-perfil";
-import { useHaySesion } from "@/hooks/api/use-sesion";
 
 const campoClase =
   "w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste";
@@ -23,11 +19,8 @@ const campoClase =
  * Canche con opt-in de marketing, sin filtrar por establecimiento. Un dueño que
  * lo disparara le estaría escribiendo a los clientes de los demás complejos.
  * El backend lo sabe y valida rol ADMIN dentro de OfertaMarketingService: a un
- * OWNER le contesta 403. La pantalla estaba gateada por `esDueno`, así que
- * prometía algo que siempre iba a fallar (B5).
- *
- * No hay link a esta pantalla desde ningún lado: se entra por URL. Son un
- * puñado de administradores y no justifica un menú propio.
+ * OWNER le contesta 403. El chequeo de rol y el cartel para quien no es admin
+ * viven en el layout de /admin, no acá.
  *
  * Dos recortes contra lo que mostraba el mock:
  *   - El campo es `cuerpoHtml` y el template lo inserta con `th:utext`, o sea
@@ -38,19 +31,9 @@ const campoClase =
  *     no existe del lado del front.
  */
 export default function AdminOfertas() {
-  const router = useRouter();
-  const haySesion = useHaySesion();
-  const { data: perfil, isPending } = usePerfil();
-
   const [asunto, setAsunto] = useState("");
   const [cuerpoHtml, setCuerpoHtml] = useState("");
   const [confirmando, setConfirmando] = useState(false);
-
-  const esAdmin = perfil?.rol === "ADMIN";
-
-  useEffect(() => {
-    if (!haySesion) router.replace("/ingresar");
-  }, [haySesion, router]);
 
   const enviar = useMutation({
     mutationFn: () => adminMails.enviarOferta({ asunto: asunto.trim(), cuerpoHtml }),
@@ -61,28 +44,6 @@ export default function AdminOfertas() {
     },
   });
 
-  if (!haySesion || (isPending && !perfil)) return <div className="min-h-dvh bg-humo" />;
-
-  // Sin redirección: quien llegó acá sabiendo la URL merece saber por qué no
-  // puede usarla. Redirigirlo al panel parecería un bug.
-  if (!esAdmin) {
-    return (
-      <div className="flex min-h-dvh flex-col bg-humo">
-        <HeaderMinimo />
-        <main className="flex flex-1 items-center justify-center px-4 py-16">
-          <div className="max-w-sm rounded-card bg-white p-8 text-center shadow-card">
-            <ShieldAlert className="mx-auto size-8 text-grafito" aria-hidden />
-            <h1 className="mt-3 font-display text-lg font-bold text-tinta">Esto es de administración</h1>
-            <p className="mt-2 text-sm text-grafito">
-              El envío de ofertas alcanza a todos los usuarios de Canche, no a los clientes de un complejo. Sólo un
-              administrador de la plataforma puede dispararlo.
-            </p>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   function pedirConfirmacion(e: FormEvent) {
     e.preventDefault();
     if (!asunto.trim() || !cuerpoHtml.trim()) return;
@@ -91,9 +52,7 @@ export default function AdminOfertas() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-humo">
-      <HeaderMinimo />
-
+    <>
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
         <h1 className="font-display text-2xl font-extrabold tracking-tight text-tinta">Enviar oferta</h1>
         <p className="mt-1 text-sm text-grafito">
@@ -211,6 +170,6 @@ export default function AdminOfertas() {
           </div>
         </ModalPanel>
       )}
-    </div>
+    </>
   );
 }

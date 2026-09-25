@@ -43,6 +43,18 @@ export type Role = "ADMIN" | "OWNER" | "EMPLOYEE" | "PLAYER";
 
 export type PlanSuscripcion = "TRIAL" | "FREE" | "PREMIUM";
 
+/**
+ * Moderación de altas de establecimiento (AdminEstablecimientoController).
+ * Un establecimiento nace PENDIENTE y no aparece en el buscador ni acepta
+ * reservas hasta VERIFICADO. Sólo se puede verificar o rechazar desde
+ * EN_REVISION — cualquier otra transición es 400.
+ */
+export type EstadoVerificacionEstablecimiento =
+  | "PENDIENTE"
+  | "EN_REVISION"
+  | "VERIFICADO"
+  | "RECHAZADO";
+
 export type EstadoReserva =
   | "PENDIENTE_SENA"
   | "CONFIRMADA"
