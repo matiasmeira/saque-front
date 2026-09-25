@@ -9,10 +9,10 @@ import { HeaderPanel } from "@/components/panel/header-panel";
 import { TablaCanchas } from "@/components/panel/tabla-canchas";
 import { FormCancha } from "@/components/panel/form-cancha";
 import { DrawerPanel } from "@/components/panel/drawer-panel";
-import { ModalPanel } from "@/components/panel/modal-panel";
 import { SkeletonCanchas } from "@/components/panel/skeleton-canchas";
 import { bloqueos as endpointBloqueos, canchas as endpointCanchas } from "@/lib/api/endpoints/canchas";
 import { keys } from "@/lib/api/keys";
+import { invalidarDisponibilidad } from "@/lib/api/invalidaciones";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import {
   aBloqueoPanel,
@@ -24,7 +24,7 @@ import {
 import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useBloqueadoPorCaja } from "@/lib/permisos";
-import type { Bloqueo, Cancha } from "@/lib/panel/canchas";
+import type { Bloqueo } from "@/lib/panel/canchas";
 
 type PanelAbierto = { tipo: "nueva" } | { tipo: "editar"; canchaId: number } | null;
 
@@ -34,11 +34,11 @@ type PanelAbierto = { tipo: "nueva" } | { tipo: "editar"; canchaId: number } | n
  * Es la base del resto del panel: la agenda, los precios y la disponibilidad
  * cuelgan de lo que se define acá.
  *
- * Una restricción del backend que cambia la UI: desactivar una cancha es
- * IRREVERSIBLE. `isActive` sólo se pone en true al crear y en false con el
- * DELETE; actualizarCancha no lo toca y el listado filtra por activas. Así que
- * el switch de "activa/inactiva" del mock no puede existir: se reemplaza por
- * una acción destructiva con confirmación.
+ * `isActive` es reversible: actualizarCancha lo puede volver a poner en true,
+ * y este listado pide incluirInactivas=true para poder mostrar y reactivar
+ * las que están apagadas (la agenda y la ficha pública siguen viendo sólo
+ * activas). El switch "Cancha activa" de form-cancha.tsx es el que maneja las
+ * dos direcciones.
  */
 export default function PanelCanchas() {
   const queryClient = useQueryClient();
@@ -47,12 +47,11 @@ export default function PanelCanchas() {
   const { establecimientoId } = useEstablecimientoActivo();
 
   const [panelAbierto, setPanelAbierto] = useState<PanelAbierto>(null);
-  const [aDesactivar, setADesactivar] = useState<Cancha | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const consulta = useQuery({
-    queryKey: keys.canchas(establecimientoId ?? 0),
-    queryFn: () => endpointCanchas.listar(establecimientoId!),
+    queryKey: keys.canchas(establecimientoId ?? 0, true),
+    queryFn: () => endpointCanchas.listar(establecimientoId!, true),
     enabled: establecimientoId !== null,
   });
 
@@ -71,7 +70,12 @@ export default function PanelCanchas() {
   }
 
   function invalidar() {
-    queryClient.invalidateQueries({ queryKey: keys.canchas(establecimientoId ?? 0) });
+    // Por prefijo: hay dos variantes de esta key (incluirInactivas true/false,
+    // ver panel/precios) y una mutación acá tiene que refrescar las dos.
+    queryClient.invalidateQueries({ queryKey: ["canchas", establecimientoId ?? 0] });
+    // Duraciones permitidas, permiteInicioMediaHora y el pool de canchas
+    // redefinen la grilla de slots.
+    invalidarDisponibilidad(queryClient);
   }
 
   const guardar = useMutation({
@@ -87,16 +91,6 @@ export default function PanelCanchas() {
     onError: (e) => alFallar(e, "No pudimos guardar la cancha."),
   });
 
-  const desactivar = useMutation({
-    mutationFn: (canchaId: number) => endpointCanchas.desactivar(establecimientoId!, canchaId),
-    onSuccess: () => {
-      invalidar();
-      setADesactivar(null);
-      setError(null);
-    },
-    onError: (e) => alFallar(e, "No pudimos desactivar la cancha."),
-  });
-
   const crearBloqueo = useMutation({
     mutationFn: ({ canchaId, bloqueo }: { canchaId: number; bloqueo: Bloqueo }) =>
       endpointBloqueos.crear(establecimientoId!, canchaId, {
@@ -106,6 +100,7 @@ export default function PanelCanchas() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bloqueos"] });
+      invalidarDisponibilidad(queryClient);
       setError(null);
     },
     onError: (e) => alFallar(e, "No pudimos crear el bloqueo."),
@@ -116,6 +111,7 @@ export default function PanelCanchas() {
       endpointBloqueos.eliminar(establecimientoId!, canchaId, bloqueoId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bloqueos"] });
+      invalidarDisponibilidad(queryClient);
       setError(null);
     },
     onError: (e) => alFallar(e, "No pudimos quitar el bloqueo."),
@@ -201,7 +197,6 @@ export default function PanelCanchas() {
             <TablaCanchas
               canchas={canchas}
               onEditar={(cancha) => setPanelAbierto({ tipo: "editar", canchaId: cancha.id })}
-              onDesactivar={setADesactivar}
             />
           )}
         </main>
@@ -212,6 +207,7 @@ export default function PanelCanchas() {
           <FormCancha
             cancha={null}
             canchasExistentes={canchas}
+            errorApi={error}
             onGuardar={(datos) => guardar.mutate({ id: null, datos })}
             onCancelar={() => setPanelAbierto(null)}
             onAgregarBloqueo={() => {}}
@@ -229,6 +225,7 @@ export default function PanelCanchas() {
           <FormCancha
             cancha={{ ...canchaEnEdicion, mantenimientos: bloqueosDeLaCancha }}
             canchasExistentes={canchas}
+            errorApi={error}
             onGuardar={(datos) => guardar.mutate({ id: canchaEnEdicion.id, datos })}
             onCancelar={() => setPanelAbierto(null)}
             onAgregarBloqueo={(bloqueo) =>
@@ -243,37 +240,6 @@ export default function PanelCanchas() {
             }}
           />
         </DrawerPanel>
-      )}
-
-      {aDesactivar && (
-        <ModalPanel
-          titulo="¿Desactivar esta cancha?"
-          subtitulo={aDesactivar.nombre}
-          onClose={() => setADesactivar(null)}
-        >
-          <p className="text-sm text-grafito">
-            Deja de recibir turnos y desaparece del listado.{" "}
-            <strong className="text-tinta">Esta acción no se puede deshacer</strong>: para
-            volver a tenerla vas a tener que crearla de nuevo.
-          </p>
-          <div className="mt-6 flex gap-3">
-            <button
-              type="button"
-              onClick={() => setADesactivar(null)}
-              className="h-11 flex-1 rounded-full border border-borde text-sm font-semibold text-grafito transition-colors hover:border-azul hover:text-azul"
-            >
-              Volver
-            </button>
-            <button
-              type="button"
-              onClick={() => desactivar.mutate(aDesactivar.id)}
-              disabled={desactivar.isPending}
-              className="h-11 flex-1 rounded-full bg-cancelado text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-            >
-              {desactivar.isPending ? "Desactivando..." : "Sí, desactivar"}
-            </button>
-          </div>
-        </ModalPanel>
       )}
     </div>
   );

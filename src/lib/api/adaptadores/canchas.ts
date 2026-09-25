@@ -84,6 +84,7 @@ export function aCanchaRequest(datos: DatosCancha): CanchaRequest {
     permiteInicioMediaHora: datos.permiteInicioMediaHora,
     canchasFisicasIds: datos.canchasFisicas,
     cantidadCanchasNecesarias: datos.canchasNecesarias,
+    isActive: datos.isActive,
     // Las tarifas viajan dentro de CanchaRequest, pero se editan en
     // /panel/precios. Omitirlas acá las deja intactas: el backend sólo las
     // reemplaza si la clave viene presente.

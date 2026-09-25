@@ -1,4 +1,4 @@
-import { Pencil, PowerOff, Wrench } from "lucide-react";
+import { AlertTriangle, Pencil, Wrench } from "lucide-react";
 import { DEPORTES } from "@/lib/deportes";
 import { esCompuesta, type Cancha } from "@/lib/panel/canchas";
 import { formatearPrecio } from "@/lib/formato";
@@ -16,16 +16,29 @@ function ChipDeporte({ valor }: { valor: string }) {
  * Los nombres de las canchas físicas se resuelven contra el listado real que
  * recibe la tabla, no contra el mock: una compuesta cuyas partes no estén en la
  * lista (por ejemplo, dadas de baja) cae al `#id`, que es información honesta.
+ *
+ * El aviso de "no se puede vender" es un conteo, nada más: si canchasNecesarias
+ * supera la cantidad de físicas ACTIVAS del pool, ningún horario la va a poder
+ * armar (eso lo decide PoolCanchaCalculator en el backend, acá sólo se avisa).
  */
 function Composicion({ cancha, canchas }: { cancha: Cancha; canchas: Cancha[] }) {
   if (!esCompuesta(cancha)) {
     return <span className="text-sm text-grafito">Física</span>;
   }
   const nombres = cancha.canchasFisicas.map((id) => canchas.find((c) => c.id === id)?.nombre ?? `#${id}`);
+  const activas = cancha.canchasFisicas.filter((id) => canchas.find((c) => c.id === id)?.isActive).length;
+  const invendible = cancha.canchasNecesarias !== null && cancha.canchasNecesarias > activas;
   return (
     <span className="text-sm text-tinta">
       Usa {cancha.canchasNecesarias} de {cancha.canchasFisicas.length}
       <span className="block text-[11px] text-grafito">({nombres.join(", ")})</span>
+      {invendible && (
+        <span className="mt-1 flex items-start gap-1 text-[11px] font-semibold text-pendiente">
+          <AlertTriangle className="mt-0.5 size-3 shrink-0" aria-hidden />
+          No se puede vender: necesita {cancha.canchasNecesarias} pero el pool sólo tiene {activas} activa
+          {activas === 1 ? "" : "s"}. Reactivá una física del pool o bajá cuántas necesita.
+        </span>
+      )}
     </span>
   );
 }
@@ -82,11 +95,9 @@ const COLUMNAS = "grid-cols-[1.2fr_1fr_1fr_1.2fr_1.6fr_0.9fr_auto]";
 export function TablaCanchas({
   canchas,
   onEditar,
-  onDesactivar,
 }: {
   canchas: Cancha[];
   onEditar: (cancha: Cancha) => void;
-  onDesactivar: (cancha: Cancha) => void;
 }) {
   return (
     <div className="overflow-hidden rounded-card bg-white shadow-card">
@@ -102,7 +113,12 @@ export function TablaCanchas({
 
       <div className="divide-y divide-borde/60">
         {canchas.map((cancha) => (
-          <div key={cancha.id} className={`grid ${COLUMNAS} items-center gap-3 px-6 py-4 transition-colors hover:bg-humo/60`}>
+          <div
+            key={cancha.id}
+            className={`grid ${COLUMNAS} items-center gap-3 px-6 py-4 transition-colors hover:bg-humo/60 ${
+              cancha.isActive ? "" : "opacity-60"
+            }`}
+          >
             <span className="font-display text-sm font-bold text-tinta">{cancha.nombre}</span>
 
             <span className="flex flex-wrap gap-1">
@@ -135,14 +151,6 @@ export function TablaCanchas({
                 className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 <Pencil className="size-4" aria-hidden />
-              </button>
-              <button
-                type="button"
-                onClick={() => onDesactivar(cancha)}
-                aria-label={`Desactivar ${cancha.nombre}`}
-                className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
-              >
-                <PowerOff className="size-4" aria-hidden />
               </button>
             </div>
           </div>

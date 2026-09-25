@@ -38,6 +38,8 @@ export type CanchaRequest = {
   tarifas?: TarifaDto[];
   canchasFisicasIds?: number[];
   cantidadCanchasNecesarias?: number | null;
+  /** null preserva el estado actual — ver CanchaService.actualizarCancha. */
+  isActive?: boolean | null;
 };
 
 export type CanchaResponse = {

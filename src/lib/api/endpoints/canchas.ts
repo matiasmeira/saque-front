@@ -15,8 +15,11 @@ import type {
  * PUT completo (ver /panel/precios).
  */
 export const canchas = {
-  listar: (estId: number) =>
-    apiFetch<CanchaResponse[]>(`/api/v1/establecimientos/${estId}/canchas`),
+  /** incluirInactivas exige dueño/admin — ver CanchaController.obtenerCanchasPorEstablecimiento. */
+  listar: (estId: number, incluirInactivas = false) =>
+    apiFetch<CanchaResponse[]>(
+      `/api/v1/establecimientos/${estId}/canchas${construirQuery({ incluirInactivas })}`,
+    ),
 
   crear: (estId: number, body: CanchaRequest) =>
     apiFetch<CanchaResponse>(`/api/v1/establecimientos/${estId}/canchas`, {
@@ -30,7 +33,12 @@ export const canchas = {
       body,
     }),
 
-  /** 204. Desactiva (isActive = false), no borra: las reservas históricas la siguen referenciando. */
+  /**
+   * 204. Desactiva (isActive = false), no borra: las reservas históricas la siguen referenciando.
+   * El panel ya no la llama: desactivar/reactivar va por `actualizar` con isActive (mismo
+   * validarDesactivacion del backend, sin duplicar el flujo). Se deja porque el endpoint
+   * sigue existiendo y es válido, no es código muerto del back.
+   */
   desactivar: (estId: number, canchaId: number) =>
     apiFetch<void>(`/api/v1/establecimientos/${estId}/canchas/${canchaId}`, {
       method: "DELETE",

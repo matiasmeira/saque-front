@@ -50,6 +50,7 @@ export function FormCancha({
   cancha,
   canchasExistentes,
   montoSenaSugerido,
+  errorApi,
   onGuardar,
   onCancelar,
   onAgregarBloqueo,
@@ -60,6 +61,14 @@ export function FormCancha({
   canchasExistentes: Cancha[];
   /** sólo se usa cuando `cancha === null` — ej. el wizard de onboarding prellena con la seña por defecto del paso 2 */
   montoSenaSugerido?: number;
+  /**
+   * Error del `guardar` de la pantalla que lo contiene (crear/actualizar cancha
+   * o los bloqueos de mantenimiento). Se muestra tal cual lo manda el backend —
+   * por ejemplo el rechazo de desactivar una cancha con reservas futuras — sin
+   * reemplazarlo por un mensaje genérico. El drawer tapa el resto de la
+   * pantalla, así que sin esto el dueño no lo vería.
+   */
+  errorApi?: string | null;
   onGuardar: (datos: DatosCancha) => void;
   onCancelar: () => void;
   /** los bloqueos se aplican al toque, no esperan al Guardar del resto del form */
@@ -84,7 +93,12 @@ export function FormCancha({
   const [bloqueoHasta, setBloqueoHasta] = useState("");
   const [bloqueoMotivo, setBloqueoMotivo] = useState("");
 
-  const fisicasDisponibles = canchasExistentes.filter((c) => c.canchasFisicas.length === 0 && c.id !== cancha?.id);
+  // Una física inactiva no entra a un pool nuevo, pero si ya estaba en el que
+  // se está editando se sigue mostrando: filtrarla a secas la sacaría del
+  // pool sin que nadie lo haya pedido.
+  const fisicasDisponibles = canchasExistentes.filter(
+    (c) => c.canchasFisicas.length === 0 && c.id !== cancha?.id && (c.isActive || pool.includes(c.id)),
+  );
   const nombresPool = pool.map((id) => canchasExistentes.find((c) => c.id === id)?.nombre ?? `#${id}`);
 
   function alternar<T>(lista: T[], valor: T, setter: (l: T[]) => void) {
@@ -358,9 +372,9 @@ export function FormCancha({
         </div>
       )}
 
-      {error && (
+      {(error ?? errorApi) && (
         <p className="text-sm text-cancelado" role="alert">
-          {error}
+          {error ?? errorApi}
         </p>
       )}
 

@@ -53,7 +53,8 @@ export const keys = {
       ["reservas", "cancha", canchaId, fecha, incluirCanceladas] as const,
   },
 
-  canchas: (estId: number) => ["canchas", estId] as const,
+  /** incluirInactivas separa la variante del panel (ve todo) de la operativa (sólo activas) — invalidar por prefijo ["canchas", estId] pega a las dos. */
+  canchas: (estId: number, incluirInactivas = false) => ["canchas", estId, incluirInactivas] as const,
 
   turnosFijos: {
     lista: (estId: number, page = 0, estado?: "ACTIVO" | "CANCELADO") =>
