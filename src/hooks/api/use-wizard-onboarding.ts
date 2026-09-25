@@ -405,6 +405,16 @@ export function useWizardOnboarding() {
   }
 
   /**
+   * Cuando la validación local del formulario bloquea el envío (campo vacío,
+   * CUIT sin forma), nunca se llega a llamar a `mutate` de nuevo: sin este
+   * reset, un error de backend de un intento anterior (ej. CUIT inválido)
+   * queda pegado en pantalla junto al error de campo nuevo.
+   */
+  function limpiarErrorVerificacion() {
+    solicitarVerificacion.reset();
+  }
+
+  /**
    * El dueño puede saltear la verificación y hacerla después: el
    * establecimiento ya existe y ya se puede seguir armando, sólo queda
    * PENDIENTE (invisible en el buscador) hasta que la mande. El banner de
@@ -488,6 +498,7 @@ export function useWizardOnboarding() {
     camposInvalidosVerificacion:
       solicitarVerificacion.error instanceof ApiError ? solicitarVerificacion.error.camposInvalidos : undefined,
     confirmarVerificacion,
+    limpiarErrorVerificacion,
     omitirVerificacion,
 
     // Pantalla de éxito

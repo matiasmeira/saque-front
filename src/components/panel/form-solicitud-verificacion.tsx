@@ -32,6 +32,7 @@ export function FormSolicitudVerificacion({
   deshabilitado,
   motivoDeshabilitado,
   onGuardar,
+  onBloqueoLocal,
 }: {
   datosIniciales?: Partial<DatosSolicitudVerificacion> | null;
   guardando: boolean;
@@ -42,6 +43,15 @@ export function FormSolicitudVerificacion({
   deshabilitado?: boolean;
   motivoDeshabilitado?: string;
   onGuardar: (datos: DatosSolicitudVerificacion) => void;
+  /**
+   * Se dispara cuando la validación LOCAL bloquea el envío (nunca se llega a
+   * llamar a `onGuardar`). El caller lo usa para resetear el estado de error
+   * de su mutation (`mutation.reset()`): sin esto, un error de backend de un
+   * intento anterior (ej. "El CUIT ingresado no es válido") queda pegado en
+   * pantalla junto al error de campo nuevo, porque la mutation nunca se
+   * vuelve a invocar y su estado de error no se limpia solo.
+   */
+  onBloqueoLocal?: () => void;
 }) {
   const [cuit, setCuit] = useState(datosIniciales?.cuit ?? "");
   const [razonSocial, setRazonSocial] = useState(datosIniciales?.razonSocial ?? "");
@@ -63,6 +73,7 @@ export function FormSolicitudVerificacion({
     const errores = validarSolicitudVerificacion(datos);
     if (Object.keys(errores).length > 0) {
       setErroresLocales(errores);
+      onBloqueoLocal?.();
       return;
     }
     setErroresLocales({});

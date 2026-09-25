@@ -35,6 +35,7 @@ export function PasoCobros({
   onAtras,
   onSolicitarVerificacion,
   onOmitirVerificacion,
+  onLimpiarErrorVerificacion,
 }: {
   requiereSena: boolean;
   estadoMercadoPago: EstadoMercadoPagoResponse | null;
@@ -48,6 +49,7 @@ export function PasoCobros({
   onAtras: () => void;
   onSolicitarVerificacion: (datos: DatosSolicitudVerificacion) => void;
   onOmitirVerificacion: () => void;
+  onLimpiarErrorVerificacion: () => void;
 }) {
   const conectado = estadoMercadoPago?.conectado ?? false;
   const bloqueadoPorSena = requiereSena && !conectado;
@@ -133,6 +135,7 @@ export function PasoCobros({
           deshabilitado={bloqueadoPorSena}
           motivoDeshabilitado={bloqueadoPorSena ? "Conectá Mercado Pago para poder enviar la verificación." : undefined}
           onGuardar={onSolicitarVerificacion}
+          onBloqueoLocal={onLimpiarErrorVerificacion}
         />
 
         <button

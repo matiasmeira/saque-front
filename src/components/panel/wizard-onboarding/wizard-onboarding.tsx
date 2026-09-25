@@ -185,6 +185,7 @@ export function WizardOnboarding() {
             onAtras={wizard.volverATarifas}
             onSolicitarVerificacion={wizard.confirmarVerificacion}
             onOmitirVerificacion={wizard.omitirVerificacion}
+            onLimpiarErrorVerificacion={wizard.limpiarErrorVerificacion}
           />
         )}
       </div>
