@@ -205,6 +205,15 @@ export default function PanelConfiguracion() {
     if (!bloqueadoPorCaja && !perfilPendiente && rol === "empleado") router.replace("/panel/agenda");
   }, [bloqueadoPorCaja, perfilPendiente, rol, router]);
 
+  // Sin esto, el tilde de "Guardado." o el banner de error de un complejo
+  // quedan pegados al cambiar de establecimiento con el selector (sin
+  // navegar): son estado de esta página, no de los formularios, y nada más
+  // los limpiaba.
+  useEffect(() => {
+    setGuardado(null);
+    setErrorAccion(null);
+  }, [establecimientoId]);
+
   if (bloqueadoPorCaja || rol === "empleado") return <div className="min-h-dvh bg-humo" />;
 
   function guardarDatos(datos: DatosEstablecimiento) {
@@ -251,8 +260,21 @@ export default function PanelConfiguracion() {
 
           {establecimiento && (
             <div className="space-y-6">
+              {/*
+                key={establecimiento.id} en Datos/Horarios/Servicios: los tres
+                siembran su estado con useState(prop) UNA sola vez, al montar.
+                Sin key, cambiar de complejo con el selector (sin salir de esta
+                pantalla) no los desmonta, y quedan mostrando el complejo
+                anterior mientras el resto de la pantalla ya cambió. El key
+                fuerza el remount y por lo tanto el reseed.
+                Fotos, Días no laborables y Política de cancelación NO lo
+                necesitan: reciben sólo establecimientoId y hacen su propio
+                useQuery con ese id en la key, así que un cambio de complejo ya
+                les dispara un refetch solo, sin ayuda.
+              */}
               <Seccion icono={Building2} titulo="Datos del complejo" descripcion="Nombre, dirección y ubicación con la que aparecés en el marketplace.">
                 <FormDatosComplejo
+                  key={establecimiento.id}
                   establecimiento={establecimiento}
                   plan={perfil?.planSuscripcion}
                   guardando={guardandoSeccion === "datos"}
@@ -274,6 +296,7 @@ export default function PanelConfiguracion() {
                       error={errorVerificacion}
                       camposInvalidos={camposInvalidosVerificacion}
                       onGuardar={enviarVerificacion}
+                      onBloqueoLocal={() => solicitarVerificacion.reset()}
                     />
                   )}
 
@@ -302,6 +325,7 @@ export default function PanelConfiguracion() {
                         error={errorVerificacion}
                         camposInvalidos={camposInvalidosVerificacion}
                         onGuardar={enviarVerificacion}
+                        onBloqueoLocal={() => solicitarVerificacion.reset()}
                       />
                     </div>
                   )}
@@ -317,6 +341,7 @@ export default function PanelConfiguracion() {
 
               <Seccion icono={Clock} titulo="Horarios de atención" descripcion="Alimentan la disponibilidad y el % de ocupación de Reportes.">
                 <FormHorariosAtencion
+                  key={establecimiento.id}
                   horarios={establecimiento.horariosAtencion}
                   guardando={guardandoSeccion === "horarios"}
                   onGuardar={guardarHorarios}
@@ -334,6 +359,7 @@ export default function PanelConfiguracion() {
 
               <Seccion icono={Sparkles} titulo="Servicios" descripcion="Lo que el jugador ve en la ficha del complejo: parrilla, duchas, estacionamiento.">
                 <FormServicios
+                  key={establecimiento.id}
                   servicios={establecimiento.servicios}
                   guardando={guardandoSeccion === "servicios"}
                   onGuardar={guardarServicios}
