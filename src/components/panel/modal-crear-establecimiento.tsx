@@ -30,15 +30,12 @@ const MENSAJE_LIMITE = "Ya alcanzaste el máximo de 3 establecimientos.";
  * backend (fuente de verdad) igual corre si de algún modo se manda el POST,
  * pero acá se evita el viaje de ida y vuelta la mayoría de las veces.
  *
- * OJO: este pre-chequeo local cuenta `misEstablecimientos` (= GET
- * /establecimientos, que trae sólo `isActive=true` — ver
- * EstablecimientoService.obtenerMisEstablecimientos), mientras que el límite
- * real del backend cuenta TODOS los no eliminados (`countByDuenoIdAndDeletedAtIsNull`),
- * deshabilitados incluidos: deshabilitar un establecimiento no libera cupo,
- * sólo eliminarlo lo hace. Hoy da lo mismo porque el front no tiene forma de
- * deshabilitar un complejo, pero el día que exista esa función (fuera de
- * alcance acá) este pre-chequeo va a quedar corto — el backend lo va a
- * rechazar igual, sólo se pierde el ahorro del viaje de ida y vuelta.
+ * `misEstablecimientos` (= GET /establecimientos) ahora trae TODOS los del
+ * dueño no eliminados, deshabilitados incluidos (ver
+ * EstablecimientoService.obtenerMisEstablecimientos en el backend) -- así que
+ * este pre-chequeo local queda alineado con el límite real
+ * (`countByDuenoIdAndDeletedAtIsNull`): deshabilitar un establecimiento sigue
+ * sin liberar cupo, y `misEstablecimientos.length` ya lo refleja sin ayuda.
  */
 export function ModalCrearEstablecimiento({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();
@@ -71,7 +68,10 @@ export function ModalCrearEstablecimiento({ onClose }: { onClose: () => void }) 
         <div className="flex flex-col items-center gap-3 rounded-input bg-humo p-5 text-center">
           <AlertTriangle className="size-6 text-cancelado" aria-hidden />
           <p className="text-sm font-semibold text-tinta">{MENSAJE_LIMITE}</p>
-          <p className="text-xs text-grafito">Para dar de alta uno nuevo, primero tenés que dar de baja alguno existente.</p>
+          <p className="text-xs text-grafito">
+            Para crear uno nuevo, eliminá alguno existente — deshabilitarlo no libera cupo. Se elimina desde la Zona de riesgo, en
+            Configuración de ese complejo.
+          </p>
         </div>
       ) : (
         <>

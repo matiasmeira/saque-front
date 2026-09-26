@@ -76,7 +76,16 @@ export function HeaderPanel({
               Sin horarios cargados · no aparecés en las búsquedas
             </Link>
           )}
-          {estadoVisible === "despublicado" && (
+          {estadoVisible === "despublicado" && esDueno && (
+            <Link
+              href="/panel/configuracion#zona-de-riesgo"
+              className="inline-flex items-center gap-1.5 rounded-full bg-cancelado-suave px-3 py-1.5 text-xs font-semibold text-cancelado hover:underline"
+            >
+              <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
+              Complejo despublicado · rehabilitar
+            </Link>
+          )}
+          {estadoVisible === "despublicado" && !esDueno && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-cancelado-suave px-3 py-1.5 text-xs font-semibold text-cancelado">
               <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
               Complejo despublicado

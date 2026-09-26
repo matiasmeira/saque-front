@@ -46,7 +46,11 @@ export default function PrevisualizacionEstablecimientoAdmin({ params }: { param
     );
   }
 
-  const complejo = consulta.data;
+  // consulta.data es PrevisualizacionEstablecimientoResponse, no la ficha
+  // plana: viene envuelta en `detalle` (ver tipos/establecimientos.ts). Antes
+  // de este unwrap esta pantalla nunca había abierto en el navegador y
+  // renderizaba con todos los campos de complejo `undefined`.
+  const complejo = consulta.data.detalle;
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${complejo.latitud},${complejo.longitud}`;
 
   return (

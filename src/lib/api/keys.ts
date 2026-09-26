@@ -30,6 +30,8 @@ export const keys = {
     fotos: (estId: number) => ["establecimientos", estId, "fotos"] as const,
     politicaCancelacion: (estId: number) => ["establecimientos", estId, "politica-cancelacion"] as const,
     mercadopago: (estId: number) => ["establecimientos", estId, "mercadopago"] as const,
+    /** Namespace del dueño -- no confundir con adminEstablecimientos.previsualizacion (moderación). */
+    previsualizacion: (estId: number) => ["establecimientos", estId, "previsualizacion"] as const,
   },
 
   publico: {

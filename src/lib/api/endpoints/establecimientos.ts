@@ -2,9 +2,10 @@ import { apiFetch, subirArchivo } from "../cliente";
 import { construirQuery } from "../query";
 import type { EstadoVerificacionEstablecimiento, Page } from "../tipos/comunes";
 import type { DisponibilidadEstablecimientoResponse } from "../tipos/disponibilidad";
-import type { ComplejoDetalleResponse } from "../tipos/publico";
 import type {
   ActualizarPoliticaCancelacionRequest,
+  CambiarEstadoEstablecimientoRequest,
+  CambiarEstadoEstablecimientoResponse,
   DiaNoLaborableRequest,
   DiaNoLaborableResponse,
   EstablecimientoAdminItem,
@@ -12,6 +13,7 @@ import type {
   EstablecimientoResponse,
   FotoEstablecimiento,
   PoliticaCancelacionResponse,
+  PrevisualizacionEstablecimientoResponse,
   RechazarEstablecimientoRequest,
   SolicitarVerificacionRequest,
   SolicitarVerificacionResponse,
@@ -114,12 +116,37 @@ export const establecimientos = {
 
   /**
    * La ficha como la vería el público, aunque el establecimiento todavía no
-   * esté VERIFICADO (por eso es por `id` y no por `slug`: uno no verificado
-   * puede no tener slug público todavía). Se asume el mismo shape que
-   * `publico.detalle` — confirmar contra el backend si difiere.
+   * esté VERIFICADO ni isActive (por eso es por `id` y no por `slug`: uno no
+   * verificado puede no tener slug público todavía). NO devuelve el mismo
+   * shape que `publico.detalle`: viene envuelto en `detalle`, junto con
+   * `estadoVerificacion` y la marca `previsualizacion` (ver
+   * PrevisualizacionEstablecimientoResponse). Confirmado contra el backend.
    */
   previsualizacion: (estId: number) =>
-    apiFetch<ComplejoDetalleResponse>(`/api/v1/establecimientos/${estId}/previsualizacion`),
+    apiFetch<PrevisualizacionEstablecimientoResponse>(`/api/v1/establecimientos/${estId}/previsualizacion`),
+
+  /**
+   * Deshabilita o rehabilita el complejo. NO toca estadoVerificacion (son dos
+   * ejes independientes) ni libera cupo del límite de 3 -- para eso hay que
+   * eliminar. La respuesta informa `reservasFuturasConfirmadas`: lo que sigue
+   * vigente después del cambio, compromisos que el dueño ya asumió con
+   * jugadores y tiene que seguir cumpliendo aunque deje de recibir reservas
+   * nuevas.
+   */
+  cambiarEstado: (estId: number, body: CambiarEstadoEstablecimientoRequest) =>
+    apiFetch<CambiarEstadoEstablecimientoResponse>(`/api/v1/establecimientos/${estId}/estado`, {
+      method: "PATCH",
+      body,
+    }),
+
+  /**
+   * Baja definitiva. 204 sin body. Dos precondiciones, ambas 400 con un
+   * mensaje del backend que ya trae todo lo necesario (cantidad y fecha de
+   * las reservas futuras, en el segundo caso) -- mostrarlo tal cual con
+   * `mensajeVisible`, no reconstruirlo acá. Libera el slug y el cupo del
+   * límite de 3; es irreversible, no hay endpoint de restauración.
+   */
+  eliminar: (estId: number) => apiFetch<void>(`/api/v1/establecimientos/${estId}`, { method: "DELETE" }),
 };
 
 /**

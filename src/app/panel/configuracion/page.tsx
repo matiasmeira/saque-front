@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { AlertTriangle, Building2, CalendarClock, CalendarOff, Check, ChevronRight, Clock, Images, Plus, Shield, ShieldCheck, Smartphone, Sparkles, Users, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowRight, Ban, Building2, CalendarClock, CalendarOff, Check, ChevronRight, Clock, Images, Plus, RotateCcw, Shield, ShieldAlert, ShieldCheck, Smartphone, Sparkles, Trash2, Users, Wallet } from "lucide-react";
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
 import { FormDatosComplejo, type DatosEstablecimiento } from "@/components/panel/form-datos-complejo";
@@ -15,6 +15,7 @@ import { SeccionDiasNoLaborables } from "@/components/panel/seccion-dias-no-labo
 import { SeccionPoliticaCancelacion } from "@/components/panel/seccion-politica-cancelacion";
 import { TablaDispositivos } from "@/components/panel/tabla-dispositivos";
 import { GenerarLinkCaja } from "@/components/panel/generar-link-caja";
+import { ModalCrearEstablecimiento } from "@/components/panel/modal-crear-establecimiento";
 import { SkeletonConfig } from "@/components/panel/skeleton-config";
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,8 +27,9 @@ import { invalidarDisponibilidad } from "@/lib/api/invalidaciones";
 import { borrarToken } from "@/lib/api/sesion";
 import { usePerfil, useEstablecimientoActivo } from "@/hooks/api/use-perfil";
 import { useSolicitarVerificacion } from "@/hooks/api/use-verificacion-establecimiento";
+import { useCambiarEstadoEstablecimiento, useEliminarEstablecimiento } from "@/hooks/api/use-establecimiento-riesgo";
 import type { DispositivoCajaResponse } from "@/lib/api/tipos/caja";
-import type { EstablecimientoRequest } from "@/lib/api/tipos/establecimientos";
+import type { EstablecimientoRequest, EstablecimientoResponse } from "@/lib/api/tipos/establecimientos";
 import type { HorarioAtencionDto, Servicio } from "@/lib/api/tipos/comunes";
 import type { DatosSolicitudVerificacion } from "@/lib/panel/verificacion";
 import { useRolPanel } from "@/lib/rol-panel";
@@ -102,6 +104,7 @@ export default function PanelConfiguracion() {
   const [guardado, setGuardado] = useState<SeccionGuardable | null>(null);
   const [dispositivoARevocar, setDispositivoARevocar] = useState<DispositivoCajaResponse | null>(null);
   const [confirmandoActivarCaja, setConfirmandoActivarCaja] = useState(false);
+  const [creandoComplejo, setCreandoComplejo] = useState(false);
 
   // "Emparejado acá" es una marca local: la cookie saque_caja_device es HttpOnly
   // y el JS no puede leerla, así que este navegador no puede saber por sí mismo
@@ -255,6 +258,14 @@ export default function PanelConfiguracion() {
               <p className="max-w-sm text-sm text-grafito">
                 No encontramos ningún complejo asociado a tu cuenta.
               </p>
+              <button
+                type="button"
+                onClick={() => setCreandoComplejo(true)}
+                className="mt-2 flex h-11 items-center gap-2 rounded-full bg-azul px-5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
+              >
+                <Plus className="size-4" aria-hidden />
+                Crear tu primer complejo
+              </button>
             </div>
           )}
 
@@ -445,10 +456,14 @@ export default function PanelConfiguracion() {
                 </div>
                 <ChevronRight className="size-5 shrink-0 text-grafito" aria-hidden />
               </Link>
+
+              <ZonaDeRiesgo key={establecimiento.id} establecimiento={establecimiento} />
             </div>
           )}
         </main>
       </div>
+
+      {creandoComplejo && <ModalCrearEstablecimiento onClose={() => setCreandoComplejo(false)} />}
 
       {generarCodigo.data && (
         <ModalPanel
@@ -526,5 +541,224 @@ function Guardado() {
       <Check className="size-4 shrink-0" aria-hidden />
       Guardado.
     </p>
+  );
+}
+
+/**
+ * Deshabilitar, rehabilitar y eliminar el complejo. Separada del resto de
+ * Configuración a propósito, con deshabilitar arriba y eliminar abajo: el
+ * orden importa porque eliminar exige que ya esté deshabilitado.
+ *
+ * `key={establecimiento.id}` en el lugar donde se monta (más arriba en este
+ * archivo) reinicia todo el estado local de acá -- confirmaciones abiertas,
+ * el aviso de reservas tras deshabilitar -- al cambiar de complejo con el
+ * selector, mismo patrón que usan Datos/Horarios/Servicios.
+ */
+function ZonaDeRiesgo({ establecimiento }: { establecimiento: EstablecimientoResponse }) {
+  const [confirmandoDeshabilitar, setConfirmandoDeshabilitar] = useState(false);
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
+  const [nombreTipeado, setNombreTipeado] = useState("");
+  const [reservasTrasDeshabilitar, setReservasTrasDeshabilitar] = useState<number | null>(null);
+
+  const cambiarEstado = useCambiarEstadoEstablecimiento();
+  const eliminar = useEliminarEstablecimiento();
+
+  const errorEstado =
+    cambiarEstado.error instanceof ApiError
+      ? mensajeVisible(cambiarEstado.error)
+      : cambiarEstado.isError
+        ? "No pudimos actualizar el estado."
+        : null;
+  const errorEliminar =
+    eliminar.error instanceof ApiError ? mensajeVisible(eliminar.error) : eliminar.isError ? "No pudimos eliminar el complejo." : null;
+  // Heurístico: el botón de eliminar ya queda disabled mientras el complejo
+  // está habilitado, así que el único 400 que puede llegar acá de verdad es
+  // el de reservas futuras. Si el texto del backend cambia, esto deja de
+  // detectarlo y sólo se pierde el link directo a la agenda -- el mensaje
+  // del backend se sigue mostrando igual.
+  const errorPorReservasFuturas = eliminar.error instanceof ApiError && /reserva/i.test(eliminar.error.mensaje);
+
+  function cerrarModalEliminar() {
+    setConfirmandoEliminar(false);
+    setNombreTipeado("");
+    eliminar.reset();
+  }
+
+  return (
+    <section id="zona-de-riesgo" className="rounded-card border-2 border-cancelado/25 bg-white p-6 shadow-card">
+      <div className="mb-4 flex items-start gap-2.5">
+        <ShieldAlert className="mt-0.5 size-5 shrink-0 text-cancelado" aria-hidden />
+        <div>
+          <h2 className="font-display text-lg font-bold text-cancelado">Zona de riesgo</h2>
+          <p className="text-sm text-grafito">Dejá de aparecer en el buscador, o eliminá el complejo para siempre.</p>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-input bg-humo p-4">
+          <div className="min-w-0">
+            <p className="font-semibold text-tinta">{establecimiento.isActive ? "Deshabilitar" : "Complejo deshabilitado"}</p>
+            <p className="mt-0.5 text-sm text-grafito">
+              {establecimiento.isActive
+                ? "Dejás de aparecer en el buscador y de recibir reservas nuevas. Las reservas que ya tenés se respetan: las seguís administrando en la agenda. No libera cupo del límite de 3 complejos."
+                : "No aparece en el buscador ni recibe reservas nuevas. Rehabilitalo cuando quieras, es inmediato."}
+            </p>
+            {reservasTrasDeshabilitar !== null && (
+              <p className="mt-2 text-sm font-semibold text-tinta">
+                {reservasTrasDeshabilitar > 0
+                  ? `Quedan ${reservasTrasDeshabilitar} reserva(s) futura(s) confirmada(s) vigentes: son compromisos que ya asumiste, seguí cumpliéndolos desde la agenda.`
+                  : "No te quedan reservas futuras confirmadas pendientes."}
+              </p>
+            )}
+          </div>
+          {establecimiento.isActive ? (
+            <button
+              type="button"
+              onClick={() => setConfirmandoDeshabilitar(true)}
+              className="flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-cancelado px-4 font-display text-sm font-bold text-cancelado transition-colors hover:bg-cancelado hover:text-white focus:outline-none focus:ring-2 focus:ring-celeste"
+            >
+              <Ban className="size-4" aria-hidden />
+              Deshabilitar
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => cambiarEstado.mutate({ estId: establecimiento.id, activo: true })}
+              disabled={cambiarEstado.isPending}
+              className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste disabled:opacity-60"
+            >
+              <RotateCcw className="size-4" aria-hidden />
+              {cambiarEstado.isPending ? "Rehabilitando..." : "Rehabilitar"}
+            </button>
+          )}
+        </div>
+
+        {errorEstado && !confirmandoDeshabilitar && (
+          <p role="alert" className="text-sm text-cancelado">
+            {errorEstado}
+          </p>
+        )}
+
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-input bg-cancelado-suave/50 p-4">
+          <div className="min-w-0">
+            <p className="font-semibold text-tinta">Eliminar complejo</p>
+            <p className="mt-0.5 text-sm text-grafito">
+              Definitivo: el complejo desaparece de tu panel y el slug queda libre para otro. Se conservan las reservas históricas y los registros
+              asociados.
+            </p>
+            {establecimiento.isActive && <p className="mt-1.5 text-sm font-semibold text-cancelado">Primero tenés que deshabilitarlo.</p>}
+          </div>
+          <button
+            type="button"
+            onClick={() => setConfirmandoEliminar(true)}
+            disabled={establecimiento.isActive}
+            title={establecimiento.isActive ? "Deshabilitalo primero para poder eliminarlo" : undefined}
+            className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-cancelado px-4 font-display text-sm font-bold text-white transition-colors hover:bg-cancelado/90 focus:outline-none focus:ring-2 focus:ring-celeste disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Trash2 className="size-4" aria-hidden />
+            Eliminar
+          </button>
+        </div>
+      </div>
+
+      {confirmandoDeshabilitar && (
+        <ModalPanel titulo="Deshabilitar complejo" subtitulo={establecimiento.nombre} onClose={() => setConfirmandoDeshabilitar(false)}>
+          <div className="space-y-4">
+            <ul className="list-disc space-y-1.5 pl-5 text-sm text-tinta">
+              <li>Dejás de aparecer en el buscador de jugadores.</li>
+              <li>No podés recibir reservas nuevas.</li>
+              <li>Las reservas que ya existen se respetan: las seguís viendo y administrando en la agenda.</li>
+              <li>NO libera cupo del límite de 3 complejos — para eso hay que eliminarlo.</li>
+            </ul>
+            {errorEstado && (
+              <p role="alert" className="text-sm text-cancelado">
+                {errorEstado}
+              </p>
+            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmandoDeshabilitar(false)}
+                className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  cambiarEstado.mutate(
+                    { estId: establecimiento.id, activo: false },
+                    {
+                      onSuccess: (respuesta) => {
+                        setReservasTrasDeshabilitar(respuesta.reservasFuturasConfirmadas);
+                        setConfirmandoDeshabilitar(false);
+                      },
+                    },
+                  )
+                }
+                disabled={cambiarEstado.isPending}
+                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-cancelado font-display text-sm font-bold text-white transition-colors hover:bg-cancelado/90 focus:outline-none focus:ring-2 focus:ring-celeste disabled:opacity-60"
+              >
+                <Ban className="size-4" aria-hidden />
+                {cambiarEstado.isPending ? "Deshabilitando..." : "Deshabilitar"}
+              </button>
+            </div>
+          </div>
+        </ModalPanel>
+      )}
+
+      {confirmandoEliminar && (
+        <ModalPanel titulo="Eliminar complejo" subtitulo="Esta acción no se puede deshacer" onClose={cerrarModalEliminar}>
+          <div className="space-y-4">
+            <p className="text-sm text-tinta">
+              Vas a eliminar <span className="font-semibold">{establecimiento.nombre}</span> para siempre. Desaparece de tu panel y el slug queda
+              libre para otro complejo. Se conservan las reservas históricas y los registros asociados.
+            </p>
+            <div>
+              <label htmlFor="confirmar-nombre-eliminar" className="mb-1 block text-xs font-semibold text-grafito">
+                Escribí <span className="font-semibold text-tinta">{establecimiento.nombre}</span> para confirmar
+              </label>
+              <input
+                id="confirmar-nombre-eliminar"
+                autoFocus
+                autoComplete="off"
+                value={nombreTipeado}
+                onChange={(e) => setNombreTipeado(e.target.value)}
+                className="w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
+              />
+            </div>
+            {errorEliminar && (
+              <div role="alert" className="space-y-1.5 text-sm text-cancelado">
+                <p>{errorEliminar}</p>
+                {errorPorReservasFuturas && (
+                  <Link href="/panel/agenda" className="inline-flex items-center gap-1 font-semibold hover:underline">
+                    Ir a la agenda
+                    <ArrowRight className="size-3.5" aria-hidden />
+                  </Link>
+                )}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={cerrarModalEliminar}
+                className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => eliminar.mutate(establecimiento.id)}
+                disabled={nombreTipeado.trim() !== establecimiento.nombre || eliminar.isPending}
+                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-cancelado font-display text-sm font-bold text-white transition-colors hover:bg-cancelado/90 focus:outline-none focus:ring-2 focus:ring-celeste disabled:opacity-60"
+              >
+                <Trash2 className="size-4" aria-hidden />
+                {eliminar.isPending ? "Eliminando..." : "Eliminar definitivamente"}
+              </button>
+            </div>
+          </div>
+        </ModalPanel>
+      )}
+    </section>
   );
 }

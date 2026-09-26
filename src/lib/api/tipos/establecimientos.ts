@@ -4,6 +4,7 @@ import type {
   HorarioAtencionDto,
   Servicio,
 } from "./comunes";
+import type { ComplejoDetalleResponse } from "./publico";
 
 /**
  * EstablecimientoRequest / EstablecimientoResponse.
@@ -172,4 +173,40 @@ export type EstablecimientoAdminItem = {
 
 export type RechazarEstablecimientoRequest = {
   motivo: string;
+};
+
+// ---------------------------------------------------------------------------
+// EstablecimientoController — previsualización / deshabilitar / eliminar
+// (dueño y, sólo la previsualización, también ADMIN)
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /establecimientos/{id}/previsualizacion. NO es el mismo shape que
+ * `publico.detalle` (ComplejoDetalleResponse a secas): el back lo envuelve en
+ * `detalle` y le agrega dos campos. Funciona sin importar isActive ni
+ * estadoVerificacion — por eso trae `estadoVerificacion` acá, para poder
+ * explicar en la UI por qué el público todavía no ve esta ficha.
+ */
+export type PrevisualizacionEstablecimientoResponse = {
+  detalle: ComplejoDetalleResponse;
+  estadoVerificacion: EstadoVerificacionEstablecimiento;
+  /** Siempre `true`. Marca de que este payload no es el que ve el público. */
+  previsualizacion: boolean;
+};
+
+/** Body de PATCH /establecimientos/{id}/estado. No toca estadoVerificacion. */
+export type CambiarEstadoEstablecimientoRequest = {
+  activo: boolean;
+};
+
+/**
+ * Respuesta del PATCH de estado. `reservasFuturasConfirmadas` es lo que sigue
+ * vigente después del cambio (compromisos ya asumidos con jugadores): sólo
+ * importa mostrarlo al deshabilitar, no al rehabilitar.
+ */
+export type CambiarEstadoEstablecimientoResponse = {
+  id: number;
+  isActive: boolean;
+  estadoVerificacion: EstadoVerificacionEstablecimiento;
+  reservasFuturasConfirmadas: number;
 };
