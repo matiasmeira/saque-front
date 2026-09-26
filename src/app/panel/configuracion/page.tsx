@@ -208,13 +208,16 @@ export default function PanelConfiguracion() {
     if (!bloqueadoPorCaja && !perfilPendiente && rol === "empleado") router.replace("/panel/agenda");
   }, [bloqueadoPorCaja, perfilPendiente, rol, router]);
 
-  // Sin esto, el tilde de "Guardado." o el banner de error de un complejo
-  // quedan pegados al cambiar de establecimiento con el selector (sin
-  // navegar): son estado de esta página, no de los formularios, y nada más
-  // los limpiaba.
+  // Sin esto, el tilde de "Guardado.", el banner de error de un complejo o el
+  // error de la solicitud de verificación quedan pegados al cambiar de
+  // establecimiento con el selector (sin navegar): son estado de esta página
+  // (o, en el caso de la verificación, de una mutación única para toda la
+  // página) y no de los formularios, y nada más los limpiaba.
   useEffect(() => {
     setGuardado(null);
     setErrorAccion(null);
+    solicitarVerificacion.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [establecimientoId]);
 
   if (bloqueadoPorCaja || rol === "empleado") return <div className="min-h-dvh bg-humo" />;
