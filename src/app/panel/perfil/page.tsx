@@ -14,9 +14,9 @@ import { VerificacionTelefono } from "@/components/perfil/verificacion-telefono"
 import { PLANES, ROLES } from "@/components/perfil/etiquetas";
 import { usuarios } from "@/lib/api/endpoints/auth";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
-import { borrarToken, hayToken } from "@/lib/api/sesion";
+import { borrarToken } from "@/lib/api/sesion";
 import { usePerfil } from "@/hooks/api/use-perfil";
-import { useHaySesion } from "@/hooks/api/use-sesion";
+import { useHaySesion, useRedirigirSiSinSesion } from "@/hooks/api/use-sesion";
 import type { PerfilResponse } from "@/lib/api/tipos/auth";
 
 /**
@@ -31,17 +31,10 @@ export default function PanelPerfil() {
   const { data: perfil, isPending, isError, error, refetch } = usePerfil();
   const [cuentaEliminada, setCuentaEliminada] = useState(false);
 
-  // Lee hayToken() en vez de confiar en el haySesion cerrado del render que
-  // disparó el efecto: en una navegación dura, useSyncExternalStore rinde
-  // false en el primer commit post-hidratación (getServerSnapshot) y recién
-  // se corrige en un render posterior — si el efecto confiara en ese false
-  // transitorio, redirigiría a /ingresar a una sesión real.
-  // cuentaEliminada gana sobre eso: borrar la cuenta también borra el token,
-  // y sin este chequeo el mismo efecto nos mandaría a /ingresar antes de
-  // mostrar el cartel de confirmación.
-  useEffect(() => {
-    if (!hayToken() && !cuentaEliminada) router.replace("/ingresar");
-  }, [haySesion, cuentaEliminada, router]);
+  // Borrar la cuenta también borra el token: sin exceptuar este caso, el
+  // redirect dispararía antes de que se llegue a mostrar el cartel de
+  // "Cuenta eliminada" de acá abajo.
+  useRedirigirSiSinSesion("/ingresar", cuentaEliminada);
 
   useEffect(() => {
     if (!cuentaEliminada) return;

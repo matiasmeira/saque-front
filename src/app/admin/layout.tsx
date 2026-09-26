@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { ShieldAlert } from "lucide-react";
 import { HeaderMinimo } from "@/components/canche/header-minimo";
 import { usePerfil } from "@/hooks/api/use-perfil";
-import { useHaySesion } from "@/hooks/api/use-sesion";
-import { hayToken } from "@/lib/api/sesion";
+import { useHaySesion, useRedirigirSiSinSesion } from "@/hooks/api/use-sesion";
 
 const LINKS = [
   { href: "/admin/establecimientos", label: "Establecimientos" },
@@ -27,19 +26,11 @@ const LINKS = [
  * al panel. El único redirect que queda es por falta de sesión.
  */
 export default function AdminLayout({ children }: { children: ReactNode }) {
-  const router = useRouter();
   const pathname = usePathname();
   const haySesion = useHaySesion();
   const { data: perfil, isPending } = usePerfil();
 
-  // Lee hayToken() adentro del efecto en vez de confiar en haySesion (que sólo
-  // dispara el efecto): useSyncExternalStore rinde false en el primer commit
-  // post-hidratación, y confiar en ese false transitorio expulsaría una
-  // sesión real. Mismo patrón que guard-sesion-panel.tsx.
-  useEffect(() => {
-    if (hayToken()) return;
-    router.replace("/ingresar");
-  }, [haySesion, router]);
+  useRedirigirSiSinSesion("/ingresar");
 
   if (!haySesion || (isPending && !perfil)) return <div className="min-h-dvh bg-humo" />;
 

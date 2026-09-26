@@ -1,6 +1,7 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
 
 import { hayToken, suscribirseToken } from "@/lib/api/sesion";
 
@@ -17,4 +18,29 @@ import { hayToken, suscribirseToken } from "@/lib/api/sesion";
  */
 export function useHaySesion(): boolean {
   return useSyncExternalStore(suscribirseToken, hayToken, () => false);
+}
+
+/**
+ * Redirige a `destino` si no hay sesión. Pensado para un efecto que corre en
+ * toda una pantalla/layout: en una carga dura (F5, URL directa, entrar por
+ * link externo) useSyncExternalStore — y por lo tanto useHaySesion() — rinde
+ * `false` en el primer commit post-hidratación (getServerSnapshot) y recién
+ * se corrige en un render posterior. Si el efecto decidiera con ese `false`
+ * transitorio, expulsaría una sesión real. Por eso vuelve a leer hayToken()
+ * DENTRO del efecto (valor fresco) y usa haySesion solo como disparador —
+ * no "simplificar" esto reemplazándolo por haySesion directo.
+ *
+ * `exceptuar`: cuando es true, este render no redirige aunque no haya sesión.
+ * El caller decide el motivo (un pathname puntual, un estado local
+ * transitorio, etc.) — el hook no sabe nada de esos casos.
+ */
+export function useRedirigirSiSinSesion(destino: string, exceptuar = false): void {
+  const router = useRouter();
+  const haySesion = useHaySesion();
+
+  useEffect(() => {
+    if (exceptuar) return;
+    if (hayToken()) return;
+    router.replace(destino);
+  }, [haySesion, exceptuar, destino, router]);
 }
