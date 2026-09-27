@@ -119,3 +119,20 @@ export function useEmpleadoIdSesion(): string | null {
     () => null,
   );
 }
+
+/**
+ * A dónde mandar a alguien que se quedó sin sesión (logout manual o JWT
+ * vencido): al kiosco solo si la sesión que se perdió era la de un empleado
+ * logueado por PIN en este mostrador; al login en cualquier otro caso.
+ *
+ * A propósito NO mira `useEmparejado()`. Esa marca es de nivel DISPOSITIVO
+ * (esta PC alguna vez canjeó un link de emparejamiento o se activó como caja)
+ * y no se borra nunca — ver el comentario de `CLAVE_EMPAREJADO` arriba. Un
+ * dueño que alguna vez usó este mismo navegador para emparejarlo, o que entra
+ * como dueño desde el link "Ingresar como dueño" de /caja, no deja de ser
+ * dueño por eso: lo único que importa es si HAY una sesión de empleado activa
+ * en esta pestaña ahora mismo.
+ */
+export function destinoSinSesion(empleadoIdSesion: string | null): "/caja" | "/ingresar" {
+  return empleadoIdSesion ? "/caja" : "/ingresar";
+}

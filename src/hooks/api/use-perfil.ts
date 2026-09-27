@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/api/errores";
 import { keys } from "@/lib/api/keys";
 import { borrarToken, guardarToken } from "@/lib/api/sesion";
 import { useHaySesion } from "@/hooks/api/use-sesion";
+import { cerrarSesionEmpleado } from "@/lib/sesion-caja";
 import { guardarEstablecimientoSeleccionado, useEstablecimientoSeleccionado } from "@/lib/establecimiento-seleccionado";
 import type { AuthRequest, PerfilResponse } from "@/lib/api/tipos/auth";
 import type { EstablecimientoResponse } from "@/lib/api/tipos/establecimientos";
@@ -103,6 +104,13 @@ export function useLogin() {
     mutationFn: async (credenciales) => {
       const { token } = await auth.login(credenciales);
       guardarToken(token);
+      // Si esta pestaña venía de una sesión de empleado por PIN cuyo JWT de 15
+      // min venció solo (eso no limpia sessionStorage — solo "Salir / cambiar
+      // de empleado" lo hace), un dueño logueándose acá encima no puede quedar
+      // marcado como "hay un empleado en este mostrador": eso es lo que usa
+      // destinoSinSesion para decidir a dónde mandarlo el día que ESTA sesión
+      // de dueño se pierda.
+      cerrarSesionEmpleado();
       // Se pide el perfil dentro de la mutacion para que quien llame sepa el
       // rol al resolver, y pueda decidir a donde redirigir sin un render extra.
       return usuarios.me();

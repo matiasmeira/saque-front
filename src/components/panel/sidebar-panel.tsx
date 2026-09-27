@@ -10,7 +10,7 @@ import { PERMISOS_DE_AGENDA } from "@/lib/permisos-empleado";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePerfil, useLogout } from "@/hooks/api/use-perfil";
 import { borrarToken } from "@/lib/api/sesion";
-import { cerrarSesionEmpleado, useEmparejado, useEmpleadoIdSesion } from "@/lib/sesion-caja";
+import { cerrarSesionEmpleado, destinoSinSesion, useEmpleadoIdSesion } from "@/lib/sesion-caja";
 import type { PermisoEmpleado } from "@/lib/api/tipos/comunes";
 
 type Item = { href: string; label: string; icono: typeof Calendar; visible: (tienePermiso: (p: PermisoEmpleado) => boolean, esDueno: boolean) => boolean };
@@ -95,7 +95,6 @@ export function SidebarPanel() {
   const rol = useRolPanel();
   const tienePermiso = usePermisos();
   const empleadoIdSesion = useEmpleadoIdSesion();
-  const emparejado = useEmparejado();
   const { data: perfil } = usePerfil();
   const queryClient = useQueryClient();
   const logout = useLogout();
@@ -120,13 +119,19 @@ export function SidebarPanel() {
 
   /**
    * Logout real de dueño: a diferencia de salirDeLaCaja, sí llama a
-   * POST /auth/logout (invalida el JWT en el server). El destino depende de si
-   * ESTA PC quedó emparejada como caja — nunca se toca el emparejamiento acá,
-   * solo se lee.
+   * POST /auth/logout (invalida el JWT en el server). El destino sale de
+   * destinoSinSesion; acá empleadoIdSesion ya es null siempre (este botón solo
+   * se renderiza para dueño/admin), así que en la práctica siempre manda a
+   * /ingresar. cerrarSesionEmpleado() es un cinturón extra: si esta pestaña
+   * arrastraba la marca de una sesión de empleado anterior (su PIN expira
+   * solo, sin limpiar sessionStorage) que por lo que sea no se limpió al
+   * loguearse como dueño, no queremos dejarla pisada para la próxima vez que
+   * alguien pierda la sesión acá.
    */
   async function cerrarSesionDueno() {
     await logout.mutateAsync().catch(() => {});
-    router.push(emparejado ? "/caja" : "/ingresar");
+    cerrarSesionEmpleado();
+    router.push(destinoSinSesion(empleadoIdSesion));
   }
 
   return (
