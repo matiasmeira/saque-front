@@ -95,11 +95,11 @@ describe("validarPasoPoliticas", () => {
 });
 
 describe("validarPasoCanchas", () => {
-  const cancha = (montoSena: number | null): CanchaResponse => ({
+  const cancha = (montoSena: number | null, isActive = true): CanchaResponse => ({
     id: 1,
     nombre: "Cancha 1",
     deportes: ["PADEL"],
-    isActive: true,
+    isActive,
     establecimientoId: 1,
     precioBase: 1000,
     montoSena,
@@ -132,6 +132,22 @@ describe("validarPasoCanchas", () => {
 
   it("con seña obligatoria y alguna cancha con seña > 0, no hay error", () => {
     expect(validarPasoCanchas([cancha(0), cancha(1500)], true)).toEqual({});
+  });
+
+  it("hay canchas cargadas pero todas inactivas: pide reactivar, no cargar", () => {
+    expect(validarPasoCanchas([cancha(0, false), cancha(1500, false)], false)).toEqual({
+      canchas: "Reactivá al menos una cancha para poder continuar.",
+    });
+  });
+
+  it("con al menos una activa entre inactivas, no hay error de canchas", () => {
+    expect(validarPasoCanchas([cancha(0, false), cancha(0, true)], false)).toEqual({});
+  });
+
+  it("con seña obligatoria, una cancha inactiva con seña no alcanza", () => {
+    expect(validarPasoCanchas([cancha(1500, false), cancha(0, true)], true)).toEqual({
+      sena: "Con seña obligatoria, al menos una cancha necesita un monto de seña mayor a 0.",
+    });
   });
 });
 

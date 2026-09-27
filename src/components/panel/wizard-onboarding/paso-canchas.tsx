@@ -16,25 +16,35 @@ type PanelAbierto = { tipo: "nueva" } | { tipo: "editar"; canchaId: number } | n
 /** Resumen simplificado — no la tabla completa de /panel/canchas: nombre, deportes, precio "desde", estado. */
 function ListaCanchasWizard({
   canchas,
+  cambiandoEstadoCanchaId,
   onEditar,
   onDesactivar,
+  onReactivar,
 }: {
   canchas: Cancha[];
+  cambiandoEstadoCanchaId: number | null;
   onEditar: (cancha: Cancha) => void;
   onDesactivar: (cancha: Cancha) => void;
+  onReactivar: (cancha: Cancha) => void;
 }) {
   return (
     <ul className="space-y-2">
       {canchas.map((c) => {
         const desde = c.preciosBase.length > 0 ? Math.min(...c.preciosBase.map((p) => p.precio)) : null;
+        const cambiandoEsta = cambiandoEstadoCanchaId === c.id;
         return (
-          <li key={c.id} className="flex items-center justify-between gap-3 rounded-input border border-borde p-3">
+          <li
+            key={c.id}
+            className={`flex items-center justify-between gap-3 rounded-input border border-borde p-3 ${
+              c.isActive ? "" : "opacity-60"
+            }`}
+          >
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <p className="truncate text-sm font-semibold text-tinta">{c.nombre}</p>
                 <span
                   className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                    c.isActive ? "bg-disponible-suave text-disponible" : "bg-humo text-grafito"
+                    c.isActive ? "bg-disponible-suave text-disponible" : "bg-ocupado-suave text-grafito"
                   }`}
                 >
                   {c.isActive ? "Activa" : "Inactiva"}
@@ -53,13 +63,24 @@ function ListaCanchasWizard({
               <button type="button" onClick={() => onEditar(c)} className="text-xs font-semibold text-azul hover:underline">
                 Editar
               </button>
-              <button
-                type="button"
-                onClick={() => onDesactivar(c)}
-                className="text-xs font-semibold text-cancelado hover:underline"
-              >
-                Desactivar
-              </button>
+              {c.isActive ? (
+                <button
+                  type="button"
+                  onClick={() => onDesactivar(c)}
+                  className="text-xs font-semibold text-cancelado hover:underline"
+                >
+                  Desactivar
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onReactivar(c)}
+                  disabled={cambiandoEsta}
+                  className="text-xs font-semibold text-azul hover:underline disabled:opacity-60"
+                >
+                  {cambiandoEsta ? "Reactivando..." : "Reactivar"}
+                </button>
+              )}
             </div>
           </li>
         );
@@ -75,12 +96,13 @@ export function PasoCanchas({
   montoSenaDefault,
   bloqueosDeCanchaEnEdicion,
   guardando,
-  desactivando,
+  cambiandoEstadoCanchaId,
   error,
   onAbrirEdicion,
   onCrear,
   onActualizar,
   onDesactivar,
+  onReactivar,
   onAgregarBloqueo,
   onQuitarBloqueo,
   onAtras,
@@ -94,12 +116,13 @@ export function PasoCanchas({
   montoSenaDefault: number;
   bloqueosDeCanchaEnEdicion: Bloqueo[];
   guardando: boolean;
-  desactivando: boolean;
+  cambiandoEstadoCanchaId: number | null;
   error: string | null;
   onAbrirEdicion: (canchaId: number) => void;
   onCrear: (datos: DatosCancha) => void;
   onActualizar: (id: number, datos: DatosCancha) => void;
   onDesactivar: (id: number) => void;
+  onReactivar: (id: number) => void;
   onAgregarBloqueo: (bloqueo: Bloqueo) => void;
   onQuitarBloqueo: (indice: number) => void;
   onAtras: () => void;
@@ -166,7 +189,13 @@ export function PasoCanchas({
           <p className="text-sm font-semibold text-tinta">Todavía no cargaste ninguna cancha</p>
         </div>
       ) : (
-        <ListaCanchasWizard canchas={canchas} onEditar={abrirEdicion} onDesactivar={setADesactivar} />
+        <ListaCanchasWizard
+          canchas={canchas}
+          cambiandoEstadoCanchaId={cambiandoEstadoCanchaId}
+          onEditar={abrirEdicion}
+          onDesactivar={setADesactivar}
+          onReactivar={(cancha) => onReactivar(cancha.id)}
+        />
       )}
 
       {(error || errorGate) && (
@@ -223,8 +252,8 @@ export function PasoCanchas({
       {aDesactivar && (
         <ModalPanel titulo="¿Desactivar esta cancha?" subtitulo={aDesactivar.nombre} onClose={() => setADesactivar(null)}>
           <p className="text-sm text-grafito">
-            Deja de recibir turnos y desaparece de este listado. Se puede reactivar más adelante desde el panel de
-            Canchas.
+            Deja de recibir turnos. Va a seguir viéndose acá, marcada como inactiva, y la podés reactivar cuando
+            quieras.
           </p>
           <div className="mt-6 flex gap-3">
             <button
@@ -240,10 +269,10 @@ export function PasoCanchas({
                 onDesactivar(aDesactivar.id);
                 setADesactivar(null);
               }}
-              disabled={desactivando}
+              disabled={cambiandoEstadoCanchaId === aDesactivar.id}
               className="h-11 flex-1 rounded-full bg-cancelado text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
             >
-              {desactivando ? "Desactivando..." : "Sí, desactivar"}
+              {cambiandoEstadoCanchaId === aDesactivar.id ? "Desactivando..." : "Sí, desactivar"}
             </button>
           </div>
         </ModalPanel>

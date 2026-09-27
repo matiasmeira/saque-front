@@ -170,7 +170,7 @@ export function useWizardOnboarding() {
 
   const [canchas, setCanchas] = useState<CanchaResponse[]>([]);
   const [errorCanchas, setErrorCanchas] = useState<string | null>(null);
-  const [desactivandoCanchaId, setDesactivandoCanchaId] = useState<number | null>(null);
+  const [cambiandoEstadoCanchaId, setCambiandoEstadoCanchaId] = useState<number | null>(null);
   const [canchaEnEdicionId, setCanchaEnEdicionId] = useState<number | null>(null);
   // Cruda, no adaptada: quitarBloqueo necesita el `id` real que el backend
   // asigna, y `Bloqueo` (la forma del panel) no lo trae — se adapta recién
@@ -204,20 +204,30 @@ export function useWizardOnboarding() {
     onError: (e) => setErrorCanchas(e instanceof ApiError ? mensajeVisible(e) : "No pudimos guardar la cancha."),
   });
 
-  const desactivarCanchaMut = useMutation<CambiarEstadoCanchaResponse, ApiError, number>({
-    mutationFn: (canchaId) => {
-      setDesactivandoCanchaId(canchaId);
-      return endpointCanchas.cambiarEstado(establecimientoParcial!.id, canchaId, { activo: false });
+  const cambiarEstadoCanchaMut = useMutation<CambiarEstadoCanchaResponse, ApiError, { id: number; activo: boolean }>({
+    mutationFn: ({ id, activo }) => {
+      setCambiandoEstadoCanchaId(id);
+      return endpointCanchas.cambiarEstado(establecimientoParcial!.id, id, { activo });
     },
-    onSuccess: (_respuesta, canchaId) => {
-      setCanchas((prev) => prev.filter((c) => c.id !== canchaId));
+    onSuccess: (respuesta, { id }) => {
+      // Merge parcial, no reemplazo: la respuesta de este PATCH sólo trae
+      // {id, isActive}, no la cancha completa (a diferencia de guardarCancha).
+      setCanchas((prev) => prev.map((c) => (c.id === id ? { ...c, isActive: respuesta.isActive } : c)));
       invalidarDisponibilidad(queryClient);
-      setDesactivandoCanchaId(null);
+      setCambiandoEstadoCanchaId(null);
       setErrorCanchas(null);
     },
-    onError: (e) => {
-      setDesactivandoCanchaId(null);
-      setErrorCanchas(e instanceof ApiError ? mensajeVisible(e) : "No pudimos desactivar la cancha.");
+    onError: (e, { activo }) => {
+      // La cancha queda como estaba (isActive no se toca acá): si reactivar
+      // falla (p. ej. validarConfiguracionDePool), sigue inactiva.
+      setCambiandoEstadoCanchaId(null);
+      setErrorCanchas(
+        e instanceof ApiError
+          ? mensajeVisible(e)
+          : activo
+            ? "No pudimos reactivar la cancha."
+            : "No pudimos desactivar la cancha.",
+      );
     },
   });
 
@@ -464,12 +474,13 @@ export function useWizardOnboarding() {
     montoSenaDefault,
     bloqueosDeCanchaEnEdicion: bloqueosCrudosDeCanchaEnEdicion.map(aBloqueoPanel),
     guardandoCancha: guardarCancha.isPending,
-    desactivandoCanchaId,
+    cambiandoEstadoCanchaId,
     errorCanchas,
     abrirEdicionCancha,
     crearCancha: (datos: DatosCancha) => guardarCancha.mutate({ id: null, datos }),
     actualizarCancha: (id: number, datos: DatosCancha) => guardarCancha.mutate({ id, datos }),
-    desactivarCancha: (id: number) => desactivarCanchaMut.mutate(id),
+    desactivarCancha: (id: number) => cambiarEstadoCanchaMut.mutate({ id, activo: false }),
+    reactivarCancha: (id: number) => cambiarEstadoCanchaMut.mutate({ id, activo: true }),
     agregarBloqueo,
     quitarBloqueo,
     volverAHorarios,

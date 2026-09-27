@@ -85,16 +85,22 @@ export function validarPasoPoliticas(datos: {
 /**
  * Paso 4 — Canchas. No hay llamada al backend al confirmar: cada cancha ya se
  * creó individualmente al agregarla (ver useWizardOnboarding). Esto sólo
- * valida que haya al menos una, y — si el plan fuerza seña — que al menos una
- * cobre algo, igual que exige CanchaService.validarMontoSena en el backend.
+ * valida que haya al menos una ACTIVA — una desactivada no recibe reservas,
+ * así que no alcanza para terminar el onboarding — y — si el plan fuerza
+ * seña — que al menos una activa cobre algo, igual que exige
+ * CanchaService.validarMontoSena en el backend.
  */
 export function validarPasoCanchas(canchas: CanchaResponse[], requiereSena: boolean): ErroresCampo {
   const errores: ErroresCampo = {};
-  if (canchas.length === 0) {
-    errores.canchas = "Cargá al menos una cancha para continuar.";
+  const activas = canchas.filter((c) => c.isActive);
+  if (activas.length === 0) {
+    errores.canchas =
+      canchas.length === 0
+        ? "Cargá al menos una cancha para continuar."
+        : "Reactivá al menos una cancha para poder continuar.";
     return errores;
   }
-  if (requiereSena && !canchas.some((c) => (c.montoSena ?? 0) > 0)) {
+  if (requiereSena && !activas.some((c) => (c.montoSena ?? 0) > 0)) {
     errores.sena = "Con seña obligatoria, al menos una cancha necesita un monto de seña mayor a 0.";
   }
   return errores;

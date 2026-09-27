@@ -144,12 +144,13 @@ export function WizardOnboarding() {
             montoSenaDefault={wizard.montoSenaDefault}
             bloqueosDeCanchaEnEdicion={wizard.bloqueosDeCanchaEnEdicion}
             guardando={wizard.guardandoCancha}
-            desactivando={wizard.desactivandoCanchaId !== null}
+            cambiandoEstadoCanchaId={wizard.cambiandoEstadoCanchaId}
             error={wizard.errorCanchas}
             onAbrirEdicion={wizard.abrirEdicionCancha}
             onCrear={wizard.crearCancha}
             onActualizar={wizard.actualizarCancha}
             onDesactivar={wizard.desactivarCancha}
+            onReactivar={wizard.reactivarCancha}
             onAgregarBloqueo={wizard.agregarBloqueo}
             onQuitarBloqueo={wizard.quitarBloqueo}
             onAtras={wizard.volverAHorarios}
