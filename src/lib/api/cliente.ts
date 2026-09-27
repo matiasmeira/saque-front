@@ -54,6 +54,20 @@ export type OpcionesRequest = {
   borrarTokenEn401?: boolean;
 };
 
+/**
+ * Un 401 sin Authorization no es sesion muerta: puede venir de un endpoint
+ * autenticado por otra via (cookie de dispositivo, en las rutas de caja) o
+ * de uno publico. Borrar el token ahi expulsaria a un usuario con sesion
+ * abierta en el mismo navegador sin que su request tuviera nada que ver.
+ */
+export function debeBorrarTokenPor401(
+  status: number,
+  huboAuthorization: boolean,
+  borrarTokenEn401: boolean,
+): boolean {
+  return status === 401 && borrarTokenEn401 && huboAuthorization;
+}
+
 async function leerCuerpo(respuesta: Response): Promise<unknown> {
   const contenido = respuesta.headers.get("content-type") ?? "";
   if (!contenido.includes("application/json")) {
@@ -81,9 +95,13 @@ export async function apiFetch<T>(
 
   if (body !== undefined) headers["Content-Type"] = "application/json";
 
+  let huboAuthorization = false;
   if (conAuth) {
     const token = leerToken();
-    if (token) headers.Authorization = `Bearer ${token}`;
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+      huboAuthorization = true;
+    }
   }
 
   if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
@@ -101,7 +119,9 @@ export async function apiFetch<T>(
 
     // El back invalida todos los JWT del usuario via tokenVersion. Un 401 es
     // sesion muerta: se limpia para que los guards del front reaccionen.
-    if (respuesta.status === 401 && borrarTokenEn401) borrarToken();
+    if (debeBorrarTokenPor401(respuesta.status, huboAuthorization, borrarTokenEn401)) {
+      borrarToken();
+    }
 
     throw parsearError(respuesta.status, cuerpo);
   }
