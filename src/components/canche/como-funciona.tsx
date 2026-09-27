@@ -20,7 +20,8 @@ const PASOS = [
   {
     numero: "03",
     titulo: "Reservá",
-    descripcion: "Asegurá tu lugar con unos clics y pagá la seña en el complejo. Todo listo para jugar.",
+    descripcion:
+      "Asegurá tu lugar con unos clics. Según el complejo, tu reserva queda confirmada al instante o te piden una seña para asegurar el horario.",
     icon: CheckCircle2,
     destacado: true,
   },

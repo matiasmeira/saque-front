@@ -17,6 +17,7 @@ import { partirFechaHora } from "@/lib/api/fechas";
 import { ApiError, esErrorTelefonoNoVerificado, mensajeVisible } from "@/lib/api/errores";
 import { etiquetaDeporte } from "@/lib/deportes";
 import { fechaLarga, formatearPrecio } from "@/lib/formato";
+import { ramaPrereserva } from "@/lib/prereserva";
 import { useHaySesion } from "@/hooks/api/use-sesion";
 import type { Deporte } from "@/lib/api/tipos/comunes";
 import type { ReservaResponse } from "@/lib/api/tipos/reservas";
@@ -34,13 +35,21 @@ import type { ReservaResponse } from "@/lib/api/tipos/reservas";
  * eso mismo sólo empieza cuando la reserva existe de verdad — antes vivía en
  * sessionStorage y no bloqueaba nada.
  *
- * BLOQUEO CONOCIDO (ver PLAN_CONEXION.md, B1): el jugador puede crear la
- * prereserva pero NO confirmarla. PUT /reservas/{id}/confirmar exige rol
- * OWNER o ADMIN, y no hay ninguna integración de pagos en el backend
- * (MERCADO_PAGO es sólo un valor del enum MetodoPago). La reserva queda en
- * PENDIENTE_SENA y, si nadie la confirma, un job la pasa a
- * CANCELADA_PRERESERVA a los 10 minutos. La UI lo dice explícitamente en vez
- * de simular un pago que no existe.
+ * La reserva NO siempre nace PENDIENTE_SENA: el backend sólo la deja así (con
+ * expiraEn a 10 minutos) si el establecimiento tiene requiereSena=true Y la
+ * cancha elegida tiene montoSena > 0 (ReservaService.correspondeSena, back).
+ * Si no corresponde seña, nace CONFIRMADA directo, con expiraEn null, y el
+ * backend ya mandó los mails de confirmación al crearla. EstadoPrereserva
+ * elige qué bloque mostrar con ramaPrereserva (lib/prereserva.ts) en vez de
+ * asumir un único camino.
+ *
+ * BLOQUEO CONOCIDO (ver PLAN_CONEXION.md, B1) — sólo alcanza a la rama
+ * PENDIENTE_SENA: el jugador puede crear la prereserva pero NO confirmarla.
+ * PUT /reservas/{id}/confirmar exige rol OWNER o ADMIN, y no hay ninguna
+ * integración de pagos en el backend (MERCADO_PAGO es sólo un valor del enum
+ * MetodoPago). La reserva queda en PENDIENTE_SENA y, si nadie la confirma, un
+ * job la pasa a CANCELADA_PRERESERVA a los 10 minutos. La UI lo dice
+ * explícitamente en vez de simular un pago que no existe.
  */
 export default function Checkout({ params }: { params: Promise<{ id: string }> }) {
   const { id: slug } = use(params);
@@ -104,6 +113,7 @@ export default function Checkout({ params }: { params: Promise<{ id: string }> }
   );
   const cancha = complejo.data?.canchas.find((c) => c.id === canchaId);
   const requiereSena = complejo.data?.requiereSena ?? false;
+  const rama = reserva ? ramaPrereserva(reserva.estado, vencida) : null;
 
   async function reservar() {
     setError(null);
@@ -151,12 +161,18 @@ export default function Checkout({ params }: { params: Promise<{ id: string }> }
           </Link>
 
           <h1 className="font-display text-[1.75rem] font-extrabold tracking-[-0.02em] text-tinta">
-            {reserva ? "Tu turno quedó reservado" : "Confirmá tu reserva"}
+            {rama === "confirmada"
+              ? "¡Reserva confirmada!"
+              : reserva
+                ? "Tu turno quedó reservado"
+                : "Confirmá tu reserva"}
           </h1>
           <p className="mt-1 text-grafito">
-            {reserva
-              ? "Te lo guardamos por unos minutos."
-              : "Revisá los detalles antes de confirmar."}
+            {rama === "confirmada"
+              ? "Te esperamos en el complejo."
+              : reserva
+                ? "Te lo guardamos por unos minutos."
+                : "Revisá los detalles antes de confirmar."}
           </p>
 
           <div className="mt-6 rounded-card bg-white p-6 sm:p-8">
@@ -310,8 +326,11 @@ function AlertaTelefonoNoVerificado({ onClose }: { onClose: () => void }) {
 }
 
 /**
- * Estado posterior a crear la prereserva. Es donde se hace visible el bloqueo
- * B1: no hay forma de que el jugador pague ni confirme desde acá.
+ * Estado posterior a crear la reserva. Bifurca con ramaPrereserva: sólo la
+ * rama "pendiente" hace visible el bloqueo B1 (no hay forma de que el
+ * jugador pague ni confirme desde acá) — "confirmada" no tiene nada
+ * pendiente, y un estado inesperado ("otra") no arriesga ningún mensaje
+ * sobre seña que podría no corresponder.
  */
 function EstadoPrereserva({
   reserva,
@@ -320,7 +339,9 @@ function EstadoPrereserva({
   reserva: ReservaResponse;
   vencida: boolean;
 }) {
-  if (vencida || reserva.estado === "CANCELADA_PRERESERVA") {
+  const rama = ramaPrereserva(reserva.estado, vencida);
+
+  if (rama === "vencida") {
     return (
       <div className="mt-6 rounded-input bg-humo p-5 text-center">
         <p className="font-display font-bold text-tinta">Se venció el tiempo de reserva</p>
@@ -349,21 +370,33 @@ function EstadoPrereserva({
         </div>
       </div>
 
-      {/*
-        No se simula un pago que el backend no puede procesar: no hay
-        integración de cobro y confirmar la reserva exige rol OWNER/ADMIN.
-        Decirlo es más honesto que mostrar un botón que no hace nada.
-      */}
-      <div className="flex items-start gap-3 rounded-input border border-borde bg-white p-5">
-        <Info className="mt-0.5 size-5 shrink-0 text-azul" aria-hidden />
-        <div>
-          <p className="font-semibold text-tinta">Falta confirmar el pago de la seña</p>
-          <p className="mt-1 text-sm leading-relaxed text-grafito">
-            El pago online todavía no está disponible. Comunicate con el complejo para
-            confirmar el turno antes de que se venza el tiempo.
-          </p>
+      {rama === "pendiente" && (
+        // No se simula un pago que el backend no puede procesar: no hay
+        // integración de cobro y confirmar la reserva exige rol OWNER/ADMIN.
+        // Decirlo es más honesto que mostrar un botón que no hace nada.
+        <div className="flex items-start gap-3 rounded-input border border-borde bg-white p-5">
+          <Info className="mt-0.5 size-5 shrink-0 text-azul" aria-hidden />
+          <div>
+            <p className="font-semibold text-tinta">Falta confirmar el pago de la seña</p>
+            <p className="mt-1 text-sm leading-relaxed text-grafito">
+              El pago online todavía no está disponible. Comunicate con el complejo para
+              confirmar el turno antes de que se venza el tiempo.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
+
+      {rama === "confirmada" && (
+        <div className="flex items-start gap-3 rounded-input border border-borde bg-white p-5">
+          <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-disponible" aria-hidden />
+          <div>
+            <p className="font-semibold text-tinta">Ya está todo listo</p>
+            <p className="mt-1 text-sm leading-relaxed text-grafito">
+              Te mandamos un mail con los detalles de tu turno.
+            </p>
+          </div>
+        </div>
+      )}
 
       <Link
         href="/mis-reservas"
