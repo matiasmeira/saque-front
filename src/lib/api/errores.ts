@@ -74,6 +74,27 @@ function mensajePorStatus(status: number): string {
   return "No pudimos completar la operación.";
 }
 
+/**
+ * ¿Esta respuesta significa que la cookie de dispositivo de caja
+ * (`saque_caja_device`) ya no vale — nunca existió, venció o el dueño la
+ * revocó?
+ *
+ * Sólo dispara con un `ApiError` real de status 401 o 403. Dos casos quedan
+ * afuera a propósito, porque no distinguen "revocado" de "pasajero":
+ * - Un error de red (el `fetch` de `apiFetch` nunca resuelve una respuesta)
+ *   nunca pasa por `parsearError`, así que no es `instanceof ApiError`.
+ * - Un 500 sí es `ApiError`, pero con `status` 500, que no matchea.
+ *
+ * `DispositivoCajaGate.exigirDispositivo` (backend) hoy siempre lanza
+ * `AccessDeniedException` (403) para cookie ausente, vencida o revocada —
+ * nunca 401 — pero se deja esa rama igual: nada ata este código a que el
+ * backend no empiece a usar el 401 genérico de "sin token" del filter chain
+ * para el mismo caso.
+ */
+export function esErrorDispositivoDesvinculado(error: unknown): boolean {
+  return error instanceof ApiError && (error.status === 401 || error.status === 403);
+}
+
 function esObjetoPlano(valor: unknown): valor is Record<string, unknown> {
   return typeof valor === "object" && valor !== null && !Array.isArray(valor);
 }

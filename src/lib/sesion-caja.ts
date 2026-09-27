@@ -14,7 +14,11 @@ import { useSyncExternalStore } from "react";
  *
  * - `establecimientoId` + nombre del local, en localStorage: sobreviven a
  *   cerrar el navegador, como una PC de mostrador real. Sirven para saber a
- *   quién pedirle la lista de nombres sin volver a preguntar.
+ *   quién pedirle la lista de nombres sin volver a preguntar. Se borran con
+ *   `borrarDispositivo()`, pero sólo cuando `/caja` recibe la confirmación
+ *   del backend (401/403 en `GET /empleados/activos`, ver
+ *   `esErrorDispositivoDesvinculado`) de que la cookie ya no vale — nunca de
+ *   entrada, y nunca ante un error de red o un 5xx pasajero.
  * - Qué empleado tocó su nombre en esta pestaña, en sessionStorage: se cierra
  *   sola al cerrarla, y "Salir / cambiar de empleado" la limpia a mano. Es una
  *   marca de UI; quien autoriza es el JWT de 15 minutos que devuelve
@@ -60,6 +64,22 @@ export function leerEstablecimientoDispositivo(): number | null {
   if (typeof window === "undefined") return null;
   const crudo = window.localStorage.getItem(CLAVE_ESTABLECIMIENTO);
   return crudo === null ? null : Number(crudo);
+}
+
+/**
+ * Deshace `guardarDispositivo()`: esta PC deja de contarse como caja de
+ * confianza. Llamar SÓLO ante la confirmación del backend de que la cookie
+ * ya no vale (ver `esErrorDispositivoDesvinculado` en `lib/api/errores.ts`) —
+ * nunca ante un error de red o un 5xx pasajero, que no distinguen "revocado"
+ * de "el server está caído", y dejarían una caja real del mostrador pidiendo
+ * un link nuevo sin motivo.
+ */
+export function borrarDispositivo() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(CLAVE_ESTABLECIMIENTO);
+  window.localStorage.removeItem(CLAVE_EMPAREJADO);
+  window.localStorage.removeItem(CLAVE_NOMBRE_LOCAL);
+  notificarCambio();
 }
 
 export function iniciarSesionEmpleado(empleadoId: string) {
@@ -127,11 +147,12 @@ export function useEmpleadoIdSesion(): string | null {
  *
  * A propósito NO mira `useEmparejado()`. Esa marca es de nivel DISPOSITIVO
  * (esta PC alguna vez canjeó un link de emparejamiento o se activó como caja)
- * y no se borra nunca — ver el comentario de `CLAVE_EMPAREJADO` arriba. Un
- * dueño que alguna vez usó este mismo navegador para emparejarlo, o que entra
- * como dueño desde el link "Ingresar como dueño" de /caja, no deja de ser
- * dueño por eso: lo único que importa es si HAY una sesión de empleado activa
- * en esta pestaña ahora mismo.
+ * y sólo se borra ante una confirmación explícita del backend de que la
+ * cookie ya no vale (ver `borrarDispositivo`) — nunca por default. Un dueño
+ * que alguna vez usó este mismo navegador para emparejarlo, o que entra como
+ * dueño desde el link "Ingresar como dueño" de /caja, no deja de ser dueño
+ * por eso: lo único que importa es si HAY una sesión de empleado activa en
+ * esta pestaña ahora mismo.
  */
 export function destinoSinSesion(empleadoIdSesion: string | null): "/caja" | "/ingresar" {
   return empleadoIdSesion ? "/caja" : "/ingresar";

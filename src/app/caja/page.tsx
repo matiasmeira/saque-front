@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
@@ -9,9 +9,10 @@ import { AlertTriangle, MonitorSmartphone } from "lucide-react";
 import { PantallaKiosco } from "@/components/caja/pantalla-kiosco";
 import { ListaNombres } from "@/components/caja/lista-nombres";
 import { mostrador } from "@/lib/api/endpoints/caja";
-import { ApiError } from "@/lib/api/errores";
+import { esErrorDispositivoDesvinculado } from "@/lib/api/errores";
 import { keys } from "@/lib/api/keys";
 import {
+  borrarDispositivo,
   leerEstablecimientoDispositivo,
   useEmpleadoIdSesion,
   useNombreLocalDispositivo,
@@ -31,9 +32,10 @@ import {
  * La cookie es HttpOnly: el JS no puede leerla, así que el estado real de
  * emparejamiento no se consulta en localStorage sino PREGUNTANDO. Si
  * GET /empleados/activos responde 200, esta PC está emparejada; si responde
- * 401/403, la cookie no está o fue revocada. localStorage solo guarda el
- * establecimientoId (a quién preguntarle) y el nombre del local, que son datos
- * de presentación.
+ * 401/403, la cookie no está o fue revocada — y esta pantalla borra el
+ * localStorage relacionado (`borrarDispositivo`) para que refleje eso.
+ * localStorage solo guarda el establecimientoId (a quién preguntarle) y el
+ * nombre del local, que son datos de presentación.
  */
 export default function Caja() {
   const router = useRouter();
@@ -57,17 +59,35 @@ export default function Caja() {
     if (empleadoIdSesion) router.replace("/panel/agenda");
   }, [empleadoIdSesion, router]);
 
+  const sinCookie = esErrorDispositivoDesvinculado(empleados.error);
+
+  // "Ajustar estado durante el render" (patrón oficial de React, no un
+  // useEffect): borrarDispositivo() de abajo limpia establecimientoId, y eso
+  // cambia la queryKey de arriba a mostrador(0) — una entrada de caché nueva,
+  // sin error — en cuanto ese borrado dispare el próximo render. Sin este
+  // latch, "sinCookie" se apagaría solo ahí y el mensaje "fue desvinculado"
+  // nunca llegaría a verse: la pantalla saltearía directo a "todavía no está
+  // lista". Sólo se prende, nunca se apaga.
+  const [ultimoSinCookie, setUltimoSinCookie] = useState(sinCookie);
+  const [dispositivoDesvinculado, setDispositivoDesvinculado] = useState(sinCookie);
+  if (sinCookie !== ultimoSinCookie) {
+    setUltimoSinCookie(sinCookie);
+    if (sinCookie) setDispositivoDesvinculado(true);
+  }
+
+  // El borrado en sí (efecto secundario real sobre localStorage) sí va en un
+  // efecto, no en el render de arriba.
+  useEffect(() => {
+    if (sinCookie) borrarDispositivo();
+  }, [sinCookie]);
+
   if (empleadoIdSesion) return <div className="min-h-dvh bg-tinta" />;
 
-  const sinCookie =
-    empleados.error instanceof ApiError &&
-    (empleados.error.status === 401 || empleados.error.status === 403);
-
-  if (establecimientoId === null || sinCookie) {
+  if (establecimientoId === null || dispositivoDesvinculado) {
     return (
       <PantallaKiosco>
         <div className="flex flex-col items-center gap-4 text-center">
-          {sinCookie ? (
+          {dispositivoDesvinculado ? (
             <>
               <AlertTriangle className="size-14 text-pendiente" aria-hidden />
               <p className="font-display text-2xl font-bold text-white">

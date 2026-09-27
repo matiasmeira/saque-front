@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { ApiError, esErrorTelefonoNoVerificado, mensajeVisible, parsearError } from "./errores";
+import {
+  ApiError,
+  esErrorDispositivoDesvinculado,
+  esErrorTelefonoNoVerificado,
+  mensajeVisible,
+  parsearError,
+} from "./errores";
 
 describe("mensajeVisible", () => {
   it("prefiere el mensaje del campo cuando el error es de bean validation", () => {
@@ -94,5 +100,31 @@ describe("esErrorTelefonoNoVerificado", () => {
     const error = parsearError(400, { error: "Falta verificar el teléfono" });
 
     expect(esErrorTelefonoNoVerificado(error)).toBe(false);
+  });
+});
+
+describe("esErrorDispositivoDesvinculado", () => {
+  it("un error de red (no ApiError) no significa dispositivo desvinculado", () => {
+    const error = new TypeError("Failed to fetch");
+
+    expect(esErrorDispositivoDesvinculado(error)).toBe(false);
+  });
+
+  it("un 500 pasajero no significa dispositivo desvinculado", () => {
+    const error = parsearError(500, null);
+
+    expect(esErrorDispositivoDesvinculado(error)).toBe(false);
+  });
+
+  it("un 401 sí significa dispositivo desvinculado", () => {
+    const error = parsearError(401, { error: "No autenticado" });
+
+    expect(esErrorDispositivoDesvinculado(error)).toBe(true);
+  });
+
+  it("un 403 sí significa dispositivo desvinculado", () => {
+    const error = parsearError(403, { error: "Dispositivo no autorizado" });
+
+    expect(esErrorDispositivoDesvinculado(error)).toBe(true);
   });
 });
