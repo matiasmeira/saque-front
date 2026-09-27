@@ -16,7 +16,11 @@ import { usePerfil } from "@/hooks/api/use-perfil";
 import type { DatosPasoIdentidad, DatosPasoPoliticas } from "@/lib/panel/wizard-onboarding";
 import type { DatosSolicitudVerificacion } from "@/lib/panel/verificacion";
 import type { EstablecimientoResponse } from "@/lib/api/tipos/establecimientos";
-import type { BloqueoCanchaResponse, CanchaResponse } from "@/lib/api/tipos/canchas";
+import type {
+  BloqueoCanchaResponse,
+  CambiarEstadoCanchaResponse,
+  CanchaResponse,
+} from "@/lib/api/tipos/canchas";
 import type { EstadoMercadoPagoResponse } from "@/lib/api/tipos/mercadopago";
 import type { Bloqueo } from "@/lib/panel/canchas";
 import type { DiaSemana, Tarifa } from "@/lib/panel/tarifas";
@@ -200,12 +204,12 @@ export function useWizardOnboarding() {
     onError: (e) => setErrorCanchas(e instanceof ApiError ? mensajeVisible(e) : "No pudimos guardar la cancha."),
   });
 
-  const desactivarCanchaMut = useMutation<void, ApiError, number>({
+  const desactivarCanchaMut = useMutation<CambiarEstadoCanchaResponse, ApiError, number>({
     mutationFn: (canchaId) => {
       setDesactivandoCanchaId(canchaId);
-      return endpointCanchas.desactivar(establecimientoParcial!.id, canchaId);
+      return endpointCanchas.cambiarEstado(establecimientoParcial!.id, canchaId, { activo: false });
     },
-    onSuccess: (_vacio, canchaId) => {
+    onSuccess: (_respuesta, canchaId) => {
       setCanchas((prev) => prev.filter((c) => c.id !== canchaId));
       invalidarDisponibilidad(queryClient);
       setDesactivandoCanchaId(null);

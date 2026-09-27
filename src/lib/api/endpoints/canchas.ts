@@ -3,6 +3,8 @@ import { construirQuery } from "../query";
 import type {
   BloqueoCanchaRequest,
   BloqueoCanchaResponse,
+  CambiarEstadoCanchaRequest,
+  CambiarEstadoCanchaResponse,
   CanchaRequest,
   CanchaResponse,
 } from "../tipos/canchas";
@@ -34,15 +36,17 @@ export const canchas = {
     }),
 
   /**
-   * 204. Desactiva (isActive = false), no borra: las reservas históricas la siguen referenciando.
-   * El panel ya no la llama: desactivar/reactivar va por `actualizar` con isActive (mismo
-   * validarDesactivacion del backend, sin duplicar el flujo). Se deja porque el endpoint
-   * sigue existiendo y es válido, no es código muerto del back.
+   * PATCH /canchas/{id}/estado. Reemplaza al viejo DELETE (deprecado, delegaba
+   * en la misma lógica de validarDesactivacion). Sólo lo usa el wizard de
+   * onboarding para desactivar: el panel de canchas activa/desactiva con
+   * `actualizar` porque ahí el switch "Cancha activa" viaja dentro del mismo
+   * PUT que el resto del formulario.
    */
-  desactivar: (estId: number, canchaId: number) =>
-    apiFetch<void>(`/api/v1/establecimientos/${estId}/canchas/${canchaId}`, {
-      method: "DELETE",
-    }),
+  cambiarEstado: (estId: number, canchaId: number, body: CambiarEstadoCanchaRequest) =>
+    apiFetch<CambiarEstadoCanchaResponse>(
+      `/api/v1/establecimientos/${estId}/canchas/${canchaId}/estado`,
+      { method: "PATCH", body },
+    ),
 };
 
 /**

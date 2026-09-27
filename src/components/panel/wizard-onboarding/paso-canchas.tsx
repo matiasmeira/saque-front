@@ -223,9 +223,8 @@ export function PasoCanchas({
       {aDesactivar && (
         <ModalPanel titulo="¿Desactivar esta cancha?" subtitulo={aDesactivar.nombre} onClose={() => setADesactivar(null)}>
           <p className="text-sm text-grafito">
-            Deja de recibir turnos y desaparece del listado.{" "}
-            <strong className="text-tinta">Esta acción no se puede deshacer</strong>: para volver a tenerla vas a
-            tener que crearla de nuevo.
+            Deja de recibir turnos y desaparece de este listado. Se puede reactivar más adelante desde el panel de
+            Canchas.
           </p>
           <div className="mt-6 flex gap-3">
             <button

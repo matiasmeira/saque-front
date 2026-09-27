@@ -58,6 +58,17 @@ export type CanchaResponse = {
   cantidadCanchasNecesarias: number | null;
 };
 
+/** Body de PATCH /canchas/{id}/estado. Espejo de CambiarEstadoEstablecimientoRequest. */
+export type CambiarEstadoCanchaRequest = {
+  activo: boolean;
+};
+
+/** Respuesta del PATCH de estado de una cancha. */
+export type CambiarEstadoCanchaResponse = {
+  id: number;
+  isActive: boolean;
+};
+
 export type BloqueoCanchaRequest = {
   fechaInicio: FechaHoraISO;
   fechaFin: FechaHoraISO;
