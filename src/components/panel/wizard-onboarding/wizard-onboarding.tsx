@@ -39,10 +39,9 @@ export function WizardOnboarding() {
    * pasos 3-6 que todavía le quedan por completar.
    */
   const [yaTeniaEstablecimiento, setYaTeniaEstablecimiento] = useState<boolean | null>(null);
-  useEffect(() => {
-    if (cargandoEstablecimiento || yaTeniaEstablecimiento !== null) return;
+  if (!cargandoEstablecimiento && yaTeniaEstablecimiento === null) {
     setYaTeniaEstablecimiento(establecimientoId !== null);
-  }, [cargandoEstablecimiento, establecimientoId, yaTeniaEstablecimiento]);
+  }
 
   const debeRedirigir = perfil?.rol === "OWNER" && yaTeniaEstablecimiento === true;
 

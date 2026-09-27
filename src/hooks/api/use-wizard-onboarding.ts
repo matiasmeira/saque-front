@@ -356,6 +356,9 @@ export function useWizardOnboarding() {
   // src/lib/api/endpoints/mercadopago.ts: el front nunca parsea el "code").
   useEffect(() => {
     if (pasoActual !== 6 || !establecimientoParcial) return;
+    // Sincroniza con un sistema externo (fetch a Mercado Pago + suscripción a
+    // visibilitychange); no hay estado derivable del render, ver comentario de arriba.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     consultarEstadoMercadoPago();
     function alVolverElFoco() {
       if (document.visibilityState === "visible") consultarEstadoMercadoPago();

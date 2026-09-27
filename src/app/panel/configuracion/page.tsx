@@ -102,6 +102,7 @@ export default function PanelConfiguracion() {
 
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
   const [guardado, setGuardado] = useState<SeccionGuardable | null>(null);
+  const [establecimientoIdVisto, setEstablecimientoIdVisto] = useState(establecimientoId);
   const [dispositivoARevocar, setDispositivoARevocar] = useState<DispositivoCajaResponse | null>(null);
   const [confirmandoActivarCaja, setConfirmandoActivarCaja] = useState(false);
   const [creandoComplejo, setCreandoComplejo] = useState(false);
@@ -213,9 +214,19 @@ export default function PanelConfiguracion() {
   // establecimiento con el selector (sin navegar): son estado de esta página
   // (o, en el caso de la verificación, de una mutación única para toda la
   // página) y no de los formularios, y nada más los limpiaba.
-  useEffect(() => {
+  //
+  // guardado/errorAccion son estado local: se ajustan durante el render
+  // comparando contra el último establecimientoId visto (evita el
+  // antipatrón que marca react-hooks/set-state-in-effect). La mutación de
+  // verificación es un store externo (TanStack Query) y sí se resetea en un
+  // efecto aparte, para no mutar ese store durante el render.
+  if (establecimientoId !== establecimientoIdVisto) {
+    setEstablecimientoIdVisto(establecimientoId);
     setGuardado(null);
     setErrorAccion(null);
+  }
+
+  useEffect(() => {
     solicitarVerificacion.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [establecimientoId]);

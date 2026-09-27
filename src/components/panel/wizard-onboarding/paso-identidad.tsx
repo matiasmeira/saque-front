@@ -311,6 +311,7 @@ export function PasoIdentidad({
           <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {fotos.map((f) => (
               <div key={f.id} className="group relative aspect-[4/3] overflow-hidden rounded-input border border-borde">
+                {/* eslint-disable-next-line @next/next/no-img-element -- blob: URL de una foto recién elegida, antes de subirse; next/image no soporta blob: */}
                 <img src={f.previewUrl} alt="" className="size-full object-cover" />
                 <button
                   type="button"

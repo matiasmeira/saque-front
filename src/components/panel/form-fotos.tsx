@@ -176,6 +176,7 @@ export function FormFotos({ establecimientoId }: { establecimientoId: number }) 
               onDrop={(e) => onDropFoto(e, indice)}
               className="group relative aspect-[3/2] cursor-grab overflow-hidden rounded-input bg-humo active:cursor-grabbing"
             >
+              {/* eslint-disable-next-line @next/next/no-img-element -- URL externa de ImageKit, no un asset local que next/image pueda optimizar en build */}
               <img src={miniatura(foto.url)} alt="Foto del complejo" className="size-full object-cover" draggable={false} />
 
               {indice === 0 && (
