@@ -58,7 +58,7 @@ export function FormDatosComplejo({
   onGuardar,
 }: {
   establecimiento?: EstablecimientoResponse;
-  /** TRIAL y FREE no pueden desactivar la seña: el backend la fuerza. */
+  /** Sólo FREE no puede desactivar la seña: el backend la fuerza. TRIAL elige libremente. */
   plan: PlanSuscripcion | undefined;
   guardando: boolean;
   onGuardar: (datos: DatosEstablecimiento) => void;
