@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Wrench } from "lucide-react";
+import { Trash2, Wrench } from "lucide-react";
 import { DEPORTES } from "@/lib/deportes";
 import { DURACIONES_DISPONIBLES, esCompuesta, type Bloqueo, type Cancha } from "@/lib/panel/canchas";
 import { fechaLarga } from "@/lib/formato";
@@ -55,6 +55,7 @@ export function FormCancha({
   onCancelar,
   onAgregarBloqueo,
   onQuitarBloqueo,
+  onEliminar,
 }: {
   cancha: Cancha | null;
   /** para elegir el pool: solo físicas, sin incluirse a sí misma */
@@ -74,6 +75,15 @@ export function FormCancha({
   /** los bloqueos se aplican al toque, no esperan al Guardar del resto del form */
   onAgregarBloqueo: (bloqueo: Bloqueo) => void;
   onQuitarBloqueo: (indice: number) => void;
+  /**
+   * Abre la confirmación de baja definitiva (el modal y la mutación viven en
+   * la pantalla que contiene el form, mismo patrón que el resto de las
+   * acciones de acá). Omitido => no se muestra ni el botón: así el wizard de
+   * onboarding, que reusa este mismo form para altas iniciales, nunca lo
+   * ofrece, y tampoco un ADMIN (el DELETE del backend es sólo OWNER, ver
+   * CanchaController) — no alcanza con deshabilitarlo, hay que no mostrarlo.
+   */
+  onEliminar?: () => void;
 }) {
   const [nombre, setNombre] = useState(cancha?.nombre ?? "");
   const [deportes, setDeportes] = useState<string[]>(cancha?.deportes ?? []);
@@ -162,6 +172,24 @@ export function FormCancha({
           reactivés a mano. Para algo temporal con fecha, usá un bloqueo por mantenimiento más abajo.
         </p>
       </div>
+
+      {cancha && onEliminar && (
+        <div>
+          <button
+            type="button"
+            onClick={onEliminar}
+            disabled={cancha.isActive}
+            title={cancha.isActive ? "Desactivala y guardá los cambios antes de poder eliminarla." : undefined}
+            className="flex h-10 w-full items-center justify-center gap-1.5 rounded-full border border-cancelado/40 font-display text-sm font-bold text-cancelado transition-colors hover:bg-cancelado/5 focus:outline-none focus:ring-2 focus:ring-celeste disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Trash2 className="size-4" aria-hidden />
+            Eliminar cancha
+          </button>
+          {cancha.isActive && (
+            <p className="mt-1 text-xs text-grafito">Desactivala y guardá los cambios antes de poder eliminarla.</p>
+          )}
+        </div>
+      )}
 
       <div>
         <p className="mb-1.5 text-xs font-semibold text-grafito">Deportes</p>

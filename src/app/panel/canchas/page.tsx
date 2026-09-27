@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, LayoutGrid, Plus } from "lucide-react";
+import { AlertTriangle, LayoutGrid, Plus, Trash2 } from "lucide-react";
 
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
 import { TablaCanchas } from "@/components/panel/tabla-canchas";
 import { FormCancha } from "@/components/panel/form-cancha";
 import { DrawerPanel } from "@/components/panel/drawer-panel";
+import { ModalPanel } from "@/components/panel/modal-panel";
 import { SkeletonCanchas } from "@/components/panel/skeleton-canchas";
 import { bloqueos as endpointBloqueos, canchas as endpointCanchas } from "@/lib/api/endpoints/canchas";
 import { keys } from "@/lib/api/keys";
@@ -21,7 +22,7 @@ import {
   aFechaHoraBloqueo,
   type DatosCancha,
 } from "@/lib/api/adaptadores/canchas";
-import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
+import { useEstablecimientoActivo, usePerfil } from "@/hooks/api/use-perfil";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useBloqueadoPorCaja } from "@/lib/permisos";
 import type { Bloqueo } from "@/lib/panel/canchas";
@@ -45,9 +46,15 @@ export default function PanelCanchas() {
   const rol = useRolPanel();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
   const { establecimientoId } = useEstablecimientoActivo();
+  // useRolPanel() junta OWNER y ADMIN en "dueno" (ver rol-panel.ts); el DELETE
+  // de canchas es sólo OWNER (CanchaController), así que para el botón de
+  // eliminar hace falta el rol real, no el agrupado.
+  const { data: perfil } = usePerfil();
+  const esOwner = perfil?.rol === "OWNER";
 
   const [panelAbierto, setPanelAbierto] = useState<PanelAbierto>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
 
   const consulta = useQuery({
     queryKey: keys.canchas(establecimientoId ?? 0, true),
@@ -116,6 +123,22 @@ export default function PanelCanchas() {
     },
     onError: (e) => alFallar(e, "No pudimos quitar el bloqueo."),
   });
+
+  const eliminarCancha = useMutation({
+    mutationFn: (canchaId: number) => endpointCanchas.eliminar(establecimientoId!, canchaId),
+    onSuccess: () => {
+      invalidar();
+      setConfirmandoEliminar(false);
+      setPanelAbierto(null);
+      setError(null);
+    },
+    onError: (e) => alFallar(e, "No pudimos eliminar la cancha."),
+  });
+
+  function cerrarConfirmacionEliminar() {
+    setConfirmandoEliminar(false);
+    setError(null);
+  }
 
   if (bloqueadoPorCaja || rol !== "dueno") return <div className="min-h-dvh bg-humo" />;
 
@@ -238,8 +261,50 @@ export default function PanelCanchas() {
                 quitarBloqueo.mutate({ canchaId: canchaEnEdicion.id, bloqueoId: bloqueo.id });
               }
             }}
+            onEliminar={esOwner ? () => setConfirmandoEliminar(true) : undefined}
           />
         </DrawerPanel>
+      )}
+
+      {confirmandoEliminar && canchaEnEdicion && (
+        <ModalPanel titulo="Eliminar cancha" subtitulo="Esta acción no se puede deshacer" onClose={cerrarConfirmacionEliminar}>
+          <div className="space-y-4">
+            <p className="text-sm text-tinta">
+              Vas a eliminar <span className="font-semibold">{canchaEnEdicion.nombre}</span> para siempre. Desaparece
+              de tus listados y de la ficha pública.
+            </p>
+            <p className="text-sm text-tinta">
+              Se conservan las reservas pasadas: siguen en el historial, la caja y los reportes.
+            </p>
+            <p className="text-sm text-grafito">
+              Si sólo querés dejar de usarla, no hace falta eliminarla: desactivada ya no recibe reservas y podés
+              reactivarla cuando quieras.
+            </p>
+            {error && (
+              <p role="alert" className="text-sm text-cancelado">
+                {error}
+              </p>
+            )}
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={cerrarConfirmacionEliminar}
+                className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => eliminarCancha.mutate(canchaEnEdicion.id)}
+                disabled={eliminarCancha.isPending}
+                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-cancelado font-display text-sm font-bold text-white transition-colors hover:bg-cancelado/90 focus:outline-none focus:ring-2 focus:ring-celeste disabled:opacity-60"
+              >
+                <Trash2 className="size-4" aria-hidden />
+                {eliminarCancha.isPending ? "Eliminando..." : "Eliminar definitivamente"}
+              </button>
+            </div>
+          </div>
+        </ModalPanel>
       )}
     </div>
   );

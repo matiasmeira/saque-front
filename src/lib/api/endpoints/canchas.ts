@@ -47,6 +47,17 @@ export const canchas = {
       `/api/v1/establecimientos/${estId}/canchas/${canchaId}/estado`,
       { method: "PATCH", body },
     ),
+
+  /**
+   * Baja lógica (deletedAt), irreversible. Sólo OWNER (ver CanchaController):
+   * ni ADMIN ni EMPLOYEE, a diferencia del resto de los métodos de canchas.
+   * El backend exige isActive=false antes de eliminar y rechaza si hay
+   * reservas futuras CONFIRMADAS (400 con mensaje visible en ambos casos).
+   */
+  eliminar: (estId: number, canchaId: number) =>
+    apiFetch<void>(`/api/v1/establecimientos/${estId}/canchas/${canchaId}`, {
+      method: "DELETE",
+    }),
 };
 
 /**
