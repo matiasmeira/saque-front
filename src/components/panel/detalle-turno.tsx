@@ -6,6 +6,7 @@ import { ArrowRightLeft, Calendar, Clock, Phone, Repeat, User } from "lucide-rea
 import { StatusBadge } from "@/components/canche/status-badge";
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { useHoraActual } from "@/lib/hora-actual";
+import { yaEmpezoTurno } from "@/lib/fecha";
 import { fechaLarga, formatearPrecio } from "@/lib/formato";
 import { METODOS_PAGO } from "@/lib/metodos-pago";
 import type { MetodoPago } from "@/lib/api/tipos/comunes";
@@ -66,8 +67,8 @@ export function DetalleTurno({
   const conSenia = turno.senia > 0;
 
   const horaActual = useHoraActual();
-  const yaEmpezo = new Date(`${turno.fecha}T${turno.horaInicio}`) <= horaActual;
-  const puedeMarcarAusente = (turno.estado === "ocupado" || turno.estado === "pendiente") && yaEmpezo;
+  const yaEmpezo = yaEmpezoTurno(turno.fecha, turno.horaInicio, horaActual);
+  const puedeMarcarAusente = turno.estado === "ocupado" || turno.estado === "pendiente";
   const puedeDeshacerAusencia = turno.estado === "ausente" && esDueno;
 
   return (
@@ -180,8 +181,9 @@ export function DetalleTurno({
               <select
                 id="metodo-pago"
                 value={metodoPago}
+                disabled={!yaEmpezo}
                 onChange={(e) => setMetodoPago(e.target.value as MetodoPago)}
-                className="mb-2.5 h-10 w-full rounded-input border border-borde bg-humo px-2 text-sm text-tinta focus:border-azul focus:outline-none"
+                className="mb-2.5 h-10 w-full rounded-input border border-borde bg-humo px-2 text-sm text-tinta focus:border-azul focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {METODOS_PAGO.map((m) => (
                   <option key={m.valor} value={m.valor}>
@@ -191,8 +193,9 @@ export function DetalleTurno({
               </select>
               <button
                 type="button"
+                disabled={!yaEmpezo}
                 onClick={() => onMarcarPagado(metodoPago)}
-                className="flex h-11 w-full items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
+                className="flex h-11 w-full items-center justify-center rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-azul"
               >
                 Cobrar y cerrar turno
               </button>
@@ -210,11 +213,17 @@ export function DetalleTurno({
           {puedeMarcarAusente && (
             <button
               type="button"
+              disabled={!yaEmpezo}
               onClick={() => setConfirmando("ausente")}
-              className="flex h-11 w-full items-center justify-center rounded-full border-2 border-ausente font-display text-sm font-bold text-ausente transition-colors hover:bg-ausente-suave focus:outline-none focus:ring-2 focus:ring-celeste"
+              className="flex h-11 w-full items-center justify-center rounded-full border-2 border-ausente font-display text-sm font-bold text-ausente transition-colors hover:bg-ausente-suave focus:outline-none focus:ring-2 focus:ring-celeste disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
             >
               Marcar ausente
             </button>
+          )}
+          {!yaEmpezo && (puedeCobrar || puedeMarcarAusente) && (
+            <p className="text-center text-xs text-grafito">
+              Se habilitan cuando empieza el turno ({turno.horaInicio}).
+            </p>
           )}
           {puedeDeshacerAusencia && (
             <button

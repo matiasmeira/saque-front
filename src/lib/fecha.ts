@@ -56,6 +56,11 @@ export function finMes(fechaISO: string): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(ultimoDia).padStart(2, "0")}`;
 }
 
+/** Si ya llegó la hora de inicio del turno — usado para habilitar Cobrar y Marcar ausente. */
+export function yaEmpezoTurno(fecha: string, horaInicio: string, ahora: Date): boolean {
+  return new Date(`${fecha}T${horaInicio}`) <= ahora;
+}
+
 /** Los 7 días a mostrar según la vista — un único elemento en Día. */
 export function diasVisibles(fechaISO: string, vista: "dia" | "semana"): string[] {
   if (vista === "dia") return [fechaISO];
