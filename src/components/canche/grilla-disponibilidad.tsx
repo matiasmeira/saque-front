@@ -13,6 +13,7 @@ import { partirFechaHora } from "@/lib/api/fechas";
 import { aMinutos } from "@/lib/disponibilidad";
 import { rangoDeAgenda } from "@/lib/horarios";
 import { familiasDeDeportes } from "@/lib/deportes";
+import type { ModoGrilla } from "@/lib/reserva-link";
 import { useHaySesion } from "@/hooks/api/use-sesion";
 import { usePerfil } from "@/hooks/api/use-perfil";
 import { proximosDias } from "@/components/canche/selector-fecha";
@@ -122,6 +123,10 @@ export function GrillaDisponibilidad({
 
   const rango = rangoDeAgenda(complejo.horariosAtencion, [fecha], []);
 
+  // Sólo lectura en modo panel: un establecimiento no verificado puede no
+  // tener slug público todavía, y aunque lo tuviera, la preview no reserva.
+  const modo: ModoGrilla = fuente.tipo === "publico" ? { slug: fuente.slug } : { soloLectura: true };
+
   const reservasPropiasPorCancha = new Map<number, { desde: number; hasta: number }[]>();
   for (const r of misReservas.data?.content ?? []) {
     if (r.estado !== "CONFIRMADA" && r.estado !== "PENDIENTE_SENA") continue;
@@ -215,11 +220,7 @@ export function GrillaDisponibilidad({
       {dia?.abierto && canchas.length > 0 && (
         <GrillaHorarios
           canchas={canchas}
-          // TODO(prompt 2 — modo sólo lectura): en fuente "panel" no hay slug
-          // público todavía (el establecimiento puede no estar verificado).
-          // El link de reserva se apaga en el prompt 2; hasta entonces esta
-          // fuente no se monta en ninguna pantalla.
-          slug={fuente.tipo === "publico" ? fuente.slug : undefined}
+          modo={modo}
           duracion={duracionActiva}
           rango={rango}
           reservasPropiasPorCancha={reservasPropiasPorCancha}

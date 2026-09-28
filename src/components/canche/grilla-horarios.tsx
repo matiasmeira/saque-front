@@ -5,6 +5,7 @@ import Link from "next/link";
 import { agendaDeCancha } from "@/lib/agenda-publica";
 import { aMinutos } from "@/lib/disponibilidad";
 import { etiquetaDeporte } from "@/lib/deportes";
+import { etiquetaSlot, hrefDeSlot, type ModoGrilla } from "@/lib/reserva-link";
 import type { RangoHorario } from "@/lib/horarios";
 import type { DisponibilidadCanchaResponse } from "@/lib/api/tipos/disponibilidad";
 
@@ -17,19 +18,14 @@ import type { DisponibilidadCanchaResponse } from "@/lib/api/tipos/disponibilida
  */
 export function GrillaHorarios({
   canchas,
-  slug,
+  modo,
   duracion,
   rango,
   reservasPropiasPorCancha,
   mostrarLeyendaPropia,
 }: {
   canchas: DisponibilidadCanchaResponse[];
-  /**
-   * Undefined en modo panel (sin slug público todavía). El modo sólo lectura
-   * que reemplaza el link de reserva en ese caso se resuelve en el prompt 2;
-   * hasta entonces esta fuente no se monta en ninguna pantalla.
-   */
-  slug?: string;
+  modo: ModoGrilla;
   duracion: number;
   rango: RangoHorario;
   reservasPropiasPorCancha: Map<number, { desde: number; hasta: number }[]>;
@@ -65,7 +61,7 @@ export function GrillaHorarios({
                 <FilaCanchaGrilla
                   key={cancha.canchaId}
                   cancha={cancha}
-                  slug={slug}
+                  modo={modo}
                   duracion={duracion}
                   rango={rango}
                   abreMin={abreMin}
@@ -97,7 +93,7 @@ export function GrillaHorarios({
 
 function FilaCanchaGrilla({
   cancha,
-  slug,
+  modo,
   duracion,
   rango,
   abreMin,
@@ -106,7 +102,7 @@ function FilaCanchaGrilla({
   reservasPropias,
 }: {
   cancha: DisponibilidadCanchaResponse;
-  slug?: string;
+  modo: ModoGrilla;
   duracion: number;
   rango: RangoHorario;
   abreMin: number;
@@ -146,15 +142,41 @@ function FilaCanchaGrilla({
           />
         ))}
 
-        {franjas.map((franja) => (
-          <Link
-            key={franja.inicioISO}
-            href={`/reservar/${slug}?cancha=${cancha.canchaId}&inicio=${franja.inicioISO}&fin=${franja.finISO}&deporte=${cancha.deportes[0]}`}
-            aria-label={`Reservar ${cancha.canchaNombre} de ${horaDe(franja.inicioISO)} a ${horaDe(franja.finISO)}`}
-            className="absolute inset-y-2 rounded-lg border border-transparent transition-colors hover:border-azul hover:bg-celeste-suave"
-            style={posicion(franja.desde, franja.hasta)}
-          />
-        ))}
+        {franjas.map((franja) => {
+          const etiqueta = etiquetaSlot(
+            modo,
+            cancha.canchaNombre,
+            horaDe(franja.inicioISO),
+            horaDe(franja.finISO),
+          );
+          const href = hrefDeSlot(modo, {
+            canchaId: cancha.canchaId,
+            inicioISO: franja.inicioISO,
+            finISO: franja.finISO,
+            deporte: cancha.deportes[0],
+          });
+
+          if (href === null) {
+            return (
+              <div
+                key={franja.inicioISO}
+                aria-label={etiqueta}
+                className="absolute inset-y-2 rounded-lg border border-transparent"
+                style={posicion(franja.desde, franja.hasta)}
+              />
+            );
+          }
+
+          return (
+            <Link
+              key={franja.inicioISO}
+              href={href}
+              aria-label={etiqueta}
+              className="absolute inset-y-2 rounded-lg border border-transparent transition-colors hover:border-azul hover:bg-celeste-suave"
+              style={posicion(franja.desde, franja.hasta)}
+            />
+          );
+        })}
       </div>
     </div>
   );
