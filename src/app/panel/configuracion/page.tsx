@@ -31,6 +31,7 @@ import { useCambiarEstadoEstablecimiento, useEliminarEstablecimiento } from "@/h
 import type { DispositivoCajaResponse } from "@/lib/api/tipos/caja";
 import type { EstablecimientoRequest, EstablecimientoResponse } from "@/lib/api/tipos/establecimientos";
 import type { HorarioAtencionDto, Servicio } from "@/lib/api/tipos/comunes";
+import { hayNombreRepetido, sugerirNombreDispositivo, validarNombreDispositivo } from "@/lib/panel/dispositivo-caja";
 import type { DatosSolicitudVerificacion } from "@/lib/panel/verificacion";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useBloqueadoPorCaja, usePerfilPendiente } from "@/lib/permisos";
@@ -106,6 +107,9 @@ export default function PanelConfiguracion() {
   const [establecimientoIdVisto, setEstablecimientoIdVisto] = useState(establecimientoId);
   const [dispositivoARevocar, setDispositivoARevocar] = useState<DispositivoCajaResponse | null>(null);
   const [confirmandoActivarCaja, setConfirmandoActivarCaja] = useState(false);
+  const [nombreActivarLocal, setNombreActivarLocal] = useState("");
+  const [pidiendoNombreCajaNueva, setPidiendoNombreCajaNueva] = useState(false);
+  const [nombreCajaNueva, setNombreCajaNueva] = useState("");
   const [creandoComplejo, setCreandoComplejo] = useState(false);
 
   // "Emparejado acá" es una marca local: la cookie saque_caja_device es HttpOnly
@@ -126,8 +130,11 @@ export default function PanelConfiguracion() {
     queryClient.invalidateQueries({ queryKey: keys.caja.dispositivos(establecimientoId ?? 0) });
 
   const generarCodigo = useMutation({
-    mutationFn: () => endpointDispositivos.generarCodigo(establecimientoId!, "Caja mostrador"),
-    onSuccess: invalidarDispositivos,
+    mutationFn: (label: string) => endpointDispositivos.generarCodigo(establecimientoId!, label),
+    onSuccess: () => {
+      invalidarDispositivos();
+      setPidiendoNombreCajaNueva(false);
+    },
   });
 
   const revocarDispositivo = useMutation({
@@ -153,7 +160,7 @@ export default function PanelConfiguracion() {
    * del teléfono.
    */
   const activarLocal = useMutation({
-    mutationFn: () => endpointDispositivos.activarLocal(establecimientoId!, "Caja mostrador"),
+    mutationFn: (label: string) => endpointDispositivos.activarLocal(establecimientoId!, label),
     onSuccess: (activado) => {
       guardarDispositivo(establecimientoId!, activado.label, activado.dispositivoId);
       borrarToken();
@@ -254,6 +261,33 @@ export default function PanelConfiguracion() {
   }
 
   const dispositivos = listaDispositivos.data ?? [];
+  const labelsDispositivos = dispositivos.map((d) => d.label);
+
+  const errorNombreCajaNueva = validarNombreDispositivo(nombreCajaNueva);
+  const repetidoNombreCajaNueva = hayNombreRepetido(nombreCajaNueva, labelsDispositivos);
+
+  const errorNombreActivarLocal = validarNombreDispositivo(nombreActivarLocal);
+  const repetidoNombreActivarLocal = hayNombreRepetido(nombreActivarLocal, labelsDispositivos);
+
+  function abrirPedidoNombreCajaNueva() {
+    setNombreCajaNueva(sugerirNombreDispositivo(labelsDispositivos));
+    setPidiendoNombreCajaNueva(true);
+  }
+
+  function cerrarPedidoNombreCajaNueva() {
+    setPidiendoNombreCajaNueva(false);
+    generarCodigo.reset();
+  }
+
+  function abrirConfirmarActivarCaja() {
+    setNombreActivarLocal(sugerirNombreDispositivo(labelsDispositivos));
+    setConfirmandoActivarCaja(true);
+  }
+
+  function cerrarConfirmarActivarCaja() {
+    setConfirmandoActivarCaja(false);
+    activarLocal.reset();
+  }
 
   return (
     <div className="flex h-dvh bg-humo">
@@ -451,17 +485,17 @@ export default function PanelConfiguracion() {
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => generarCodigo.mutate()}
-                    disabled={establecimientoId === null || generarCodigo.isPending}
+                    onClick={abrirPedidoNombreCajaNueva}
+                    disabled={establecimientoId === null}
                     className="flex h-10 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Plus className="size-4" aria-hidden />
-                    {generarCodigo.isPending ? "Generando..." : "Generar link para nueva caja"}
+                    Generar link para nueva caja
                   </button>
                   {!emparejadoAqui && (
                     <button
                       type="button"
-                      onClick={() => setConfirmandoActivarCaja(true)}
+                      onClick={abrirConfirmarActivarCaja}
                       className="flex h-10 items-center gap-1.5 rounded-full border border-borde px-4 font-display text-sm font-bold text-tinta transition-colors hover:border-azul focus:outline-none focus:ring-2 focus:ring-celeste"
                     >
                       <Smartphone className="size-4" aria-hidden />
@@ -490,6 +524,57 @@ export default function PanelConfiguracion() {
       </div>
 
       {creandoComplejo && <ModalCrearEstablecimiento onClose={() => setCreandoComplejo(false)} />}
+
+      {pidiendoNombreCajaNueva && (
+        <ModalPanel titulo="Nueva caja" subtitulo="Poné un nombre para identificarla" onClose={cerrarPedidoNombreCajaNueva}>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="nombre-caja-nueva" className="mb-1 block text-xs font-semibold text-grafito">
+                Nombre de la caja
+              </label>
+              <input
+                id="nombre-caja-nueva"
+                autoFocus
+                autoComplete="off"
+                value={nombreCajaNueva}
+                onChange={(e) => setNombreCajaNueva(e.target.value)}
+                className="w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
+              />
+              {errorNombreCajaNueva ? (
+                <p role="alert" className="mt-1.5 text-sm text-cancelado">
+                  {errorNombreCajaNueva}
+                </p>
+              ) : (
+                repetidoNombreCajaNueva && (
+                  <p className="mt-1.5 text-sm text-grafito">Ya tenés una caja con este nombre. Podés seguir igual.</p>
+                )
+              )}
+            </div>
+            {generarCodigo.isError && (
+              <p role="alert" className="text-sm text-cancelado">
+                {generarCodigo.error instanceof ApiError ? mensajeVisible(generarCodigo.error) : "No pudimos generar el link."}
+              </p>
+            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={cerrarPedidoNombreCajaNueva}
+                className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => generarCodigo.mutate(nombreCajaNueva.trim())}
+                disabled={establecimientoId === null || generarCodigo.isPending || errorNombreCajaNueva !== null}
+                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {generarCodigo.isPending ? "Generando..." : "Generar link"}
+              </button>
+            </div>
+          </div>
+        </ModalPanel>
+      )}
 
       {generarCodigo.data && (
         <ModalPanel
@@ -549,26 +634,53 @@ export default function PanelConfiguracion() {
       })()}
 
       {confirmandoActivarCaja && (
-        <ModalPanel titulo="Activar como caja" onClose={() => setConfirmandoActivarCaja(false)}>
+        <ModalPanel titulo="Activar como caja" onClose={cerrarConfirmarActivarCaja}>
           <div className="space-y-4">
             <p className="text-sm text-tinta">
               Al activar esta caja se cierra tu sesión en esta computadora. Para volver a entrar como dueño vas a tener que iniciar sesión de
               nuevo. Tus otras sesiones (teléfono, otra PC) no se tocan.
             </p>
             <p className="text-sm text-grafito">Esta PC va a quedar en la pantalla de nombres del kiosco, lista para que un empleado entre con su PIN.</p>
+            <div>
+              <label htmlFor="nombre-activar-local" className="mb-1 block text-xs font-semibold text-grafito">
+                Nombre de la caja
+              </label>
+              <input
+                id="nombre-activar-local"
+                autoFocus
+                autoComplete="off"
+                value={nombreActivarLocal}
+                onChange={(e) => setNombreActivarLocal(e.target.value)}
+                className="w-full rounded-input bg-humo px-3 py-2.5 text-tinta focus:outline-none focus:ring-2 focus:ring-celeste"
+              />
+              {errorNombreActivarLocal ? (
+                <p role="alert" className="mt-1.5 text-sm text-cancelado">
+                  {errorNombreActivarLocal}
+                </p>
+              ) : (
+                repetidoNombreActivarLocal && (
+                  <p className="mt-1.5 text-sm text-grafito">Ya tenés una caja con este nombre. Podés seguir igual.</p>
+                )
+              )}
+            </div>
+            {activarLocal.isError && (
+              <p role="alert" className="text-sm text-cancelado">
+                {activarLocal.error instanceof ApiError ? mensajeVisible(activarLocal.error) : "No pudimos activar esta computadora."}
+              </p>
+            )}
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setConfirmandoActivarCaja(false)}
+                onClick={cerrarConfirmarActivarCaja}
                 className="flex h-11 flex-1 items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 Cancelar
               </button>
               <button
                 type="button"
-                onClick={() => activarLocal.mutate()}
-                disabled={establecimientoId === null || activarLocal.isPending}
-                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste disabled:opacity-60"
+                onClick={() => activarLocal.mutate(nombreActivarLocal.trim())}
+                disabled={establecimientoId === null || activarLocal.isPending || errorNombreActivarLocal !== null}
+                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-azul font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {activarLocal.isPending ? "Activando..." : "Activar"}
               </button>
