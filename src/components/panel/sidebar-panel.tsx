@@ -191,8 +191,9 @@ export function SidebarPanel() {
 
       {/* Mutuamente excluyente con el bloque de arriba: un dueño real nunca
           tiene empleadoIdSesion seteado. Se chequea perfil.rol directamente
-          (no useRolPanel(), que en desarrollo sin perfil cae por defecto a
-          "dueno") para no mostrar este botón sin una sesión real. */}
+          (no useRolPanel(), que sin perfil resuelve "empleado" pero eso
+          incluye el caso "todavía está cargando") para no mostrar este botón
+          antes de confirmar una sesión de dueño real. */}
       {!empleadoIdSesion && (perfil?.rol === "OWNER" || perfil?.rol === "ADMIN") && (
         <div className="border-t border-white/10 p-3">
           {perfil?.nombre && <p className="truncate px-2.5 pb-2 text-xs text-[#9DB6D6]">{perfil.nombre}</p>}

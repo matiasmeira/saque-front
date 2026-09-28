@@ -1,43 +1,31 @@
-import { useSearchParams } from "next/navigation";
 import { usePerfil } from "@/hooks/api/use-perfil";
-import { useEmparejado, useEmpleadoIdSesion } from "@/lib/sesion-caja";
+import type { PerfilResponse } from "@/lib/api/tipos/auth";
 
 export type RolPanel = "dueno" | "empleado";
+
+/**
+ * Mapeo puro perfil → rol. OWNER y ADMIN son "dueno"; EMPLOYEE es "empleado".
+ * Sin perfil (cargando, error, o sin sesión) es "empleado": el rol con menos
+ * permisos, el default seguro cuando todavía no se sabe quién es.
+ */
+export function rolDesdePerfil(perfil: PerfilResponse | undefined): RolPanel {
+  if (!perfil) return "empleado";
+  return perfil.rol === "OWNER" || perfil.rol === "ADMIN" ? "dueno" : "empleado";
+}
 
 /**
  * Rol con el que opera el panel.
  *
  * La fuente de verdad es GET /api/v1/usuarios/me: el JWT NO lleva el rol (solo
- * sub, iat, exp, tokenVersion y, para empleados, empleadoId). OWNER y ADMIN
- * son "dueno"; EMPLOYEE es "empleado".
+ * sub, iat, exp, tokenVersion y, para empleados, empleadoId).
  *
- * PUENTE TEMPORAL (se elimina en la Fase 2, cuando /ingresar sea login real):
- * mientras el panel siga consumiendo mocks, sin sesion se mantiene la
- * resolucion vieja — ?rol= en la URL, sesion de caja, dispositivo emparejado —
- * para no dejar el panel inaccesible a mitad de la migracion. Pero ese fallback
- * SOLO corre en desarrollo: en produccion, sin sesion no hay dueño implicito,
- * se degrada a "empleado" (que sin identidad no tiene ningun permiso).
- *
- * El caso "emparejado sin nadie logueado" sigue siendo "empleado" y nunca
- * "dueño": activar un dispositivo como caja es justamente lo que cierra el
- * acceso implicito de dueño en esa PC.
+ * Sin perfil todavía (mientras /me está en vuelo, si la query falló, o si no
+ * hay sesión) el rol es "empleado" en todos los entornos — no hay dueño
+ * implícito. Los consumidores que necesitan distinguir "todavía no se sabe"
+ * de "es empleado de verdad" usan usePerfilPendiente() (src/lib/permisos.ts)
+ * para no redirigir ni bloquear mientras el perfil está cargando.
  */
 export function useRolPanel(): RolPanel {
-  const searchParams = useSearchParams();
-  const empleadoIdSesion = useEmpleadoIdSesion();
-  const emparejado = useEmparejado();
   const { data: perfil } = usePerfil();
-
-  if (perfil) {
-    return perfil.rol === "OWNER" || perfil.rol === "ADMIN" ? "dueno" : "empleado";
-  }
-
-  if (process.env.NODE_ENV !== "development") return "empleado";
-
-  const rolParam = searchParams.get("rol");
-  if (rolParam === "empleado") return "empleado";
-  if (rolParam === "dueno") return "dueno";
-  if (empleadoIdSesion) return "empleado";
-  if (emparejado) return "empleado";
-  return "dueno";
+  return rolDesdePerfil(perfil);
 }
