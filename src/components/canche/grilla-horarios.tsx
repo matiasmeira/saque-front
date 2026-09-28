@@ -24,7 +24,12 @@ export function GrillaHorarios({
   mostrarLeyendaPropia,
 }: {
   canchas: DisponibilidadCanchaResponse[];
-  slug: string;
+  /**
+   * Undefined en modo panel (sin slug público todavía). El modo sólo lectura
+   * que reemplaza el link de reserva en ese caso se resuelve en el prompt 2;
+   * hasta entonces esta fuente no se monta en ninguna pantalla.
+   */
+  slug?: string;
   duracion: number;
   rango: RangoHorario;
   reservasPropiasPorCancha: Map<number, { desde: number; hasta: number }[]>;
@@ -101,7 +106,7 @@ function FilaCanchaGrilla({
   reservasPropias,
 }: {
   cancha: DisponibilidadCanchaResponse;
-  slug: string;
+  slug?: string;
   duracion: number;
   rango: RangoHorario;
   abreMin: number;

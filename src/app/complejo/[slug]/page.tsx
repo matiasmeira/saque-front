@@ -141,7 +141,7 @@ export default async function FichaComplejo({ params }: { params: Promise<{ slug
               <h2 className="mb-4 font-display text-[1.75rem] font-extrabold tracking-[-0.02em] text-tinta">
                 Canchas
               </h2>
-              <GrillaDisponibilidad complejo={complejo} />
+              <GrillaDisponibilidad complejo={complejo} fuente={{ tipo: "publico", slug }} />
             </section>
 
             {complejo.servicios.length > 0 && (

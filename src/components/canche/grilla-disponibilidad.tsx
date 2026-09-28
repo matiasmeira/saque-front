@@ -5,7 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { publico } from "@/lib/api/endpoints/publico";
+import { establecimientos } from "@/lib/api/endpoints/establecimientos";
 import { reservas } from "@/lib/api/endpoints/reservas";
+import { aDisponibilidadPublica } from "@/lib/api/adaptadores/disponibilidad";
 import { keys } from "@/lib/api/keys";
 import { partirFechaHora } from "@/lib/api/fechas";
 import { aMinutos } from "@/lib/disponibilidad";
@@ -39,7 +41,23 @@ import type { ComplejoDetalleResponse } from "@/lib/api/tipos/publico";
  */
 const DIAS_VISIBLES = 7;
 
-export function GrillaDisponibilidad({ complejo }: { complejo: ComplejoDetalleResponse }) {
+/**
+ * De dónde sale la disponibilidad: la ficha pública consulta por slug
+ * (GET /publico/complejos/{slug}/disponibilidad); la previsualización de panel
+ * (dueño o ADMIN) consulta por id (GET /establecimientos/{id}/disponibilidad),
+ * porque un establecimiento no verificado puede no tener slug público todavía.
+ */
+export type FuenteDisponibilidad =
+  | { tipo: "publico"; slug: string }
+  | { tipo: "panel"; establecimientoId: number };
+
+export function GrillaDisponibilidad({
+  complejo,
+  fuente,
+}: {
+  complejo: ComplejoDetalleResponse;
+  fuente: FuenteDisponibilidad;
+}) {
   const dias = proximosDias(DIAS_VISIBLES);
   const [indiceDia, setIndiceDia] = useState(0);
   const familias = familiasDeDeportes(complejo.deportes);
@@ -50,8 +68,18 @@ export function GrillaDisponibilidad({ complejo }: { complejo: ComplejoDetalleRe
   const familiaActiva = familias.find((f) => f.valor === familiaFiltro) ?? familias[0] ?? null;
 
   const disponibilidad = useQuery({
-    queryKey: keys.publico.disponibilidad(complejo.slug, fecha),
-    queryFn: () => publico.disponibilidad(complejo.slug, fecha),
+    queryKey:
+      fuente.tipo === "publico"
+        ? keys.publico.disponibilidad(fuente.slug, fecha)
+        : keys.disponibilidad(fuente.establecimientoId, fecha),
+    queryFn: () =>
+      fuente.tipo === "publico"
+        ? publico.disponibilidad(fuente.slug, fecha)
+        : establecimientos.disponibilidad(fuente.establecimientoId, fecha),
+    // La key del panel (keys.disponibilidad) es la misma que usa la agenda:
+    // sanitizar acá, en select, y no en queryFn, para no pisarle la caché con
+    // ocupadaPorPool en null.
+    select: fuente.tipo === "panel" ? aDisponibilidadPublica : undefined,
     // Override puntual sobre el staleTime/refetchOnWindowFocus globales
     // (providers.tsx) — no simplificar juntándolo con la config general.
     // Esta es la query más volátil de la app: una prereserva ajena puede
@@ -62,6 +90,8 @@ export function GrillaDisponibilidad({ complejo }: { complejo: ComplejoDetalleRe
     // barata de detectar el vencimiento de la prereserva de un tercero: no
     // hay push posible (el endpoint de disponibilidad no expone reservas
     // ajenas), así que hay que reconsultar al volver a mirar la pantalla.
+    // Misma configuración para las dos fuentes: la preview se tiene que
+    // comportar igual que la pública.
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
@@ -185,7 +215,11 @@ export function GrillaDisponibilidad({ complejo }: { complejo: ComplejoDetalleRe
       {dia?.abierto && canchas.length > 0 && (
         <GrillaHorarios
           canchas={canchas}
-          slug={complejo.slug}
+          // TODO(prompt 2 — modo sólo lectura): en fuente "panel" no hay slug
+          // público todavía (el establecimiento puede no estar verificado).
+          // El link de reserva se apaga en el prompt 2; hasta entonces esta
+          // fuente no se monta en ninguna pantalla.
+          slug={fuente.tipo === "publico" ? fuente.slug : undefined}
           duracion={duracionActiva}
           rango={rango}
           reservasPropiasPorCancha={reservasPropiasPorCancha}

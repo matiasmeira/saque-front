@@ -478,7 +478,10 @@ export default function GuiaDeEstilo() {
 
       {/* ---------- GRILLA DE DISPONIBILIDAD (A3) ---------- */}
       <Seccion titulo="Grilla de disponibilidad (A3)">
-        <GrillaDisponibilidad complejo={COMPLEJO_DEMO} />
+        <GrillaDisponibilidad
+          complejo={COMPLEJO_DEMO}
+          fuente={{ tipo: "publico", slug: COMPLEJO_DEMO.slug }}
+        />
         <p className="mt-3 text-xs text-grafito">
           Consulta la disponibilidad real del backend para el slug de demo: una fila por cancha y un
           chip por turno libre. Los chips son link directo al checkout, con el slot entero
