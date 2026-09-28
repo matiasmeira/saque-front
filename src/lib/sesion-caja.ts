@@ -14,8 +14,12 @@ import { useSyncExternalStore } from "react";
  *
  * - `establecimientoId` + nombre del local, en localStorage: sobreviven a
  *   cerrar el navegador, como una PC de mostrador real. Sirven para saber a
- *   quién pedirle la lista de nombres sin volver a preguntar. Se borran con
- *   `borrarDispositivo()`, pero sólo cuando `/caja` recibe la confirmación
+ *   quién pedirle la lista de nombres sin volver a preguntar. También se
+ *   guarda el `dispositivoId` cuando la respuesta del backend lo trae (hoy
+ *   sólo "activar esta PC como caja"; el canje de link no lo devuelve): es lo
+ *   que le permite a Configuración marcar "esta computadora" en la tabla de
+ *   dispositivos (ver `esEstaComputadora` en `dispositivo-actual.ts`). Se
+ *   borran con `borrarDispositivo()`, pero sólo cuando `/caja` recibe la confirmación
  *   del backend (401/403 en `GET /empleados/activos`, ver
  *   `esErrorDispositivoDesvinculado`) de que la cookie ya no vale — nunca de
  *   entrada, y nunca ante un error de red o un 5xx pasajero.
@@ -32,6 +36,7 @@ const CLAVE_EMPAREJADO = "saque_caja_emparejado";
 const CLAVE_NOMBRE_LOCAL = "saque_caja_nombre_local";
 const CLAVE_EMPLEADO = "saque_caja_empleado";
 const CLAVE_ESTABLECIMIENTO = "saque_caja_establecimiento";
+const CLAVE_DISPOSITIVO_ID = "saque_caja_dispositivo_id";
 
 // El evento nativo "storage" del navegador solo avisa a OTRAS pestañas, nunca a
 // la que hizo el cambio — pero acá una misma pantalla puede necesitar reaccionar
@@ -50,12 +55,19 @@ function notificarCambio() {
  * El TOKEN del dispositivo NO se guarda acá: vive en la cookie saque_caja_device,
  * que es HttpOnly y el JS no puede leer. Lo único que necesita el kiosco de este
  * lado es el establecimientoId, para saber a quién pedirle los empleados.
+ *
+ * `dispositivoId` es opcional porque no todos los flujos de emparejamiento lo
+ * devuelven (ver el comentario de más arriba). Si vuelve a llamarse con un id
+ * nuevo (esta PC se reactivó), pisa al anterior sin dejar rastro del viejo.
  */
-export function guardarDispositivo(establecimientoId: number, nombreLocal: string) {
+export function guardarDispositivo(establecimientoId: number, nombreLocal: string, dispositivoId?: number) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(CLAVE_ESTABLECIMIENTO, String(establecimientoId));
   window.localStorage.setItem(CLAVE_EMPAREJADO, "1");
   window.localStorage.setItem(CLAVE_NOMBRE_LOCAL, nombreLocal);
+  if (dispositivoId !== undefined) {
+    window.localStorage.setItem(CLAVE_DISPOSITIVO_ID, String(dispositivoId));
+  }
   notificarCambio();
 }
 
@@ -79,6 +91,7 @@ export function borrarDispositivo() {
   window.localStorage.removeItem(CLAVE_ESTABLECIMIENTO);
   window.localStorage.removeItem(CLAVE_EMPAREJADO);
   window.localStorage.removeItem(CLAVE_NOMBRE_LOCAL);
+  window.localStorage.removeItem(CLAVE_DISPOSITIVO_ID);
   notificarCambio();
 }
 
@@ -128,6 +141,22 @@ export function useNombreLocalDispositivo(): string | null {
   return useSyncExternalStore(
     suscribirseAlmacenamiento,
     () => window.localStorage.getItem(CLAVE_NOMBRE_LOCAL),
+    () => null,
+  );
+}
+
+/**
+ * El id del dispositivo que esta PC guardó al emparejarse, o `null` si nunca
+ * se guardó (nunca se emparejó, o se emparejó por un flujo que no devuelve
+ * el id). Lo usa Configuración para marcar "esta computadora" en la tabla.
+ */
+export function useDispositivoIdActual(): number | null {
+  return useSyncExternalStore(
+    suscribirseAlmacenamiento,
+    () => {
+      const crudo = window.localStorage.getItem(CLAVE_DISPOSITIVO_ID);
+      return crudo === null ? null : Number(crudo);
+    },
     () => null,
   );
 }

@@ -1,5 +1,6 @@
 import { ShieldOff } from "lucide-react";
 import { fechaLarga } from "@/lib/formato";
+import { esEstaComputadora } from "@/lib/dispositivo-actual";
 import type { DispositivoCajaResponse } from "@/lib/api/tipos/caja";
 
 /**
@@ -10,12 +11,19 @@ import type { DispositivoCajaResponse } from "@/lib/api/tipos/caja";
  * ningún endpoint para cambiarlo después (DispositivoCajaController tiene POST,
  * GET y DELETE, nada más). Antes esto era un input editable in situ que sólo
  * mutaba estado local — prometía algo que no se guardaba en ningún lado.
+ *
+ * `idDispositivoActual` marca la fila de la PC desde la que se está mirando
+ * esta tabla (ver `esEstaComputadora`). Puede ser `null` si este navegador
+ * nunca guardó ese id (no se emparejó, o se emparejó por un flujo que no lo
+ * devuelve) — en ese caso ninguna fila se marca.
  */
 export function TablaDispositivos({
   dispositivos,
+  idDispositivoActual,
   onRevocar,
 }: {
   dispositivos: DispositivoCajaResponse[];
+  idDispositivoActual: number | null;
   onRevocar: (dispositivo: DispositivoCajaResponse) => void;
 }) {
   return (
@@ -28,28 +36,38 @@ export function TablaDispositivos({
       </div>
 
       <div className="divide-y divide-borde/60">
-        {dispositivos.map((dispositivo) => (
-          <div
-            key={dispositivo.id}
-            className="grid grid-cols-[1.4fr_1fr_1fr_auto] items-center gap-3 px-6 py-3.5 transition-colors hover:bg-humo/60"
-          >
-            <span className="truncate px-2 text-sm font-semibold text-tinta">{dispositivo.label}</span>
-            <span className="text-sm text-grafito">{fechaLarga(dispositivo.createdAt.slice(0, 10))}</span>
-            <span className="text-sm text-grafito">
-              {dispositivo.lastUsedAt ? fechaLarga(dispositivo.lastUsedAt.slice(0, 10)) : "Nunca"}
-            </span>
-            <button
-              type="button"
-              onClick={() => onRevocar(dispositivo)}
-              aria-label={`Revocar ${dispositivo.label}`}
-              title="Revocar"
-              className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-cancelado transition-colors hover:bg-cancelado-suave"
+        {dispositivos.map((dispositivo) => {
+          const esEsta = esEstaComputadora(dispositivo, idDispositivoActual);
+          return (
+            <div
+              key={dispositivo.id}
+              className="grid grid-cols-[1.4fr_1fr_1fr_auto] items-center gap-3 px-6 py-3.5 transition-colors hover:bg-humo/60"
             >
-              <ShieldOff className="size-4 shrink-0" aria-hidden />
-              Revocar
-            </button>
-          </div>
-        ))}
+              <span className="flex min-w-0 items-center gap-2 truncate px-2 text-sm font-semibold text-tinta">
+                <span className="truncate">{dispositivo.label}</span>
+                {esEsta && (
+                  <span className="shrink-0 rounded-full bg-celeste-suave px-2 py-0.5 text-xs font-semibold text-azul">
+                    Esta computadora
+                  </span>
+                )}
+              </span>
+              <span className="text-sm text-grafito">{fechaLarga(dispositivo.createdAt.slice(0, 10))}</span>
+              <span className="text-sm text-grafito">
+                {dispositivo.lastUsedAt ? fechaLarga(dispositivo.lastUsedAt.slice(0, 10)) : "Nunca"}
+              </span>
+              <button
+                type="button"
+                onClick={() => onRevocar(dispositivo)}
+                aria-label={esEsta ? "Desvincular esta computadora" : `Revocar ${dispositivo.label}`}
+                title={esEsta ? "Desvincular esta computadora" : "Revocar"}
+                className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-cancelado transition-colors hover:bg-cancelado-suave"
+              >
+                <ShieldOff className="size-4 shrink-0" aria-hidden />
+                {esEsta ? "Desvincular" : "Revocar"}
+              </button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

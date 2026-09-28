@@ -34,7 +34,8 @@ import type { HorarioAtencionDto, Servicio } from "@/lib/api/tipos/comunes";
 import type { DatosSolicitudVerificacion } from "@/lib/panel/verificacion";
 import { useRolPanel } from "@/lib/rol-panel";
 import { useBloqueadoPorCaja, usePerfilPendiente } from "@/lib/permisos";
-import { guardarDispositivo, useEmparejado } from "@/lib/sesion-caja";
+import { borrarDispositivo, guardarDispositivo, useDispositivoIdActual, useEmparejado } from "@/lib/sesion-caja";
+import { esEstaComputadora } from "@/lib/dispositivo-actual";
 
 type SeccionGuardable = "datos" | "horarios" | "servicios";
 
@@ -111,6 +112,9 @@ export default function PanelConfiguracion() {
   // y el JS no puede leerla, así que este navegador no puede saber por sí mismo
   // si ES uno de los dispositivos de la lista.
   const emparejadoAqui = useEmparejado();
+  // Id guardado al emparejar esta PC (ver sesion-caja.ts): null si nunca se
+  // guardó, y entonces ninguna fila de la tabla se marca como "esta compu".
+  const idDispositivoActual = useDispositivoIdActual();
 
   const listaDispositivos = useQuery({
     queryKey: keys.caja.dispositivos(establecimientoId ?? 0),
@@ -128,8 +132,12 @@ export default function PanelConfiguracion() {
 
   const revocarDispositivo = useMutation({
     mutationFn: (dispositivoId: number) => endpointDispositivos.revocar(establecimientoId!, dispositivoId),
-    onSuccess: () => {
+    onSuccess: (_, dispositivoId) => {
       invalidarDispositivos();
+      // Si la fila revocada era esta PC, no hace falta esperar a que /caja
+      // note la revocación sola: se limpia el localStorage ya mismo para que
+      // "Activar esta computadora como caja" vuelva a aparecer al toque.
+      if (dispositivoId === idDispositivoActual) borrarDispositivo();
       setDispositivoARevocar(null);
     },
   });
@@ -147,7 +155,7 @@ export default function PanelConfiguracion() {
   const activarLocal = useMutation({
     mutationFn: () => endpointDispositivos.activarLocal(establecimientoId!, "Caja mostrador"),
     onSuccess: (activado) => {
-      guardarDispositivo(establecimientoId!, activado.label);
+      guardarDispositivo(establecimientoId!, activado.label, activado.dispositivoId);
       borrarToken();
       queryClient.clear();
       setConfirmandoActivarCaja(false);
@@ -434,7 +442,11 @@ export default function PanelConfiguracion() {
                     </p>
                   </div>
                 ) : (
-                  <TablaDispositivos dispositivos={dispositivos} onRevocar={setDispositivoARevocar} />
+                  <TablaDispositivos
+                    dispositivos={dispositivos}
+                    idDispositivoActual={idDispositivoActual}
+                    onRevocar={setDispositivoARevocar}
+                  />
                 )}
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   <button
@@ -489,12 +501,24 @@ export default function PanelConfiguracion() {
         </ModalPanel>
       )}
 
-      {dispositivoARevocar && (
-        <ModalPanel titulo="Revocar dispositivo" subtitulo={dispositivoARevocar.label} onClose={() => setDispositivoARevocar(null)}>
+      {dispositivoARevocar && (() => {
+        const esEsta = esEstaComputadora(dispositivoARevocar, idDispositivoActual);
+        return (
+        <ModalPanel
+          titulo={esEsta ? "Desvincular esta computadora" : "Revocar dispositivo"}
+          subtitulo={dispositivoARevocar.label}
+          onClose={() => setDispositivoARevocar(null)}
+        >
           <div className="space-y-4">
             <p className="text-sm text-tinta">
-              <span className="font-semibold">{dispositivoARevocar.label}</span> pierde el acceso de inmediato. En su próximo intento va a caer
-              a la pantalla de &ldquo;no emparejado&rdquo; — para volver a usarla hace falta un link nuevo.
+              {esEsta ? (
+                <>Esta computadora deja de funcionar como caja de inmediato. Para volver a usarla vas a tener que activarla de nuevo desde Configuración.</>
+              ) : (
+                <>
+                  <span className="font-semibold">{dispositivoARevocar.label}</span> pierde el acceso de inmediato. En su próximo intento va a caer
+                  a la pantalla de &ldquo;no emparejado&rdquo; — para volver a usarla hace falta un link nuevo.
+                </>
+              )}
             </p>
             <div className="flex gap-2">
               <button
@@ -510,12 +534,19 @@ export default function PanelConfiguracion() {
                 disabled={revocarDispositivo.isPending}
                 className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-cancelado font-display text-sm font-bold text-white transition-colors hover:bg-cancelado/90 focus:outline-none focus:ring-2 focus:ring-celeste disabled:opacity-60"
               >
-                {revocarDispositivo.isPending ? "Revocando..." : "Revocar"}
+                {esEsta
+                  ? revocarDispositivo.isPending
+                    ? "Desvinculando..."
+                    : "Desvincular"
+                  : revocarDispositivo.isPending
+                    ? "Revocando..."
+                    : "Revocar"}
               </button>
             </div>
           </div>
         </ModalPanel>
-      )}
+        );
+      })()}
 
       {confirmandoActivarCaja && (
         <ModalPanel titulo="Activar como caja" onClose={() => setConfirmandoActivarCaja(false)}>
