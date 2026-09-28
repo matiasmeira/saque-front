@@ -1,19 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, Eye, MapPin, ShieldQuestion } from "lucide-react";
+import { AlertTriangle, Eye, ShieldQuestion } from "lucide-react";
 
 import { SidebarPanel } from "@/components/panel/sidebar-panel";
 import { HeaderPanel } from "@/components/panel/header-panel";
-import { GaleriaFotos } from "@/components/canche/galeria-fotos";
-import { MapaComplejo } from "@/components/canche/mapa-complejo";
-import { ReservaBlock } from "@/components/canche/reserva-block";
+import { ContenidoComplejo } from "@/components/canche/contenido-complejo";
 import { useEstablecimientoActivo } from "@/hooks/api/use-perfil";
 import { usePrevisualizacionPropia } from "@/hooks/api/use-establecimiento-riesgo";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
-import { etiquetaDeporte } from "@/lib/deportes";
-import { formatearPrecio } from "@/lib/formato";
-import { servicio as buscarServicio } from "@/lib/servicios";
 import type { PrevisualizacionEstablecimientoResponse } from "@/lib/api/tipos/establecimientos";
 
 /**
@@ -23,10 +18,12 @@ import type { PrevisualizacionEstablecimientoResponse } from "@/lib/api/tipos/es
  * SidebarPanel/HeaderPanel: no hay gateo especial acá, cualquier dueño puede
  * entrar en cualquier momento).
  *
- * No monta GrillaDisponibilidad (hace su propio fetch por slug, y un
- * complejo no verificado puede no tener slug público todavía): las canchas
- * se listan de sólo lectura, mismo patrón que la previsualización de admin
- * en /admin/establecimientos/[id]/previsualizacion.
+ * El cuerpo es ContenidoComplejo, el mismo que usa la ficha pública: misma
+ * grilla, galería, servicios y mapa, pero alimentado por
+ * GET /establecimientos/{id}/previsualizacion (fuente "panel", por id, no
+ * por slug -- un complejo no verificado puede no tener slug público
+ * todavía) y en modo sólo lectura (ver ModoGrilla). Mismo patrón que la
+ * previsualización de admin en /admin/establecimientos/[id]/previsualizacion.
  */
 export default function PanelPrevisualizacion() {
   const { establecimientoId, establecimiento, cargando } = useEstablecimientoActivo();
@@ -69,8 +66,12 @@ export default function PanelPrevisualizacion() {
             </div>
           )}
 
-          {consulta.data && establecimiento && (
-            <VistaPrevia previsualizacion={consulta.data} isActive={establecimiento.isActive} />
+          {consulta.data && establecimiento && establecimientoId !== null && (
+            <VistaPrevia
+              previsualizacion={consulta.data}
+              isActive={establecimiento.isActive}
+              establecimientoId={establecimientoId}
+            />
           )}
         </main>
       </div>
@@ -81,9 +82,11 @@ export default function PanelPrevisualizacion() {
 function VistaPrevia({
   previsualizacion,
   isActive,
+  establecimientoId,
 }: {
   previsualizacion: PrevisualizacionEstablecimientoResponse;
   isActive: boolean;
+  establecimientoId: number;
 }) {
   const { detalle, estadoVerificacion } = previsualizacion;
 
@@ -106,77 +109,11 @@ function VistaPrevia({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-card bg-white shadow-card">
-        <GaleriaFotos fotos={detalle.fotos} nombreComplejo={detalle.nombre} />
-
-        <div className="p-6 sm:p-8">
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            {detalle.deportes.map((valor) => (
-              <span key={valor} className="rounded-full border border-borde px-3 py-1 text-sm text-grafito">
-                {etiquetaDeporte(valor)}
-              </span>
-            ))}
-          </div>
-
-          <h2 className="font-display text-2xl font-extrabold tracking-tight text-tinta">{detalle.nombre}</h2>
-          <div className="mt-2 flex items-center gap-1.5 text-grafito">
-            <MapPin className="size-4 shrink-0" aria-hidden />
-            <p className="text-sm">{detalle.direccion}</p>
-          </div>
-
-          <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
-            <div className="space-y-8 lg:col-span-2">
-              <section id="canchas" className="scroll-mt-4">
-                <h3 className="mb-3 font-display text-lg font-bold text-tinta">Canchas</h3>
-                {detalle.canchas.length === 0 ? (
-                  <p className="text-sm text-grafito">Todavía no cargaste ninguna cancha.</p>
-                ) : (
-                  <ul className="space-y-2">
-                    {detalle.canchas.map((c) => (
-                      <li key={c.id} className="flex items-center justify-between gap-3 rounded-input bg-humo px-4 py-3 text-sm">
-                        <span className="text-tinta">
-                          {c.nombre} · {c.deportes.map(etiquetaDeporte).join(", ")}
-                        </span>
-                        {c.precioDesde !== null && <span className="text-grafito">desde {formatearPrecio(c.precioDesde)}</span>}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-
-              {detalle.servicios.length > 0 && (
-                <section>
-                  <h3 className="mb-3 font-display text-lg font-bold text-tinta">Servicios</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {detalle.servicios.map((valor) => {
-                      const s = buscarServicio(valor);
-                      const Icono = s?.Icono;
-                      return (
-                        <span
-                          key={valor}
-                          className="inline-flex items-center gap-2 rounded-full border border-borde px-4 py-2 text-sm text-grafito"
-                        >
-                          {Icono && <Icono className="size-4" aria-hidden />}
-                          {s?.etiqueta ?? valor}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </section>
-              )}
-
-              <section>
-                <h3 className="mb-3 font-display text-lg font-bold text-tinta">Cómo llegar</h3>
-                <div className="relative h-56 overflow-hidden rounded-card bg-humo">
-                  <MapaComplejo lat={detalle.latitud} lng={detalle.longitud} />
-                </div>
-              </section>
-            </div>
-
-            <ReservaBlock complejo={detalle} />
-          </div>
-        </div>
-      </div>
+      <ContenidoComplejo
+        complejo={detalle}
+        fuenteGrilla={{ tipo: "panel", establecimientoId }}
+        nivelTitulo="h2"
+      />
     </div>
   );
 }

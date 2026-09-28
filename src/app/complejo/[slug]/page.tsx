@@ -1,14 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { MapPin, Navigation } from "lucide-react";
 import { HeaderPublico } from "@/components/canche/header-publico";
 import { FooterPublico } from "@/components/canche/footer-publico";
-import { GaleriaFotos } from "@/components/canche/galeria-fotos";
-import { GrillaDisponibilidad } from "@/components/canche/grilla-disponibilidad";
-import { ReservaBlock } from "@/components/canche/reserva-block";
-import { MapaComplejo } from "@/components/canche/mapa-complejo";
+import { ContenidoComplejo } from "@/components/canche/contenido-complejo";
 import { etiquetaDeporte } from "@/lib/deportes";
-import { servicio as buscarServicio } from "@/lib/servicios";
 import { publico } from "@/lib/api/endpoints/publico";
 import { ApiError } from "@/lib/api/errores";
 import type { ComplejoDetalleResponse } from "@/lib/api/tipos/publico";
@@ -112,87 +107,8 @@ export default async function FichaComplejo({ params }: { params: Promise<{ slug
 
       <HeaderPublico variant="claro" ancho="7xl" />
 
-      <GaleriaFotos fotos={complejo.fotos} nombreComplejo={complejo.nombre} />
-
-      <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-10 pb-56 sm:px-8 lg:px-10 lg:pb-16">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          {complejo.deportes.map((valor) => (
-            <span
-              key={valor}
-              className="rounded-full border border-borde bg-white px-3 py-1 text-sm text-grafito"
-            >
-              {etiquetaDeporte(valor)}
-            </span>
-          ))}
-        </div>
-
-        <h1 className="font-display text-[2.5rem] font-extrabold leading-[0.95] tracking-[-0.02em] text-tinta sm:text-[3.5rem]">
-          {complejo.nombre}
-        </h1>
-
-        <div className="mt-3 flex items-center gap-1.5 text-grafito">
-          <MapPin className="size-[18px] shrink-0" aria-hidden />
-          <p>{complejo.direccion}</p>
-        </div>
-
-        <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-3">
-          <div className="space-y-10 lg:col-span-2">
-            <section id="canchas" className="scroll-mt-24">
-              <h2 className="mb-4 font-display text-[1.75rem] font-extrabold tracking-[-0.02em] text-tinta">
-                Canchas
-              </h2>
-              <GrillaDisponibilidad complejo={complejo} fuente={{ tipo: "publico", slug }} />
-            </section>
-
-            {complejo.servicios.length > 0 && (
-              <section>
-                <h2 className="mb-4 font-display text-[1.75rem] font-extrabold tracking-[-0.02em] text-tinta">
-                  Servicios
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                  {complejo.servicios.map((valor) => {
-                    const servicio = buscarServicio(valor);
-                    const Icono = servicio?.Icono;
-                    return (
-                      <span
-                        key={valor}
-                        className="inline-flex items-center gap-2 rounded-full border border-borde bg-white px-4 py-2 text-sm text-grafito"
-                      >
-                        {Icono && <Icono className="size-[18px]" aria-hidden />}
-                        {servicio?.etiqueta ?? valor}
-                      </span>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
-            <section>
-              <h2 className="mb-4 font-display text-[1.75rem] font-extrabold tracking-[-0.02em] text-tinta">
-                Cómo llegar
-              </h2>
-              <div className="relative h-64 overflow-hidden rounded-card bg-humo">
-                <MapaComplejo lat={complejo.latitud} lng={complejo.longitud} />
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${complejo.latitud},${complejo.longitud}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="absolute bottom-5 left-5 z-[1000] flex items-center gap-3 rounded-card bg-white px-4 py-3 shadow-card transition-transform hover:scale-[1.02]"
-                >
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-celeste-suave text-azul">
-                    <Navigation className="size-5" aria-hidden />
-                  </span>
-                  <span>
-                    <span className="block text-sm font-semibold text-tinta">Abrir en Google Maps</span>
-                    <span className="block text-xs text-grafito">{complejo.direccion}</span>
-                  </span>
-                </a>
-              </div>
-            </section>
-          </div>
-
-          <ReservaBlock complejo={complejo} />
-        </div>
+      <main className="flex-1">
+        <ContenidoComplejo complejo={complejo} fuenteGrilla={{ tipo: "publico", slug }} />
       </main>
 
       <FooterPublico ancho="7xl" />
