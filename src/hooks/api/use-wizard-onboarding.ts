@@ -33,8 +33,9 @@ type PasoActual = 1 | 2 | 3 | 4 | 5 | 6;
  * establecimiento se crea al confirmar el paso 2 (Fase 1) y de ahí en
  * adelante `establecimientoParcial` es la fuente de verdad: horarios lo
  * actualiza con un PUT completo, canchas/tarifas son sub-recursos aparte.
- * "Publicar complejo" (paso 6) no dispara ningún request — todo ya se guardó
- * en cuanto se confirmó cada paso (ver Ruling 6 del plan de Fase 2).
+ * Los pasos 1 a 5 guardan en cuanto se confirma cada uno; el paso 6 envía la
+ * solicitud de verificación (el complejo queda en revisión hasta que el admin
+ * lo verifica).
  */
 export function useWizardOnboarding() {
   const queryClient = useQueryClient();
@@ -339,9 +340,8 @@ export function useWizardOnboarding() {
   }
 
   /**
-   * "Publicar complejo" ahora dispara la solicitud de verificación real
-   * (antes no mandaba ningún request — ver Ruling 6 del plan de Fase 2, ya
-   * no vale). La respuesta del POST sólo confirma la cola (ver
+   * El paso 6 envía la solicitud de verificación real; el complejo no se
+   * publica al enviarla, queda en revisión. La respuesta del POST sólo confirma la cola (ver
    * SolicitarVerificacionResponse); el estado real que se muestra en la
    * pantalla de cierre sale de releer `establecimientos.mios()`, no del
    * body del POST.

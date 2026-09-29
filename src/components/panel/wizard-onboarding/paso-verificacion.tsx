@@ -55,7 +55,6 @@ export function PasoVerificacion({
           guardando={solicitandoVerificacion}
           error={errorVerificacion}
           camposInvalidos={camposInvalidosVerificacion}
-          textoBoton="Enviar y publicar"
           onGuardar={onSolicitarVerificacion}
           onBloqueoLocal={onLimpiarErrorVerificacion}
         />
