@@ -12,8 +12,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePerfil, useLogout } from "@/hooks/api/use-perfil";
 import { borrarToken } from "@/lib/api/sesion";
 import { cerrarSesionEmpleado, destinoSinSesion, useEmpleadoIdSesion } from "@/lib/sesion-caja";
-import { ID_BOTON_CERRAR_MENU, ID_MENU_LATERAL, useEsEscritorio, useMenuMovil } from "@/components/panel/menu-movil-panel";
+import { ID_BOTON_ABRIR_MENU, ID_BOTON_CERRAR_MENU, ID_MENU_LATERAL, useEsEscritorio, useMenuMovil } from "@/components/panel/menu-movil-panel";
 import { semanticaSidebar } from "@/lib/menu-movil";
+import { indiceFocoTrap } from "@/lib/focus-trap";
 import type { PermisoEmpleado } from "@/lib/api/tipos/comunes";
 
 type Item = { href: string; label: string; icono: typeof Calendar; visible: (tienePermiso: (p: PermisoEmpleado) => boolean, esDueno: boolean) => boolean };
@@ -109,6 +110,47 @@ export function SidebarPanel() {
   useEffect(() => {
     if (abierto) document.getElementById(ID_BOTON_CERRAR_MENU)?.focus();
   }, [abierto]);
+
+  // Focus trap del drawer abierto (sólo < lg: desde lg es una nav fija y la
+  // página se recorre normal). Los enfocables se consultan en cada Tab porque
+  // la lista es dinámica (rol, permisos, perfil cargando, logout deshabilitado).
+  useEffect(() => {
+    if (!menu || !abierto || esEscritorio) return;
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== "Tab") return;
+      const aside = document.getElementById(ID_MENU_LATERAL);
+      if (!aside) return;
+      const enfocables = Array.from(aside.querySelectorAll<HTMLElement>("a[href], button:not([disabled])"));
+      const destino = indiceFocoTrap({
+        actual: enfocables.indexOf(document.activeElement as HTMLElement),
+        cantidad: enfocables.length,
+        shift: e.shiftKey,
+      });
+      if (destino === null) return;
+      e.preventDefault();
+      enfocables[destino].focus();
+    }
+
+    // Red de seguridad: si el foco sale por otro camino (clic, lector de
+    // pantalla), vuelve al ✕. Se ignora el ☰: cerrar() le pasa el foco en el
+    // mismo tick del setAbierto(false), antes de que corra el cleanup de este
+    // efecto, y ese foco es el destino correcto. Cubre los tres cierres (✕,
+    // Escape, link). Con el drawer abierto el ☰ está tapado por el backdrop.
+    function onFocusIn(e: FocusEvent) {
+      const t = e.target as HTMLElement | null;
+      if (!t || t.id === ID_BOTON_ABRIR_MENU) return;
+      if (document.getElementById(ID_MENU_LATERAL)?.contains(t)) return;
+      document.getElementById(ID_BOTON_CERRAR_MENU)?.focus();
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("focusin", onFocusIn);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("focusin", onFocusIn);
+    };
+  }, [menu, abierto, esEscritorio]);
 
   // Cierra el drawer al tocar un link. El provider ya lo cierra cuando cambia
   // la ruta, pero tocar el link de la pantalla actual no cambia pathname, y
