@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { establecimientos as endpointEstablecimientos } from "@/lib/api/endpoints/establecimientos";
 import { canchas as endpointCanchas, bloqueos as endpointBloqueos } from "@/lib/api/endpoints/canchas";
-import { mercadopago as endpointMercadoPago } from "@/lib/api/endpoints/mercadopago";
 import { aBloqueoPanel, aCanchaPanel, aCanchaRequest, aFechaHoraBloqueo, type DatosCancha } from "@/lib/api/adaptadores/canchas";
 import { aTarifasDto, aTarifasPanel } from "@/lib/api/tarifas";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
@@ -21,7 +20,6 @@ import type {
   CambiarEstadoCanchaResponse,
   CanchaResponse,
 } from "@/lib/api/tipos/canchas";
-import type { EstadoMercadoPagoResponse } from "@/lib/api/tipos/mercadopago";
 import type { Bloqueo } from "@/lib/panel/canchas";
 import type { DiaSemana, Tarifa } from "@/lib/panel/tarifas";
 import type { HorarioAtencionDto } from "@/lib/api/tipos/comunes";
@@ -331,61 +329,10 @@ export function useWizardOnboarding() {
   }
 
   // ---------------------------------------------------------------------
-  // Paso 6 — Cobros (MercadoPago)
+  // Paso 6 — Verificación
   // ---------------------------------------------------------------------
 
-  const [estadoMercadoPago, setEstadoMercadoPago] = useState<EstadoMercadoPagoResponse | null>(null);
-  const [cargandoEstadoMercadoPago, setCargandoEstadoMercadoPago] = useState(false);
-  const [conectandoMercadoPago, setConectandoMercadoPago] = useState(false);
-  const [errorMercadoPago, setErrorMercadoPago] = useState<string | null>(null);
   const [publicado, setPublicado] = useState(false);
-
-  function consultarEstadoMercadoPago() {
-    if (!establecimientoParcial) return;
-    setCargandoEstadoMercadoPago(true);
-    endpointMercadoPago
-      .obtenerEstado(establecimientoParcial.id)
-      .then(setEstadoMercadoPago)
-      .catch(() => setEstadoMercadoPago({ conectado: false, cuenta: null }))
-      .finally(() => setCargandoEstadoMercadoPago(false));
-  }
-
-  // Vuelve a chequear el estado al entrar al paso 6 y cada vez que la
-  // pestaña recupera el foco — es como se entera de una conexión hecha en
-  // la pestaña de Mercado Pago que abrió el redirect (ver comentario en
-  // src/lib/api/endpoints/mercadopago.ts: el front nunca parsea el "code").
-  useEffect(() => {
-    if (pasoActual !== 6 || !establecimientoParcial) return;
-    // Sincroniza con un sistema externo (fetch a Mercado Pago + suscripción a
-    // visibilitychange); no hay estado derivable del render, ver comentario de arriba.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    consultarEstadoMercadoPago();
-    function alVolverElFoco() {
-      if (document.visibilityState === "visible") consultarEstadoMercadoPago();
-    }
-    document.addEventListener("visibilitychange", alVolverElFoco);
-    return () => document.removeEventListener("visibilitychange", alVolverElFoco);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pasoActual, establecimientoParcial?.id]);
-
-  function iniciarConexionMercadoPago() {
-    if (!establecimientoParcial) return;
-    setConectandoMercadoPago(true);
-    setErrorMercadoPago(null);
-    endpointMercadoPago
-      .iniciarOAuth(establecimientoParcial.id)
-      .then(({ urlAutorizacion }) => {
-        window.location.href = urlAutorizacion;
-      })
-      .catch(() => {
-        setConectandoMercadoPago(false);
-        // No usamos mensajeVisible(e) acá a propósito: este endpoint es una
-        // convención sin backend real todavía (ver comentario más arriba),
-        // así que su forma de error es desconocida y no debe mostrarse cruda
-        // (p. ej. el "Not Found" en inglés que devuelve Spring en un 404).
-        setErrorMercadoPago("No pudimos conectar con Mercado Pago. Intentá de nuevo más tarde.");
-      });
-  }
 
   function volverATarifas() {
     setPasoActual(5);
@@ -500,11 +447,6 @@ export function useWizardOnboarding() {
     confirmarTarifas,
 
     // Paso 6
-    estadoMercadoPago,
-    cargandoEstadoMercadoPago,
-    conectandoMercadoPago,
-    errorMercadoPago,
-    iniciarConexionMercadoPago,
     volverATarifas,
     solicitandoVerificacion: solicitarVerificacion.isPending,
     errorVerificacion:

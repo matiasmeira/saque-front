@@ -9,7 +9,7 @@ import { PasoPoliticas } from "./paso-politicas";
 import { PasoHorarios } from "./paso-horarios";
 import { PasoCanchas } from "./paso-canchas";
 import { PasoTarifas } from "./paso-tarifas";
-import { PasoCobros } from "./paso-cobros";
+import { PasoVerificacion } from "./paso-verificacion";
 import { useWizardOnboarding } from "@/hooks/api/use-wizard-onboarding";
 import { useEstablecimientoActivo, usePerfil } from "@/hooks/api/use-perfil";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
@@ -172,16 +172,11 @@ export function WizardOnboarding() {
         )}
 
         {wizard.pasoActual === 6 && wizard.establecimientoParcial && (
-          <PasoCobros
+          <PasoVerificacion
             requiereSena={wizard.establecimientoParcial.requiereSena}
-            estadoMercadoPago={wizard.estadoMercadoPago}
-            cargandoEstado={wizard.cargandoEstadoMercadoPago}
-            conectando={wizard.conectandoMercadoPago}
-            errorMercadoPago={wizard.errorMercadoPago}
             solicitandoVerificacion={wizard.solicitandoVerificacion}
             errorVerificacion={wizard.errorVerificacion}
             camposInvalidosVerificacion={wizard.camposInvalidosVerificacion}
-            onConectar={wizard.iniciarConexionMercadoPago}
             onAtras={wizard.volverATarifas}
             onSolicitarVerificacion={wizard.confirmarVerificacion}
             onOmitirVerificacion={wizard.omitirVerificacion}

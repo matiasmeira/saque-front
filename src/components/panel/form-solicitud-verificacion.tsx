@@ -29,8 +29,6 @@ export function FormSolicitudVerificacion({
   error,
   camposInvalidos,
   textoBoton = "Enviar a revisión",
-  deshabilitado,
-  motivoDeshabilitado,
   onGuardar,
   onBloqueoLocal,
 }: {
@@ -39,9 +37,6 @@ export function FormSolicitudVerificacion({
   error: string | null;
   camposInvalidos?: Record<string, string>;
   textoBoton?: string;
-  /** Ej: con seña obligatoria y Mercado Pago sin conectar, en el wizard. */
-  deshabilitado?: boolean;
-  motivoDeshabilitado?: string;
   onGuardar: (datos: DatosSolicitudVerificacion) => void;
   /**
    * Se dispara cuando la validación LOCAL bloquea el envío (nunca se llega a
@@ -61,7 +56,6 @@ export function FormSolicitudVerificacion({
 
   function guardar(e: FormEvent) {
     e.preventDefault();
-    if (deshabilitado) return;
 
     const datos: DatosSolicitudVerificacion = {
       cuit: normalizarCuit(cuit),
@@ -171,11 +165,9 @@ export function FormSolicitudVerificacion({
         </p>
       )}
 
-      {deshabilitado && motivoDeshabilitado && <p className="text-sm text-grafito">{motivoDeshabilitado}</p>}
-
       <button
         type="submit"
-        disabled={guardando || deshabilitado}
+        disabled={guardando}
         className="flex h-11 items-center justify-center rounded-full bg-azul px-6 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste disabled:cursor-not-allowed disabled:opacity-60"
       >
         {guardando ? "Enviando..." : textoBoton}

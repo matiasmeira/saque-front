@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
 
-const PASOS = ["Identidad", "Políticas", "Horarios", "Canchas", "Tarifas", "Cobros"];
+const PASOS = ["Identidad", "Políticas", "Horarios", "Canchas", "Tarifas", "Verificación"];
 
 /**
  * Barra de progreso única del wizard: reemplaza las 4 variantes distintas
