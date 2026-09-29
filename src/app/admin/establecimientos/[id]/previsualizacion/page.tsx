@@ -56,10 +56,12 @@ export default function PrevisualizacionEstablecimientoAdmin({ params }: { param
   const complejo = consulta.data.detalle;
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-grafito">
-        Vista previa · como la ve el público
-      </p>
+    <main className="flex-1">
+      <div className="mx-auto w-full max-w-7xl px-5 pt-10 sm:px-8 lg:px-10">
+        <p className="text-xs font-semibold uppercase tracking-wide text-grafito">
+          Vista previa · como la ve el público
+        </p>
+      </div>
 
       <ContenidoComplejo
         complejo={complejo}
@@ -67,16 +69,18 @@ export default function PrevisualizacionEstablecimientoAdmin({ params }: { param
       />
 
       {complejo.horariosAtencion.length > 0 && (
-        <section className="mt-6 rounded-card bg-white p-6 shadow-card">
-          <h2 className="font-display text-sm font-bold text-tinta">Horarios</h2>
-          <ul className="mt-2 space-y-1 text-sm text-tinta">
-            {complejo.horariosAtencion.map((h, i) => (
-              <li key={i}>
-                {h.diaSemana}: {h.horaApertura.slice(0, 5)} a {h.horaCierre.slice(0, 5)}
-              </li>
-            ))}
-          </ul>
-        </section>
+        <div className="mx-auto w-full max-w-7xl px-5 pb-28 sm:px-8 lg:px-10 lg:pb-10">
+          <section className="rounded-card bg-white p-6 shadow-card">
+            <h2 className="font-display text-sm font-bold text-tinta">Horarios</h2>
+            <ul className="mt-2 space-y-1 text-sm text-tinta">
+              {complejo.horariosAtencion.map((h, i) => (
+                <li key={i}>
+                  {h.diaSemana}: {h.horaApertura.slice(0, 5)} a {h.horaCierre.slice(0, 5)}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
       )}
     </main>
   );
