@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 
 /**
@@ -28,6 +29,17 @@ const MenuMovilContext = createContext<MenuMovil | null>(null);
 
 export function MenuMovilProvider({ children }: { children: ReactNode }) {
   const [abierto, setAbierto] = useState(false);
+  const pathname = usePathname();
+  const [pathnameAnterior, setPathnameAnterior] = useState(pathname);
+
+  // Si cambia la ruta (Atrás/Adelante, redirects, cualquier navegación que no
+  // pase por un link del sidebar) el menú se cierra: el provider vive en el
+  // layout y persiste entre pantallas. Se ajusta durante el render, sin mover
+  // el foco (el ☰ de la pantalla nueva ya queda en el orden natural).
+  if (pathname !== pathnameAnterior) {
+    setPathnameAnterior(pathname);
+    setAbierto(false);
+  }
 
   const abrir = useCallback(() => setAbierto(true), []);
   const cerrar = useCallback(() => {

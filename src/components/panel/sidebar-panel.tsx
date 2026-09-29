@@ -110,8 +110,9 @@ export function SidebarPanel() {
     if (abierto) document.getElementById(ID_BOTON_CERRAR_MENU)?.focus();
   }, [abierto]);
 
-  // Cierra el drawer al tocar un link. Va en el onClick y no en un efecto
-  // sobre pathname (react-hooks/set-state-in-effect). Sin provider: undefined.
+  // Cierra el drawer al tocar un link. El provider ya lo cierra cuando cambia
+  // la ruta, pero tocar el link de la pantalla actual no cambia pathname, y
+  // además acá el foco vuelve al ☰. Sin provider: undefined.
   const alNavegar = menu?.cerrar;
 
   /**
