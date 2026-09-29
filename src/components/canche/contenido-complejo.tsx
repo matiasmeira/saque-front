@@ -95,7 +95,7 @@ export function ContenidoComplejo({
               <h2 className="mb-4 font-display text-[1.75rem] font-extrabold tracking-[-0.02em] text-tinta">
                 Cómo llegar
               </h2>
-              <div className="relative h-64 overflow-hidden rounded-card bg-humo">
+              <div className="relative isolate h-64 overflow-hidden rounded-card bg-humo">
                 <MapaComplejo lat={complejo.latitud} lng={complejo.longitud} />
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${complejo.latitud},${complejo.longitud}`}

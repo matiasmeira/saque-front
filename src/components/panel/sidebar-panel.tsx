@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, Calendar, CreditCard, Eye, History, LayoutGrid, LogOut, Receipt, Repeat, Settings, Tag, User, Users, Utensils, Wallet } from "lucide-react";
+import { BarChart3, Calendar, CreditCard, Eye, History, LayoutGrid, LogOut, Receipt, Repeat, Settings, Tag, User, Users, Utensils, Wallet, X } from "lucide-react";
 import { LogoMarca } from "@/components/canche/logo";
 import { useRolPanel } from "@/lib/rol-panel";
 import { usePermisos } from "@/lib/permisos";
@@ -11,6 +12,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePerfil, useLogout } from "@/hooks/api/use-perfil";
 import { borrarToken } from "@/lib/api/sesion";
 import { cerrarSesionEmpleado, destinoSinSesion, useEmpleadoIdSesion } from "@/lib/sesion-caja";
+import { ID_BOTON_CERRAR_MENU, ID_MENU_LATERAL, useEsEscritorio, useMenuMovil } from "@/components/panel/menu-movil-panel";
+import { semanticaSidebar } from "@/lib/menu-movil";
 import type { PermisoEmpleado } from "@/lib/api/tipos/comunes";
 
 type Item = { href: string; label: string; icono: typeof Calendar; visible: (tienePermiso: (p: PermisoEmpleado) => boolean, esDueno: boolean) => boolean };
@@ -98,6 +101,18 @@ export function SidebarPanel() {
   const { data: perfil } = usePerfil();
   const queryClient = useQueryClient();
   const logout = useLogout();
+  const menu = useMenuMovil();
+  const esEscritorio = useEsEscritorio();
+  const abierto = menu?.abierto ?? false;
+
+  // Al abrir el drawer el foco va al ✕ (sistema externo: el DOM).
+  useEffect(() => {
+    if (abierto) document.getElementById(ID_BOTON_CERRAR_MENU)?.focus();
+  }, [abierto]);
+
+  // Cierra el drawer al tocar un link. Va en el onClick y no en un efecto
+  // sobre pathname (react-hooks/set-state-in-effect). Sin provider: undefined.
+  const alNavegar = menu?.cerrar;
 
   /**
    * Devuelve el mostrador a la pantalla de nombres. Tiene que soltar el JWT del
@@ -135,9 +150,38 @@ export function SidebarPanel() {
   }
 
   return (
-    <aside className="flex h-full w-56 shrink-0 flex-col bg-tinta">
+    <>
+      {menu && abierto && (
+        <button type="button" tabIndex={-1} aria-label="Cerrar menú" onClick={menu.cerrar} className="fixed inset-0 z-50 bg-tinta/40 lg:hidden" />
+      )}
+      {/* Desde lg las clases son las de siempre: todo lo del drawer va con
+          max-lg:. Por debajo de lg, con menú: off-canvas a la izquierda, y
+          cerrado queda `invisible` (ni foco ni lector de pantalla). Sin
+          provider no se agrega ninguna de esas clases. */}
+      <aside
+        id={ID_MENU_LATERAL}
+        {...semanticaSidebar({ conMenuMovil: !!menu, esEscritorio, abierto })}
+        className={`flex h-full w-56 shrink-0 flex-col bg-tinta${
+          menu
+            ? ` max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-50 max-lg:shadow-xl max-lg:transition-[transform,visibility] max-lg:duration-200 motion-reduce:max-lg:transition-none ${
+                abierto ? "max-lg:visible max-lg:translate-x-0" : "max-lg:invisible max-lg:-translate-x-full"
+              }`
+            : ""
+        }`}
+      >
       <div className="flex h-16 items-center px-5">
         <LogoMarca className="h-8 w-auto" />
+        {menu && (
+          <button
+            id={ID_BOTON_CERRAR_MENU}
+            type="button"
+            onClick={menu.cerrar}
+            aria-label="Cerrar menú"
+            className="ml-auto flex size-9 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10 lg:hidden"
+          >
+            <X className="size-5" aria-hidden />
+          </button>
+        )}
       </div>
 
       <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-5">
@@ -152,7 +196,7 @@ export function SidebarPanel() {
                   const activo = pathname === item.href || pathname.startsWith(`${item.href}/`);
                   const Icono = item.icono;
                   return (
-                    <Link key={item.href} href={item.href} aria-current={activo ? "page" : undefined} className={claseLink(activo)}>
+                    <Link key={item.href} href={item.href} onClick={alNavegar} aria-current={activo ? "page" : undefined} className={claseLink(activo)}>
                       <Icono className="size-[18px] shrink-0" aria-hidden />
                       {item.label}
                     </Link>
@@ -172,6 +216,7 @@ export function SidebarPanel() {
           {perfil?.nombre && <p className="truncate px-2.5 pb-2 text-xs text-[#9DB6D6]">{perfil.nombre}</p>}
           <Link
             href="/panel/perfil"
+            onClick={alNavegar}
             aria-current={pathname === "/panel/perfil" ? "page" : undefined}
             className="flex h-10 items-center gap-2.5 rounded-input pl-2.5 pr-3 text-sm font-semibold text-[#9DB6D6] transition-colors hover:bg-white/5 hover:text-white"
           >
@@ -199,6 +244,7 @@ export function SidebarPanel() {
           {perfil?.nombre && <p className="truncate px-2.5 pb-2 text-xs text-[#9DB6D6]">{perfil.nombre}</p>}
           <Link
             href="/panel/perfil"
+            onClick={alNavegar}
             aria-current={pathname === "/panel/perfil" ? "page" : undefined}
             className="flex h-10 items-center gap-2.5 rounded-input pl-2.5 pr-3 text-sm font-semibold text-[#9DB6D6] transition-colors hover:bg-white/5 hover:text-white"
           >
@@ -216,6 +262,7 @@ export function SidebarPanel() {
           </button>
         </div>
       )}
-    </aside>
+      </aside>
+    </>
   );
 }

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { GuardSesionPanel } from "@/components/panel/guard-sesion-panel";
+import { MenuMovilProvider } from "@/components/panel/menu-movil-panel";
 
 /**
  * Boundary de Suspense para este subárbol.
@@ -18,6 +19,9 @@ import { GuardSesionPanel } from "@/components/panel/guard-sesion-panel";
  * guard deja al usuario navegando sin sesión y sin salida, que es justo el
  * bug que esto arregla.
  *
+ * MenuMovilProvider (client) guarda si el menú lateral está abierto en pantallas
+ * chicas; este layout sigue siendo server component porque sólo le pasa children.
+ *
  * NO hay chrome compartido acá (sidebar/header): cada pantalla monta su
  * propio `<div className="flex h-dvh ...">` con `SidebarPanel`+`HeaderPanel`.
  * Por eso BannerVerificacionPendiente NO vive acá (agregarlo como hermano de
@@ -30,7 +34,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <Suspense fallback={<div className="min-h-dvh bg-humo" />}>
       <GuardSesionPanel />
-      {children}
+      <MenuMovilProvider>{children}</MenuMovilProvider>
     </Suspense>
   );
 }

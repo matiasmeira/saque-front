@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, Clock, ShieldAlert, ShieldQuestion } from "lucide-react";
+import { AlertTriangle, Clock, Menu, ShieldAlert, ShieldQuestion } from "lucide-react";
 
 import { usePerfil, useEstablecimientoActivo } from "@/hooks/api/use-perfil";
 import { SelectorEstablecimiento } from "@/components/panel/selector-establecimiento";
 import { ModalCrearEstablecimiento } from "@/components/panel/modal-crear-establecimiento";
 import { BannerVerificacionPendiente } from "@/components/panel/banner-verificacion-pendiente";
+import { ID_BOTON_ABRIR_MENU, ID_MENU_LATERAL, useMenuMovil } from "@/components/panel/menu-movil-panel";
 
 /**
  * Header del panel: nombre del complejo + cartel de estado, sólo cuando
@@ -39,6 +40,7 @@ export function HeaderPanel({
   const { establecimiento } = useEstablecimientoActivo();
   const { data: perfil } = usePerfil();
   const [creandoComplejo, setCreandoComplejo] = useState(false);
+  const menu = useMenuMovil();
 
   const esDuenoOAdmin = perfil?.rol === "OWNER" || perfil?.rol === "ADMIN";
   // La solicitud de verificación es OWNER puro en el backend (ni ADMIN):
@@ -60,13 +62,26 @@ export function HeaderPanel({
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center justify-between border-b border-borde bg-white px-8">
+      <header className="flex h-16 shrink-0 items-center justify-between border-b border-borde bg-white px-4 max-lg:h-auto max-lg:min-h-16 max-lg:flex-wrap max-lg:gap-y-2 max-lg:py-2 lg:px-8">
         <div className="flex min-w-0 items-center gap-4">
+          {menu && (
+            <button
+              id={ID_BOTON_ABRIR_MENU}
+              type="button"
+              onClick={menu.abrir}
+              aria-label="Abrir menú"
+              aria-expanded={menu.abierto}
+              aria-controls={ID_MENU_LATERAL}
+              className="-ml-2 flex size-10 shrink-0 items-center justify-center rounded-full text-tinta transition-colors hover:bg-humo lg:hidden"
+            >
+              <Menu className="size-5" aria-hidden />
+            </button>
+          )}
           <h1 className="truncate font-display text-base font-bold text-tinta">{nombreVisible}</h1>
           <SelectorEstablecimiento onCrear={() => setCreandoComplejo(true)} />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 max-lg:w-full max-lg:flex-wrap max-lg:empty:hidden">
           {sinHorarios && (
             <Link
               href="/panel/configuracion"
