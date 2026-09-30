@@ -43,6 +43,8 @@ function Verificar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
+  // Lo agrega el back al link del mail; destinoTrasLogin lo valida (rutaInternaSegura).
+  const volverA = searchParams.get("volverA");
 
   const [paso, setPaso] = useState<PasoRegistro>("password");
 
@@ -54,7 +56,7 @@ function Verificar() {
   });
 
   function entrar(perfil: PerfilResponse) {
-    router.push(destinoTrasLogin({ rol: perfil.rol }));
+    router.push(destinoTrasLogin({ rol: perfil.rol, volverA }));
   }
 
   const sinToken = token === "";

@@ -7,6 +7,10 @@ import { ApiError } from "@/lib/api/errores";
 import { keys } from "@/lib/api/keys";
 import { guardarToken } from "@/lib/api/sesion";
 import type { PerfilResponse } from "@/lib/api/tipos/auth";
+import { armarBodyIniciarRegistro } from "@/lib/registro-body";
+
+/** Variables de las mutaciones que inician el registro. */
+export type IniciarRegistroVars = { email: string; volverA?: string | null };
 
 /** Resultado de sondear un email en el paso 1 de /ingresar. */
 export type ResultadoSondeo = "tiene-cuenta" | "sin-cuenta";
@@ -32,10 +36,10 @@ export type ResultadoSondeo = "tiene-cuenta" | "sin-cuenta";
  * si en realidad no tenia cuenta, el login le dara 401 con el link a registro.
  */
 export function useSondearEmail() {
-  return useMutation<ResultadoSondeo, ApiError, string>({
-    mutationFn: async (email) => {
+  return useMutation<ResultadoSondeo, ApiError, IniciarRegistroVars>({
+    mutationFn: async ({ email, volverA }) => {
       try {
-        await auth.iniciarRegistro({ email });
+        await auth.iniciarRegistro(armarBodyIniciarRegistro(email, volverA));
         return "sin-cuenta";
       } catch (error) {
         if (error instanceof ApiError && (error.status === 400 || error.status === 429)) {
@@ -49,8 +53,10 @@ export function useSondearEmail() {
 
 /** Reenvia el codigo de verificacion. Mismo endpoint, mismo cupo de 3 cada 15 min. */
 export function useReenviarCodigo() {
-  return useMutation<void, ApiError, string>({
-    mutationFn: (email) => auth.iniciarRegistro({ email }),
+  return useMutation<void, ApiError, IniciarRegistroVars>({
+    // El reenvío arma un link nuevo (el anterior se invalida): lleva volverA también.
+    mutationFn: ({ email, volverA }) =>
+      auth.iniciarRegistro(armarBodyIniciarRegistro(email, volverA)),
   });
 }
 

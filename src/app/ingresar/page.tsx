@@ -54,6 +54,8 @@ export default function Ingresar() {
   const login = useLogin();
   const verificarCodigo = useVerificarCodigo();
   const reenviar = useReenviarCodigo();
+  // Se manda crudo al iniciar/reenviar el registro: el back y destinoTrasLogin lo validan.
+  const volverA = searchParams.get("volverA");
 
   /**
    * Adónde va el usuario una vez que hay sesión.
@@ -67,7 +69,7 @@ export default function Ingresar() {
     router.push(
       destinoTrasLogin({
         rol: perfil.rol,
-        volverA: searchParams.get("volverA"),
+        volverA,
       }),
     );
   }
@@ -83,7 +85,7 @@ export default function Ingresar() {
     setError(null);
     setEmail(limpio);
     try {
-      const resultado = await sondear.mutateAsync(limpio);
+      const resultado = await sondear.mutateAsync({ email: limpio, volverA });
       setPaso(resultado === "tiene-cuenta" ? "password-login" : "codigo");
     } catch (e) {
       setError(mensajeDeError(e, "No pudimos continuar. Intentá de nuevo."));
@@ -238,7 +240,7 @@ export default function Ingresar() {
               </button>
               <button
                 type="button"
-                onClick={() => reenviar.mutate(email)}
+                onClick={() => reenviar.mutate({ email, volverA })}
                 disabled={reenviar.isPending}
                 className="mt-4 w-full text-center text-sm text-azul hover:underline disabled:text-grafito disabled:no-underline"
               >

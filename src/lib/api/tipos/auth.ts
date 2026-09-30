@@ -24,6 +24,12 @@ export type RegisterRequest = {
 
 export type IniciarRegistroRequest = {
   email: string;
+  /**
+   * Ruta interna a la que volver tras verificar (IniciarRegistroRequest.java,
+   * campo opcional). El back la valida y, si sirve, la suma al link del mail;
+   * si no, la ignora. Sin valor, la clave no se manda (nunca null).
+   */
+  volverA?: string;
 };
 
 export type VerificarTokenResponse = {

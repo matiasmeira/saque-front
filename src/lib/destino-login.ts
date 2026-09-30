@@ -28,7 +28,8 @@ export function rutaInternaSegura(valor: string | null | undefined): string | nu
  * 1. `volverA`, si es una ruta interna (lo manda el checkout). Se valida con
  *    `rutaInternaSegura`: cualquier valor que resuelto contra un origen fijo
  *    cambie de origen (URL absoluta, "//host", "/\host", etc.) sería un open
- *    redirect y se ignora. /verificar no tiene `volverA`: no lo pasa.
+ *    redirect y se ignora. /verificar lo lee del link del mail
+ *    (lo agrega el back al iniciar el registro).
  * 2. Según el rol: ADMIN a su área de administración, OWNER a su panel, el
  *    resto a la home.
  */
