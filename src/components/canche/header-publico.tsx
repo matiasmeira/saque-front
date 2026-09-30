@@ -21,8 +21,11 @@ export function HeaderPublico({ variant = "claro", ancho = "5xl" }: HeaderPublic
   const textoSecundario = oscuro ? "text-[#9DB6D6]" : "text-grafito";
   const maxWidth = ancho === "7xl" ? "max-w-7xl" : "max-w-5xl";
 
+  // z-20: el header es un stacking context y tiene que quedar por encima del
+  // contenido de la página (título y buscador de la home, en z-10) para que el
+  // dropdown del menú de usuario no quede tapado.
   return (
-    <header className="relative z-10">
+    <header className="relative z-20">
       <div className={`mx-auto flex ${maxWidth} items-center justify-between px-5 py-5 sm:px-8`}>
         <Link href="/" className="flex min-h-11 items-center gap-2">
           {oscuro ? (

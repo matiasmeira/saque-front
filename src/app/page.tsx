@@ -15,10 +15,7 @@ export default function Home() {
             blanco y la identidad de marca sin depender de qué foto rote. */}
         <div className="absolute inset-0 bg-tinta/75" />
         <HeaderPublico variant="oscuro" />
-        {/* pointer-events-none: es puro texto decorativo, sin nada clickeable
-            adentro. Sin esto, este div (mismo z-10 que el header, y después
-            en el DOM) tapa el menú de usuario y le come los clicks/hover. */}
-        <div className="relative z-10 mx-auto max-w-2xl px-5 pb-24 pt-6 text-center pointer-events-none sm:px-8 sm:pb-32 sm:pt-10">
+        <div className="relative z-10 mx-auto max-w-2xl px-5 pb-24 pt-6 text-center sm:px-8 sm:pb-32 sm:pt-10">
           <h1 className="text-[clamp(2.75rem,7vw,4.5rem)] font-display font-extrabold leading-[0.95] tracking-[-0.03em] text-white">
             Tu próximo partido empieza acá
           </h1>
