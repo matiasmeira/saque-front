@@ -154,7 +154,10 @@ export function SidebarPanel() {
 
   // Cierra el drawer al tocar un link. El provider ya lo cierra cuando cambia
   // la ruta, pero tocar el link de la pantalla actual no cambia pathname, y
-  // además acá el foco vuelve al ☰. Sin provider: undefined.
+  // además acá cerrar() devuelve el foco al ☰. Eso sólo aplica al link de la
+  // pantalla actual: si la ruta cambia, la pantalla se desmonta (cada página
+  // monta su propio SidebarPanel y HeaderPanel), el ☰ desaparece y el foco
+  // queda en el body, como en cualquier navegación de Next. Sin provider: undefined.
   const alNavegar = menu?.cerrar;
 
   /**
