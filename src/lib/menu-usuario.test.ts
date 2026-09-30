@@ -19,7 +19,7 @@ describe("itemsMenuUsuario", () => {
 
   it("ADMIN ve solo el panel de administración", () => {
     expect(itemsMenuUsuario("ADMIN")).toEqual([
-      { label: "Panel de administración", href: "/panel/agenda" },
+      { label: "Panel de administración", href: "/admin/ofertas" },
     ]);
   });
 

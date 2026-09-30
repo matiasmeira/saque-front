@@ -13,6 +13,7 @@ import {
 } from "@/components/canche/completar-registro";
 import { auth } from "@/lib/api/endpoints/auth";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
+import { destinoTrasLogin } from "@/lib/destino-login";
 import { urlCheckout, useIntencion } from "@/lib/reserva-intencion";
 import type { PerfilResponse } from "@/lib/api/tipos/auth";
 
@@ -59,24 +60,25 @@ function Verificar() {
   );
 
   function entrar(perfil: PerfilResponse) {
-    if (
+    const hayReserva =
       modoReserva &&
       intencion?.complejo &&
       intencion.cancha &&
       intencion.fecha &&
-      intencion.hora
-    ) {
-      router.push(
-        urlCheckout({
-          complejo: intencion.complejo,
-          cancha: intencion.cancha,
-          fecha: intencion.fecha,
-          hora: intencion.hora,
-        }),
-      );
-      return;
-    }
-    router.push(perfil.rol === "OWNER" || perfil.rol === "ADMIN" ? "/panel/agenda" : "/");
+      intencion.hora;
+    router.push(
+      destinoTrasLogin({
+        rol: perfil.rol,
+        destinoReserva: hayReserva
+          ? urlCheckout({
+              complejo: intencion.complejo!,
+              cancha: intencion.cancha!,
+              fecha: intencion.fecha!,
+              hora: intencion.hora!,
+            })
+          : null,
+      }),
+    );
   }
 
   const sinToken = token === "";

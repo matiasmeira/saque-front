@@ -23,11 +23,11 @@ export function itemsMenuUsuario(rol: Role): ItemMenuUsuario[] {
         { label: "Mi perfil", href: "/perfil" },
       ];
     case "ADMIN":
-      // Mismo destino que OWNER: no existe un panel de administración
-      // separado, ADMIN comparte /panel/agenda (ver entrar() en
-      // src/app/ingresar/page.tsx). /admin/ofertas existe pero es una
-      // pantalla puntual, no "el" panel.
-      return [{ label: "Panel de administración", href: "/panel/agenda" }];
+      // ADMIN tiene su propia área en /admin (layout con Establecimientos y
+      // Ofertas) y no usa /panel, que es del dueño. Por decisión de producto
+      // el menú lo lleva a /admin/ofertas, igual que después de ingresar
+      // (ver destinoTrasLogin).
+      return [{ label: "Panel de administración", href: "/admin/ofertas" }];
     case "EMPLOYEE":
       // No entra por acá en el uso normal (login por PIN en /caja): si un
       // token de empleado sobrevive en localStorage y esta persona cae en

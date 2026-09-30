@@ -10,6 +10,7 @@ import {
   TITULOS_REGISTRO,
   type PasoRegistro,
 } from "@/components/canche/completar-registro";
+import { destinoTrasLogin } from "@/lib/destino-login";
 import { guardarBooking, urlCheckout, useIntencion } from "@/lib/reserva-intencion";
 import { useQuery } from "@tanstack/react-query";
 import { publico } from "@/lib/api/endpoints/publico";
@@ -108,16 +109,13 @@ export default function Ingresar() {
    * un `volverA` con URL absoluta sería un open redirect.
    */
   function entrar(perfil: PerfilResponse) {
-    const volverA = searchParams.get("volverA");
-    if (volverA?.startsWith("/") && !volverA.startsWith("//")) {
-      router.push(volverA);
-      return;
-    }
-    if (modoReserva) {
-      router.push(cerrarHacia);
-      return;
-    }
-    router.push(perfil.rol === "OWNER" || perfil.rol === "ADMIN" ? "/panel/agenda" : "/");
+    router.push(
+      destinoTrasLogin({
+        rol: perfil.rol,
+        volverA: searchParams.get("volverA"),
+        destinoReserva: modoReserva ? cerrarHacia : null,
+      }),
+    );
   }
 
   function mensajeDeError(e: unknown, porDefecto: string): string {
