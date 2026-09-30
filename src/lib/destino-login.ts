@@ -29,22 +29,18 @@ export function rutaInternaSegura(valor: string | null | undefined): string | nu
  *    `rutaInternaSegura`: cualquier valor que resuelto contra un origen fijo
  *    cambie de origen (URL absoluta, "//host", "/\host", etc.) sería un open
  *    redirect y se ignora. /verificar no tiene `volverA`: no lo pasa.
- * 2. `destinoReserva`, si hay una reserva en curso (null si no).
- * 3. Según el rol: ADMIN a su área de administración, OWNER a su panel, el
+ * 2. Según el rol: ADMIN a su área de administración, OWNER a su panel, el
  *    resto a la home.
  */
 export function destinoTrasLogin({
   rol,
   volverA,
-  destinoReserva,
 }: {
   rol: Role;
   volverA?: string | null;
-  destinoReserva?: string | null;
 }): string {
   const rutaVolverA = rutaInternaSegura(volverA);
   if (rutaVolverA) return rutaVolverA;
-  if (destinoReserva) return destinoReserva;
   if (rol === "ADMIN") return "/admin/ofertas";
   if (rol === "OWNER") return "/panel/agenda";
   return "/";

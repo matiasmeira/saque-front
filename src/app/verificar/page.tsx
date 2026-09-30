@@ -14,7 +14,6 @@ import {
 import { auth } from "@/lib/api/endpoints/auth";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { destinoTrasLogin } from "@/lib/destino-login";
-import { urlCheckout, useIntencion } from "@/lib/reserva-intencion";
 import type { PerfilResponse } from "@/lib/api/tipos/auth";
 
 /**
@@ -43,7 +42,6 @@ export default function VerificarPage() {
 function Verificar() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const intencion = useIntencion();
   const token = searchParams.get("token") ?? "";
 
   const [paso, setPaso] = useState<PasoRegistro>("password");
@@ -55,30 +53,8 @@ function Verificar() {
     retry: false,
   });
 
-  const modoReserva = Boolean(
-    intencion?.complejo && intencion?.cancha && intencion?.fecha && intencion?.hora,
-  );
-
   function entrar(perfil: PerfilResponse) {
-    const hayReserva =
-      modoReserva &&
-      intencion?.complejo &&
-      intencion.cancha &&
-      intencion.fecha &&
-      intencion.hora;
-    router.push(
-      destinoTrasLogin({
-        rol: perfil.rol,
-        destinoReserva: hayReserva
-          ? urlCheckout({
-              complejo: intencion.complejo!,
-              cancha: intencion.cancha!,
-              fecha: intencion.fecha!,
-              hora: intencion.hora!,
-            })
-          : null,
-      }),
-    );
+    router.push(destinoTrasLogin({ rol: perfil.rol }));
   }
 
   const sinToken = token === "";

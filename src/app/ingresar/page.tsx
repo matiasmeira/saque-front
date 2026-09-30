@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { HeaderPublico } from "@/components/canche/header-publico";
 import {
   CompletarRegistro,
@@ -11,10 +11,6 @@ import {
   type PasoRegistro,
 } from "@/components/canche/completar-registro";
 import { destinoTrasLogin } from "@/lib/destino-login";
-import { guardarBooking, urlCheckout, useIntencion } from "@/lib/reserva-intencion";
-import { useQuery } from "@tanstack/react-query";
-import { publico } from "@/lib/api/endpoints/publico";
-import { keys } from "@/lib/api/keys";
 import { useLogin } from "@/hooks/api/use-perfil";
 import { useReenviarCodigo, useSondearEmail, useVerificarCodigo } from "@/hooks/api/use-auth";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
@@ -45,7 +41,6 @@ const LARGO_CODIGO = 6;
 export default function Ingresar() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const intencion = useIntencion();
 
   const [paso, setPaso] = useState<Paso>("email");
   const [email, setEmail] = useState("");
@@ -60,47 +55,6 @@ export default function Ingresar() {
   const verificarCodigo = useVerificarCodigo();
   const reenviar = useReenviarCodigo();
 
-  const complejo = searchParams.get("complejo");
-  const cancha = searchParams.get("cancha");
-  const fecha = searchParams.get("fecha");
-  const hora = searchParams.get("hora");
-  const tieneParamsDeReserva = Boolean(complejo && cancha && fecha && hora);
-
-  useEffect(() => {
-    if (complejo && cancha && fecha && hora) {
-      guardarBooking({ complejo, cancha, fecha, hora });
-    }
-  }, [complejo, cancha, fecha, hora]);
-
-  const modoReserva = Boolean(
-    intencion?.complejo && intencion?.cancha && intencion?.fecha && intencion?.hora,
-  );
-  // El nombre del complejo es sólo copy de contexto ("estás entrando para
-  // reservar en tal lado"): sale de la ficha pública, que no pide sesión, y si
-  // falla la línea simplemente no aparece.
-  const { data: complejoIntencion } = useQuery({
-    queryKey: keys.publico.detalle(intencion?.complejo ?? ""),
-    queryFn: () => publico.detalle(intencion!.complejo!),
-    enabled: Boolean(intencion?.complejo),
-    staleTime: 5 * 60_000,
-  });
-  const complejoNombre = complejoIntencion?.nombre ?? null;
-  const cerrarHacia =
-    modoReserva && intencion?.complejo && intencion.cancha && intencion.fecha && intencion.hora
-      ? urlCheckout({
-          complejo: intencion.complejo,
-          cancha: intencion.cancha,
-          fecha: intencion.fecha,
-          hora: intencion.hora,
-        })
-      : "/";
-
-  // Igual que antes: si venimos con params de reserva, esperamos a que la
-  // intención sincronizada coincida con ESTA reserva antes de mostrar nada.
-  if (tieneParamsDeReserva && intencion?.complejo !== complejo) {
-    return <div className="min-h-dvh bg-humo" />;
-  }
-
   /**
    * Adónde va el usuario una vez que hay sesión.
    *
@@ -114,7 +68,6 @@ export default function Ingresar() {
       destinoTrasLogin({
         rol: perfil.rol,
         volverA: searchParams.get("volverA"),
-        destinoReserva: modoReserva ? cerrarHacia : null,
       }),
     );
   }
@@ -173,7 +126,7 @@ export default function Ingresar() {
   const claseLabel = "mb-1 block text-xs font-semibold text-grafito";
 
   const titulos: Record<Paso, string> = {
-    email: modoReserva ? "Para reservar necesitás una cuenta" : "Ingresá o creá tu cuenta",
+    email: "Ingresá o creá tu cuenta",
     "password-login": "Ingresá tu contraseña",
     codigo: "Revisá tu email",
     ...TITULOS_REGISTRO,
@@ -187,16 +140,6 @@ export default function Ingresar() {
 
       <main className="flex flex-1 items-center justify-center px-5 py-10">
         <div className="relative w-full max-w-sm rounded-card bg-white p-8">
-          {modoReserva && paso === "email" && (
-            <Link
-              href={cerrarHacia}
-              aria-label="Cerrar"
-              className="absolute right-4 top-4 flex size-9 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo"
-            >
-              <X className="size-5" aria-hidden />
-            </Link>
-          )}
-
           {paso !== "email" && (
             <button
               type="button"
@@ -212,9 +155,6 @@ export default function Ingresar() {
             {titulos[paso]}
           </h1>
 
-          {paso === "email" && complejoNombre && (
-            <p className="mt-1 text-center text-sm text-grafito">{complejoNombre}</p>
-          )}
           {paso !== "email" && (
             <p className="mt-1 text-center text-sm text-grafito">{email}</p>
           )}

@@ -1,7 +1,6 @@
 /**
- * Mock de sesión de usuario. A diferencia de la intención de
- * reserva (sessionStorage, vive y muere con la pestaña), el usuario
- * tiene que persistir entre pestañas y visitas — localStorage.
+ * Mock de sesión de usuario. Tiene que persistir entre pestañas y
+ * visitas — localStorage.
  *
  * Sin esto no hay forma de distinguir, en A7, entre un visitante
  * que nunca se registró y uno que ya completó A4 — distinción que
@@ -34,7 +33,7 @@ function notificarCambio() {
   window.dispatchEvent(new Event(EVENTO_CAMBIO));
 }
 
-/** localStorage no dispara "storage" en la propia pestaña — igual que sessionStorage con la intención. */
+/** localStorage no dispara "storage" en la propia pestaña. */
 export function suscribirseUsuario(callback: () => void) {
   window.addEventListener(EVENTO_CAMBIO, callback);
   window.addEventListener("storage", callback);
@@ -56,7 +55,7 @@ export function borrarUsuario() {
   notificarCambio();
 }
 
-// Mismo fix que reserva-intencion.ts: useSyncExternalStore exige la
+// useSyncExternalStore exige la
 // MISMA referencia si el dato no cambió, y JSON.parse arma un
 // objeto nuevo cada vez — hay que cachear por el string crudo, si
 // no entra en loop infinito ("the result of getSnapshot should be
