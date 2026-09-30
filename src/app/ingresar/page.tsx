@@ -105,8 +105,9 @@ export default function Ingresar() {
    * Adónde va el usuario una vez que hay sesión.
    *
    * `volverA` lo manda el checkout, que necesita retomar un slot concreto
-   * (cancha + inicio + fin + deporte). Se valida que sea una ruta interna:
-   * un `volverA` con URL absoluta sería un open redirect.
+   * (cancha + inicio + fin + deporte). destinoTrasLogin lo valida con
+   * rutaInternaSegura: si resuelto contra un origen fijo cambia de origen
+   * (URL absoluta, "//host", "/\host"), sería un open redirect y se ignora.
    */
   function entrar(perfil: PerfilResponse) {
     router.push(
