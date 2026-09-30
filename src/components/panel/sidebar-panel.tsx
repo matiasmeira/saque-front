@@ -14,7 +14,7 @@ import { borrarToken } from "@/lib/api/sesion";
 import { cerrarSesionEmpleado, destinoSinSesion, useEmpleadoIdSesion } from "@/lib/sesion-caja";
 import { ID_BOTON_ABRIR_MENU, ID_BOTON_CERRAR_MENU, ID_MENU_LATERAL, useEsEscritorio, useMenuMovil } from "@/components/panel/menu-movil-panel";
 import { semanticaSidebar } from "@/lib/menu-movil";
-import { indiceFocoTrap } from "@/lib/focus-trap";
+import { SELECTOR_ENFOCABLES, indiceFocoTrap } from "@/lib/focus-trap";
 import type { PermisoEmpleado } from "@/lib/api/tipos/comunes";
 
 type Item = { href: string; label: string; icono: typeof Calendar; visible: (tienePermiso: (p: PermisoEmpleado) => boolean, esDueno: boolean) => boolean };
@@ -121,7 +121,7 @@ export function SidebarPanel() {
       if (e.key !== "Tab") return;
       const aside = document.getElementById(ID_MENU_LATERAL);
       if (!aside) return;
-      const enfocables = Array.from(aside.querySelectorAll<HTMLElement>("a[href], button:not([disabled])"));
+      const enfocables = Array.from(aside.querySelectorAll<HTMLElement>(SELECTOR_ENFOCABLES));
       const destino = indiceFocoTrap({
         actual: enfocables.indexOf(document.activeElement as HTMLElement),
         cantidad: enfocables.length,

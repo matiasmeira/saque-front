@@ -90,7 +90,7 @@ export function DialogoCancelarTurnoFijo({
   if (cancelar.isSuccess) {
     const { canceladas, omitidas } = cancelar.data;
     return (
-      <ModalPanel titulo="Serie cancelada" subtitulo={turnoFijo.canchaNombre} onClose={onClose}>
+      <ModalPanel key="exito" titulo="Serie cancelada" subtitulo={turnoFijo.canchaNombre} onClose={onClose}>
         <p className="text-sm text-tinta">
           Se {canceladas === 1 ? "dio" : "dieron"} de baja <strong>{canceladas}</strong>{" "}
           {canceladas === 1 ? "turno" : "turnos"}.
@@ -108,7 +108,7 @@ export function DialogoCancelarTurnoFijo({
   }
 
   return (
-    <ModalPanel titulo="Cancelar serie" subtitulo={`${turnoFijo.canchaNombre} · ${diaLabel} · ${cliente}`} onClose={onClose}>
+    <ModalPanel key="formulario" titulo="Cancelar serie" subtitulo={`${turnoFijo.canchaNombre} · ${diaLabel} · ${cliente}`} onClose={onClose}>
       <p className="text-sm text-grafito">
         Se cancelan los turnos de esta serie a partir de la fecha elegida. Los que ya se jugaron o quedaron
         marcados como ausentes no se tocan.

@@ -53,7 +53,7 @@ export function DialogoRenovarTurnoFijo({
   if (renovar.isSuccess) {
     const nueva = renovar.data;
     return (
-      <ModalPanel titulo="Serie renovada" subtitulo={turnoFijo.canchaNombre} onClose={onClose}>
+      <ModalPanel key="exito" titulo="Serie renovada" subtitulo={turnoFijo.canchaNombre} onClose={onClose}>
         <p className="text-sm text-tinta">
           Se creó la nueva serie con <strong>{nueva.ocurrencias.length}</strong>{" "}
           {nueva.ocurrencias.length === 1 ? "turno" : "turnos"}, del{" "}
@@ -72,6 +72,7 @@ export function DialogoRenovarTurnoFijo({
 
   return (
     <ModalPanel
+      key="formulario"
       titulo="Renovar serie"
       subtitulo={`${turnoFijo.canchaNombre} · ${diaLabel} · ${cliente}`}
       onClose={onClose}
