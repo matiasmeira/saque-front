@@ -157,6 +157,11 @@ export function useWizardOnboarding({ onComplejoCreado }: { onComplejoCreado?: (
       // disponibilidad cacheada (gcTime 5 min) para este estId aunque nadie
       // la esté mirando ahora mismo.
       invalidarDisponibilidad(queryClient);
+      // El paso 2 sembró mios() con horariosAtencion vacío. Se relee acá, en el
+      // origen del cambio, y no en cada salida del wizard (omitir, cierre de
+      // ADMIN, "Volver al panel", links a la agenda): así ninguna queda con el
+      // header diciendo "Sin horarios cargados" por la caché de 5 min.
+      queryClient.invalidateQueries({ queryKey: keys.establecimientos.mios() });
       setPasoActual(4);
     },
   });
