@@ -40,7 +40,7 @@ type Paso = "email" | "password-login" | "codigo" | PasoRegistro;
 const LARGO_CODIGO = 6;
 
 // 429 del sondeo: no sabemos si el email tiene cuenta, así que no lo afirmamos.
-const MENSAJE_ESPERAR = "Hiciste varios intentos seguidos. Esperá un minuto y volvé a intentar.";
+const MENSAJE_ESPERAR = "Hiciste varios intentos seguidos. Esperá unos minutos y volvé a intentar.";
 
 export default function Ingresar() {
   const router = useRouter();
