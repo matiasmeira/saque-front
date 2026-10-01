@@ -4,7 +4,9 @@ import {
   debeRedirigirGuardWizard,
   esComplejoAdicional,
   LIMITE_ESTABLECIMIENTOS,
+  esUltimoPaso,
   pasosDelWizard,
+  textoBotonAvance,
   puedeCrearOtroComplejo,
   rutaCrearComplejo,
   textoCierreEnRevision,
@@ -72,6 +74,24 @@ describe("pasosDelWizard", () => {
     const pasos = pasosDelWizard("ADMIN");
     expect(pasos).toHaveLength(5);
     expect(pasos).not.toContain("Verificación");
+  });
+});
+
+describe("esUltimoPaso / textoBotonAvance", () => {
+  it("ADMIN: el paso 5 es el último y dice Terminar", () => {
+    expect(esUltimoPaso("ADMIN", 5)).toBe(true);
+    expect(textoBotonAvance("ADMIN", 5)).toBe("Terminar");
+  });
+  it("OWNER: el paso 5 no es el último y dice Continuar", () => {
+    expect(esUltimoPaso("OWNER", 5)).toBe(false);
+    expect(textoBotonAvance("OWNER", 5)).toBe("Continuar");
+  });
+  it("OWNER: el paso 6 es el último", () => {
+    expect(esUltimoPaso("OWNER", 6)).toBe(true);
+    expect(textoBotonAvance("OWNER", 6)).toBe("Terminar");
+  });
+  it("ADMIN: los pasos anteriores dicen Continuar", () => {
+    expect(textoBotonAvance("ADMIN", 4)).toBe("Continuar");
   });
 });
 

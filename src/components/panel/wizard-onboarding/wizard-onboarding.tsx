@@ -221,6 +221,7 @@ export function WizardOnboarding() {
 
         {wizard.pasoActual === 5 && (
           <PasoTarifas
+            rol={rol}
             canchas={wizard.canchasPanel}
             tarifasPorCancha={wizard.tarifasPorCancha}
             guardando={wizard.guardandoTarifas}

@@ -1,13 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { DrawerPanel } from "@/components/panel/drawer-panel";
 import { ListaTarifas } from "@/components/panel/lista-tarifas";
 import { FormTarifa } from "@/components/panel/form-tarifa";
 import { etiquetaDias, type DiaSemana, type Tarifa } from "@/lib/panel/tarifas";
+import { esUltimoPaso, textoBotonAvance } from "@/lib/panel/nuevo-complejo";
+import type { Role } from "@/lib/api/tipos/comunes";
 import type { PrecioPorDuracion } from "@/lib/panel/canchas";
 import type { Cancha } from "@/lib/panel/canchas";
+
+const PASO_TARIFAS = 5;
 
 type PanelAbierto = { tipo: "nueva" } | { tipo: "editar"; tarifaId: number } | null;
 export type DatosTarifaForm = { dias: DiaSemana[]; horaDesde: string; horaHasta: string; precios: PrecioPorDuracion[] };
@@ -18,6 +22,7 @@ export type DatosTarifaForm = { dias: DiaSemana[]; horaDesde: string; horaHasta:
  * lectura, así que el precio base se muestra en un bloque estático propio.
  */
 export function PasoTarifas({
+  rol,
   canchas,
   tarifasPorCancha,
   guardando,
@@ -28,6 +33,7 @@ export function PasoTarifas({
   onAtras,
   onContinuar,
 }: {
+  rol: Role | undefined;
   canchas: Cancha[];
   tarifasPorCancha: Record<number, Tarifa[]>;
   guardando: boolean;
@@ -136,8 +142,12 @@ export function PasoTarifas({
           onClick={onContinuar}
           className="flex h-11 items-center gap-2 rounded-full bg-azul px-6 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
         >
-          Continuar
-          <ArrowRight className="size-4" aria-hidden />
+          {textoBotonAvance(rol, PASO_TARIFAS)}
+          {esUltimoPaso(rol, PASO_TARIFAS) ? (
+            <Check className="size-4" aria-hidden />
+          ) : (
+            <ArrowRight className="size-4" aria-hidden />
+          )}
         </button>
       </div>
 

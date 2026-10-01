@@ -61,6 +61,16 @@ export function pasosDelWizard(rol: Role | undefined): string[] {
   return rol === "ADMIN" ? PASOS_WIZARD.slice(0, 5) : PASOS_WIZARD;
 }
 
+/** Último paso del wizard para ese rol (1-based): 5 para ADMIN, 6 para OWNER. */
+export function esUltimoPaso(rol: Role | undefined, paso: number): boolean {
+  return paso === pasosDelWizard(rol).length;
+}
+
+/** Texto del botón de avance: en el último paso no hay "siguiente", se termina. */
+export function textoBotonAvance(rol: Role | undefined, paso: number): string {
+  return esUltimoPaso(rol, paso) ? "Terminar" : "Continuar";
+}
+
 const AVISO_SIN_BUSCADOR = "Hasta que lo aprobemos no vas a aparecer en el buscador ni recibir reservas.";
 
 /** Texto del paso 6. El mes de prueba sólo se menciona para el primer complejo. */
