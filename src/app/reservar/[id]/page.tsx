@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -19,6 +19,7 @@ import { etiquetaDeporte } from "@/lib/deportes";
 import { fechaLarga, formatearPrecio } from "@/lib/formato";
 import { ramaPrereserva } from "@/lib/prereserva";
 import { useHaySesion } from "@/hooks/api/use-sesion";
+import { useDialogoAccesible } from "@/hooks/use-dialogo-accesible";
 import type { Deporte } from "@/lib/api/tipos/comunes";
 import type { ReservaResponse } from "@/lib/api/tipos/reservas";
 
@@ -67,6 +68,19 @@ export default function Checkout({ params }: { params: Promise<{ id: string }> }
   const [vencida, setVencida] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [telefonoNoVerificado, setTelefonoNoVerificado] = useState(false);
+  // El botón queda deshabilitado (y pierde el foco) mientras se crea la
+  // reserva, así que el aviso no puede "recordar" quién lo abrió: al cerrarlo
+  // (ya desmontado, para no pelear con su trampa de foco) se lo devolvemos.
+  const botonReservar = useRef<HTMLButtonElement>(null);
+  const avisoAbierto = useRef(false);
+  useEffect(() => {
+    if (telefonoNoVerificado) {
+      avisoAbierto.current = true;
+    } else if (avisoAbierto.current) {
+      avisoAbierto.current = false;
+      botonReservar.current?.focus();
+    }
+  }, [telefonoNoVerificado]);
 
   const complejo = useQuery({
     queryKey: keys.publico.detalle(slug),
@@ -248,6 +262,7 @@ export default function Checkout({ params }: { params: Promise<{ id: string }> }
             ) : (
               <>
                 <button
+                  ref={botonReservar}
                   type="button"
                   onClick={reservar}
                   disabled={crear.isPending || complejo.isPending}
@@ -289,16 +304,25 @@ export default function Checkout({ params }: { params: Promise<{ id: string }> }
  */
 function AlertaTelefonoNoVerificado({ onClose }: { onClose: () => void }) {
   const router = useRouter();
+  const ref = useRef<HTMLDivElement>(null);
+  const { idTitulo } = useDialogoAccesible({ ref, onClose });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <button type="button" aria-label="Cerrar" onClick={onClose} className="absolute inset-0 bg-tinta/40" />
+      <button type="button" tabIndex={-1} aria-hidden onClick={onClose} className="absolute inset-0 bg-tinta/40" />
 
-      <div className="relative w-full max-w-sm rounded-card bg-white p-6 text-center shadow-xl">
+      <div
+        ref={ref}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={idTitulo}
+        tabIndex={-1}
+        className="relative w-full max-w-sm rounded-card bg-white p-6 text-center shadow-xl"
+      >
         <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-celeste-suave text-azul">
           <Phone className="size-5" aria-hidden />
         </div>
-        <h2 className="mt-4 font-display text-lg font-bold text-tinta">
+        <h2 id={idTitulo} className="mt-4 font-display text-lg font-bold text-tinta">
           Este complejo exige tener el celular verificado
         </h2>
         <p className="mt-2 text-sm text-grafito">
@@ -315,6 +339,7 @@ function AlertaTelefonoNoVerificado({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={onClose}
+            data-dialogo-cerrar=""
             className="flex h-11 items-center justify-center rounded-full border border-borde font-display text-sm font-semibold text-grafito transition-colors hover:bg-humo"
           >
             Ahora no
