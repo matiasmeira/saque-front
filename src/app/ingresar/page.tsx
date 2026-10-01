@@ -39,6 +39,9 @@ type Paso = "email" | "password-login" | "codigo" | PasoRegistro;
 
 const LARGO_CODIGO = 6;
 
+// 429 del sondeo: no sabemos si el email tiene cuenta, así que no lo afirmamos.
+const MENSAJE_ESPERAR = "Hiciste varios intentos seguidos. Esperá un minuto y volvé a intentar.";
+
 export default function Ingresar() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -90,6 +93,10 @@ export default function Ingresar() {
     setEmail(limpio);
     try {
       const resultado = await sondear.mutateAsync({ email: limpio, volverA, modo });
+      if (resultado === "esperar") {
+        setError(MENSAJE_ESPERAR);
+        return;
+      }
       setPaso(resultado === "tiene-cuenta" ? "password-login" : "codigo");
     } catch (e) {
       setError(mensajeDeError(e, "No pudimos continuar. Intentá de nuevo."));
@@ -276,6 +283,18 @@ export default function Ingresar() {
             <p role="alert" className="mt-4 text-center text-sm text-cancelado">
               {error}
             </p>
+          )}
+          {error === MENSAJE_ESPERAR && (
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                setPaso("password-login");
+              }}
+              className="mt-2 w-full text-center text-sm text-azul hover:underline"
+            >
+              Ya tengo cuenta, quiero ingresar
+            </button>
           )}
         </div>
       </main>

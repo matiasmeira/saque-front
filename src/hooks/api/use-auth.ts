@@ -9,6 +9,7 @@ import { guardarToken } from "@/lib/api/sesion";
 import type { PerfilResponse } from "@/lib/api/tipos/auth";
 import type { ModoRegistro } from "@/lib/modo-registro";
 import { armarBodyIniciarRegistro } from "@/lib/registro-body";
+import { clasificarSondeo, type ResultadoSondeo } from "@/lib/sondeo-email";
 
 /** Variables de las mutaciones que inician el registro. */
 export type IniciarRegistroVars = {
@@ -16,9 +17,6 @@ export type IniciarRegistroVars = {
   volverA?: string | null;
   modo?: ModoRegistro;
 };
-
-/** Resultado de sondear un email en el paso 1 de /ingresar. */
-export type ResultadoSondeo = "tiene-cuenta" | "sin-cuenta";
 
 /**
  * ¿Este email ya tiene cuenta?
@@ -36,21 +34,20 @@ export type ResultadoSondeo = "tiene-cuenta" | "sin-cuenta";
  * OJO — RATE LIMIT: ese endpoint permite 1 llamada por email por minuto
  * (RegistroVerificacionService.INICIAR_INTENTOS_MAXIMOS) y 10 cada 10 minutos
  * por IP (RateLimitFilter). El cupo por email se consume ANTES de chequear si
- * el email existe: la segunda llamada dentro del minuto devuelve 429. Como
- * dejar a un usuario sin poder loguearse seria peor que mostrarle un campo de
- * mas, un 429 se trata como "tiene-cuenta": mostramos la contraseña igual y,
- * si en realidad no tenia cuenta, el login le dara 401 con el link a registro.
+ * el email existe: la segunda llamada dentro del minuto devuelve 429, y con un
+ * 429 no se puede saber si hay cuenta. Por eso es "esperar" (ver
+ * clasificarSondeo), no "tiene-cuenta": /ingresar pide esperar y ofrece el
+ * link para ingresar a quien ya tiene cuenta.
  */
 export function useSondearEmail() {
   return useMutation<ResultadoSondeo, ApiError, IniciarRegistroVars>({
     mutationFn: async (vars) => {
       try {
         await auth.iniciarRegistro(armarBodyIniciarRegistro(vars));
-        return "sin-cuenta";
+        return "nuevo";
       } catch (error) {
-        if (error instanceof ApiError && (error.status === 400 || error.status === 429)) {
-          return "tiene-cuenta";
-        }
+        const resultado = error instanceof ApiError ? clasificarSondeo(error.status) : null;
+        if (resultado) return resultado;
         throw error;
       }
     },
