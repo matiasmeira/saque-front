@@ -10,7 +10,7 @@ import { borrarToken, guardarToken } from "@/lib/api/sesion";
 import { useHaySesion } from "@/hooks/api/use-sesion";
 import { cerrarSesionEmpleado } from "@/lib/sesion-caja";
 import { guardarEstablecimientoSeleccionado, useEstablecimientoSeleccionado } from "@/lib/establecimiento-seleccionado";
-import type { AuthRequest, PerfilResponse } from "@/lib/api/tipos/auth";
+import type { AuthRequest, PerfilResponse, RegisterRequest } from "@/lib/api/tipos/auth";
 import type { EstablecimientoResponse } from "@/lib/api/tipos/establecimientos";
 
 /**
@@ -113,6 +113,28 @@ export function useLogin() {
       cerrarSesionEmpleado();
       // Se pide el perfil dentro de la mutacion para que quien llame sepa el
       // rol al resolver, y pueda decidir a donde redirigir sin un render extra.
+      return usuarios.me();
+    },
+    onSuccess: (perfil) => {
+      queryClient.setQueryData(keys.perfil(), perfil);
+    },
+  });
+}
+
+/**
+ * Alta de dueño (POST /auth/register/owner). Misma mecánica que useLogin: el
+ * 201 trae sólo el JWT, así que se guarda y se pide el perfil.
+ */
+export function useRegistrarDueno() {
+  const queryClient = useQueryClient();
+
+  return useMutation<PerfilResponse, ApiError, RegisterRequest>({
+    mutationFn: async (datos) => {
+      const { token } = await auth.registrarDueno(datos);
+      guardarToken(token);
+      // Igual que en useLogin: un dueño nuevo no puede heredar el emparejamiento
+      // de un mostrador de empleado que quedó en esta pestaña.
+      cerrarSesionEmpleado();
       return usuarios.me();
     },
     onSuccess: (perfil) => {
