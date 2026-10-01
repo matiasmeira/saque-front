@@ -33,9 +33,10 @@ export type ResultadoSondeo = "tiene-cuenta" | "sin-cuenta";
  * cuenta se pide la contraseña, de lo contrario se envía el mail para crear
  * la cuenta". El efecto de mandar el mail es parte del mismo request.
  *
- * OJO — RATE LIMIT: ese endpoint permite 3 llamadas por email cada 15 minutos
- * (RegistroVerificacionService.INICIAR_INTENTOS_MAXIMOS) y consume el cupo
- * ANTES de chequear si el email existe. Al cuarto intento devuelve 429. Como
+ * OJO — RATE LIMIT: ese endpoint permite 1 llamada por email por minuto
+ * (RegistroVerificacionService.INICIAR_INTENTOS_MAXIMOS) y 10 cada 10 minutos
+ * por IP (RateLimitFilter). El cupo por email se consume ANTES de chequear si
+ * el email existe: la segunda llamada dentro del minuto devuelve 429. Como
  * dejar a un usuario sin poder loguearse seria peor que mostrarle un campo de
  * mas, un 429 se trata como "tiene-cuenta": mostramos la contraseña igual y,
  * si en realidad no tenia cuenta, el login le dara 401 con el link a registro.
@@ -56,7 +57,7 @@ export function useSondearEmail() {
   });
 }
 
-/** Reenvia el codigo de verificacion. Mismo endpoint, mismo cupo de 3 cada 15 min. */
+/** Reenvia el codigo de verificacion. Mismo endpoint, mismo cupo: 1 por minuto por email. */
 export function useReenviarCodigo() {
   return useMutation<void, ApiError, IniciarRegistroVars>({
     // El reenvío arma un link nuevo (el anterior se invalida): lleva volverA
