@@ -109,11 +109,19 @@ function VistaPrevia({
         </div>
       )}
 
-      <ContenidoComplejo
-        complejo={detalle}
-        fuenteGrilla={{ tipo: "panel", establecimientoId }}
-        nivelTitulo="h2"
-      />
+      {/* ContenidoComplejo trae su propio contenedor (px-10 en lg) y acá ya
+          está dentro del px-8 del main y del sidebar de w-56: con tanto
+          padding apilado, en 1024-1035px la columna del botón de reserva
+          queda en ~144px y "Ver turnos disponibles" se parte en dos
+          líneas. El margen negativo en lg le devuelve 24px por lado sin
+          tocar el componente compartido (la ficha pública no cambia). */}
+      <div className="lg:-mx-6">
+        <ContenidoComplejo
+          complejo={detalle}
+          fuenteGrilla={{ tipo: "panel", establecimientoId }}
+          nivelTitulo="h2"
+        />
+      </div>
     </div>
   );
 }
