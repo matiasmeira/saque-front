@@ -8,7 +8,6 @@ import type {
   EmpleadoLoginRequest,
   IniciarRegistroRequest,
   PerfilResponse,
-  RegisterRequest,
   ResetPasswordRequest,
   SolicitarCodigoRequest,
   SolicitarRecuperacionPasswordRequest,
@@ -25,13 +24,6 @@ import type {
 export const auth = {
   login: (body: AuthRequest) =>
     apiFetch<AuthResponse>("/api/v1/auth/login", {
-      method: "POST",
-      body,
-      conAuth: false,
-    }),
-
-  registrarDueno: (body: RegisterRequest) =>
-    apiFetch<AuthResponse>("/api/v1/auth/register/owner", {
       method: "POST",
       body,
       conAuth: false,

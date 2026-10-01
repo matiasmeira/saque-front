@@ -16,12 +16,6 @@ export type AuthResponse = {
   token: string;
 };
 
-export type RegisterRequest = {
-  email: string;
-  password: string;
-  nombre: string;
-};
-
 export type IniciarRegistroRequest = {
   email: string;
   /**
@@ -30,6 +24,12 @@ export type IniciarRegistroRequest = {
    * si no, la ignora. Sin valor, la clave no se manda (nunca null).
    */
   volverA?: string;
+  /**
+   * Tipo de cuenta a crear. El back lo suma a IniciarRegistroRequest.java en el
+   * pendiente 84 (hoy el record sólo tiene email y volverA): null o ausente =
+   * JUGADOR, DUENO = al completar se crea un OWNER. Un valor desconocido da 400.
+   */
+  tipo?: "JUGADOR" | "DUENO";
 };
 
 export type VerificarTokenResponse = {

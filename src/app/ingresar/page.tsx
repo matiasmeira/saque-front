@@ -11,6 +11,7 @@ import {
   type PasoRegistro,
 } from "@/components/canche/completar-registro";
 import { destinoTrasLogin } from "@/lib/destino-login";
+import { modoDesdeParam, textosModo } from "@/lib/modo-registro";
 import { useLogin } from "@/hooks/api/use-perfil";
 import { useReenviarCodigo, useSondearEmail, useVerificarCodigo } from "@/hooks/api/use-auth";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
@@ -56,6 +57,9 @@ export default function Ingresar() {
   const reenviar = useReenviarCodigo();
   // Se manda crudo al iniciar/reenviar el registro: el back y destinoTrasLogin lo validan.
   const volverA = searchParams.get("volverA");
+  // ?tipo=dueno: mismo flujo, pero el alta crea un OWNER (el back lo sabe por `tipo`).
+  const modo = modoDesdeParam(searchParams.get("tipo"));
+  const textos = textosModo(modo, LARGO_CODIGO);
 
   /**
    * Adónde va el usuario una vez que hay sesión.
@@ -85,7 +89,7 @@ export default function Ingresar() {
     setError(null);
     setEmail(limpio);
     try {
-      const resultado = await sondear.mutateAsync({ email: limpio, volverA });
+      const resultado = await sondear.mutateAsync({ email: limpio, volverA, modo });
       setPaso(resultado === "tiene-cuenta" ? "password-login" : "codigo");
     } catch (e) {
       setError(mensajeDeError(e, "No pudimos continuar. Intentá de nuevo."));
@@ -128,7 +132,7 @@ export default function Ingresar() {
   const claseLabel = "mb-1 block text-xs font-semibold text-grafito";
 
   const titulos: Record<Paso, string> = {
-    email: "Ingresá o creá tu cuenta",
+    email: textos.tituloEmail,
     "password-login": "Ingresá tu contraseña",
     codigo: "Revisá tu email",
     ...TITULOS_REGISTRO,
@@ -180,14 +184,19 @@ export default function Ingresar() {
               <button type="submit" disabled={sondear.isPending} className={claseBoton}>
                 {sondear.isPending ? "Verificando..." : "Continuar"}
               </button>
-              <p className="mt-4 text-center text-sm text-grafito">
-                Si ya tenés cuenta, entrás igual con este mismo email.
-              </p>
+              {textos.pieEmail && (
+                <p className="mt-4 text-center text-sm text-grafito">{textos.pieEmail}</p>
+              )}
             </form>
           )}
 
           {paso === "password-login" && (
             <form onSubmit={enviarLogin} className="mt-6">
+              {textos.avisoCuentaExistente && (
+                <p role="status" className="mb-4 text-center text-sm text-grafito">
+                  {textos.avisoCuentaExistente}
+                </p>
+              )}
               <label htmlFor="password" className={claseLabel}>
                 Contraseña
               </label>
@@ -215,7 +224,7 @@ export default function Ingresar() {
           {paso === "codigo" && (
             <form onSubmit={enviarCodigo} className="mt-6">
               <p className="mb-4 text-center text-sm text-grafito">
-                Te mandamos un código de {LARGO_CODIGO} dígitos para crear tu cuenta.
+                {textos.parrafoCodigo}
               </p>
               <label htmlFor="codigo" className={claseLabel}>
                 Código
@@ -240,7 +249,7 @@ export default function Ingresar() {
               </button>
               <button
                 type="button"
-                onClick={() => reenviar.mutate({ email, volverA })}
+                onClick={() => reenviar.mutate({ email, volverA, modo })}
                 disabled={reenviar.isPending}
                 className="mt-4 w-full text-center text-sm text-azul hover:underline disabled:text-grafito disabled:no-underline"
               >
