@@ -15,7 +15,7 @@ import { SeccionDiasNoLaborables } from "@/components/panel/seccion-dias-no-labo
 import { SeccionPoliticaCancelacion } from "@/components/panel/seccion-politica-cancelacion";
 import { TablaDispositivos } from "@/components/panel/tabla-dispositivos";
 import { GenerarLinkCaja } from "@/components/panel/generar-link-caja";
-import { ModalCrearEstablecimiento } from "@/components/panel/modal-crear-establecimiento";
+import { RUTA_WIZARD } from "@/lib/panel/nuevo-complejo";
 import { SkeletonConfig } from "@/components/panel/skeleton-config";
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -110,7 +110,6 @@ export default function PanelConfiguracion() {
   const [nombreActivarLocal, setNombreActivarLocal] = useState("");
   const [pidiendoNombreCajaNueva, setPidiendoNombreCajaNueva] = useState(false);
   const [nombreCajaNueva, setNombreCajaNueva] = useState("");
-  const [creandoComplejo, setCreandoComplejo] = useState(false);
 
   // "Emparejado acá" es una marca local: la cookie saque_caja_device es HttpOnly
   // y el JS no puede leerla, así que este navegador no puede saber por sí mismo
@@ -316,7 +315,7 @@ export default function PanelConfiguracion() {
               </p>
               <button
                 type="button"
-                onClick={() => setCreandoComplejo(true)}
+                onClick={() => router.push(RUTA_WIZARD)}
                 className="mt-2 flex h-11 items-center gap-2 rounded-full bg-azul px-5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 <Plus className="size-4" aria-hidden />
@@ -522,8 +521,6 @@ export default function PanelConfiguracion() {
           )}
         </main>
       </div>
-
-      {creandoComplejo && <ModalCrearEstablecimiento onClose={() => setCreandoComplejo(false)} />}
 
       {pidiendoNombreCajaNueva && (
         <ModalPanel titulo="Nueva caja" subtitulo="Poné un nombre para identificarla" onClose={cerrarPedidoNombreCajaNueva}>

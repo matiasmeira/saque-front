@@ -29,7 +29,8 @@ type DatosTarifaForm = { dias: DiaSemana[]; horaDesde: string; horaHasta: string
 type PasoActual = 1 | 2 | 3 | 4 | 5 | 6;
 
 /**
- * Estado y orquestación del wizard de onboarding completo (6 pasos). El
+ * Estado y orquestación del wizard de onboarding completo (6 pasos; 5 para un
+ * ADMIN, que no puede solicitar la verificación). El
  * establecimiento se crea al confirmar el paso 2 (Fase 1) y de ahí en
  * adelante `establecimientoParcial` es la fuente de verdad: horarios lo
  * actualiza con un PUT completo, canchas/tarifas son sub-recursos aparte.
@@ -37,7 +38,7 @@ type PasoActual = 1 | 2 | 3 | 4 | 5 | 6;
  * solicitud de verificación (el complejo queda en revisión hasta que el admin
  * lo verifica).
  */
-export function useWizardOnboarding() {
+export function useWizardOnboarding({ onComplejoCreado }: { onComplejoCreado?: () => void } = {}) {
   const queryClient = useQueryClient();
   const { data: perfil } = usePerfil();
 
@@ -46,6 +47,7 @@ export function useWizardOnboarding() {
   const [montoSenaDefault, setMontoSenaDefault] = useState(0);
   const [establecimientoParcial, setEstablecimientoParcial] = useState<EstablecimientoResponse | null>(null);
   const [erroresFotos, setErroresFotos] = useState<string[]>([]);
+  const [publicado, setPublicado] = useState(false);
   const establecimientoRef = useRef<EstablecimientoResponse | null>(null);
 
   // ---------------------------------------------------------------------
@@ -91,14 +93,14 @@ export function useWizardOnboarding() {
         // observa esta query. Sin esto, "Ir al panel" — o un reintento
         // tras un fallo parcial — vuelve a leer [] cacheado en
         // /panel/agenda y rebota de nuevo al wizard, arriesgando un
-        // establecimiento duplicado. Mismo patrón que
-        // ModalCrearEstablecimiento (modal-crear-establecimiento.tsx).
+        // establecimiento duplicado.
         const nuevo = establecimiento;
         queryClient.setQueryData<EstablecimientoResponse[]>(
           keys.establecimientos.mios(),
           (previos) => [...(previos ?? []), nuevo],
         );
         guardarEstablecimientoSeleccionado(establecimiento.id);
+        onComplejoCreado?.();
       }
 
       const fotosFallidas: string[] = [];
@@ -326,14 +328,18 @@ export function useWizardOnboarding() {
   }
 
   function confirmarTarifas() {
+    // Solicitar la verificación es OWNER puro en el backend: un ADMIN termina
+    // acá y el complejo queda PENDIENTE para que lo verifique él mismo.
+    if (perfil?.rol === "ADMIN") {
+      setPublicado(true);
+      return;
+    }
     setPasoActual(6);
   }
 
   // ---------------------------------------------------------------------
   // Paso 6 — Verificación
   // ---------------------------------------------------------------------
-
-  const [publicado, setPublicado] = useState(false);
 
   function volverATarifas() {
     setPasoActual(5);

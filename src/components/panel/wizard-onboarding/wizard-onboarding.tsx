@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { AlertTriangle, ArrowRight, CheckCircle2 } from "lucide-react";
 import { BarraProgresoWizard } from "./barra-progreso-wizard";
 import { PasoIdentidad } from "./paso-identidad";
 import { PasoPoliticas } from "./paso-politicas";
@@ -14,13 +15,28 @@ import { useWizardOnboarding } from "@/hooks/api/use-wizard-onboarding";
 import { useEstablecimientoActivo, usePerfil } from "@/hooks/api/use-perfil";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { useBloqueadoPorCaja } from "@/lib/permisos";
+import {
+  debeRedirigirGuardWizard,
+  esComplejoAdicional,
+  MENSAJE_LIMITE_ESTABLECIMIENTOS,
+  pasosDelWizard,
+  puedeCrearOtroComplejo,
+  RUTA_WIZARD,
+  textoCierreEnRevision,
+  textoCierrePendiente,
+} from "@/lib/panel/nuevo-complejo";
 
 export function WizardOnboarding() {
   const router = useRouter();
   const bloqueadoPorCaja = useBloqueadoPorCaja();
   const { data: perfil } = usePerfil();
-  const { establecimientoId, cargando: cargandoEstablecimiento } = useEstablecimientoActivo();
-  const wizard = useWizardOnboarding();
+  const { establecimientoId, misEstablecimientos, cargando: cargandoEstablecimiento } = useEstablecimientoActivo();
+  const esNuevoEnUrl = useSearchParams().get("nuevo") === "1";
+  // Al crear el complejo en el paso 2 se saca `?nuevo=1` de la URL: un F5
+  // posterior manda a la agenda (como con el primer complejo) en vez de
+  // arrancar otro wizard y duplicar el complejo. Por eso `esNuevo` también se
+  // captura en la foto de abajo y no se lee en vivo.
+  const wizard = useWizardOnboarding({ onComplejoCreado: () => router.replace(RUTA_WIZARD) });
 
   /**
    * Esta ruta no tiene guard propio: sólo se llega acá por el redirect de
@@ -37,13 +53,27 @@ export function WizardOnboarding() {
    * 2 (ver use-wizard-onboarding.ts), así que si el chequeo fuera reactivo
    * en vez de una foto única al montar, expulsaría al dueño a mitad de los
    * pasos 3-6 que todavía le quedan por completar.
+   *
+   * La misma foto guarda si se entró con `nuevo=1` (intención explícita de
+   * crear un complejo adicional: el guard no redirige) y cuántos complejos
+   * había, para el aviso del límite (en vivo pasaría a 3 al crear el nuevo).
    */
-  const [yaTeniaEstablecimiento, setYaTeniaEstablecimiento] = useState<boolean | null>(null);
-  if (!cargandoEstablecimiento && yaTeniaEstablecimiento === null) {
-    setYaTeniaEstablecimiento(establecimientoId !== null);
+  const [entrada, setEntrada] = useState<{ yaTenia: boolean; esNuevo: boolean; cantidad: number } | null>(null);
+  if (!cargandoEstablecimiento && entrada === null) {
+    setEntrada({
+      yaTenia: establecimientoId !== null,
+      esNuevo: esNuevoEnUrl,
+      cantidad: misEstablecimientos.length,
+    });
   }
 
-  const debeRedirigir = perfil?.rol === "OWNER" && yaTeniaEstablecimiento === true;
+  const debeRedirigir =
+    entrada !== null &&
+    debeRedirigirGuardWizard({
+      rol: perfil?.rol,
+      yaTeniaEstablecimiento: entrada.yaTenia,
+      esNuevo: entrada.esNuevo,
+    });
 
   useEffect(() => {
     if (debeRedirigir) router.replace("/panel/agenda");
@@ -53,15 +83,36 @@ export function WizardOnboarding() {
 
   // Mientras se resuelve si ya tenía establecimiento, o mientras se redirige
   // por tenerlo, no se muestra el wizard — evita el flash del paso 1.
-  if (cargandoEstablecimiento || yaTeniaEstablecimiento === null || debeRedirigir) {
+  if (cargandoEstablecimiento || entrada === null || debeRedirigir) {
     return <div className="min-h-dvh bg-humo" />;
+  }
+
+  const complejoAdicional = esComplejoAdicional({ esNuevo: entrada.esNuevo, yaTeniaEstablecimiento: entrada.yaTenia });
+  const rol = perfil?.rol;
+  const pasos = pasosDelWizard(rol);
+
+  // Defensa: entrar a /panel/bienvenida?nuevo=1 con el límite alcanzado.
+  if (complejoAdicional && !puedeCrearOtroComplejo(entrada.cantidad)) {
+    return (
+      <div className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center gap-4 p-6 text-center">
+        <AlertTriangle className="size-8 text-cancelado" aria-hidden />
+        <p className="font-semibold text-tinta">{MENSAJE_LIMITE_ESTABLECIMIENTOS}</p>
+        <p className="text-sm text-grafito">
+          Para crear uno nuevo, eliminá alguno existente — deshabilitarlo no libera cupo. Se elimina desde la Zona de
+          riesgo, en Configuración de ese complejo.
+        </p>
+        <Link href="/panel/agenda" className="text-sm font-semibold text-azul hover:underline">
+          Volver al panel
+        </Link>
+      </div>
+    );
   }
 
   if (wizard.publicado) {
     // El dueño pudo haber enviado la verificación (EN_REVISION) u omitirla
-    // (sigue PENDIENTE): el cierre tiene que decir la verdad en los dos
-    // casos, no "¡tu complejo está listo!" — eso ya no es cierto en ninguno
-    // de los dos: sin verificar no aparece en el buscador ni recibe reservas.
+    // (sigue PENDIENTE), y un ADMIN nunca la envía (termina en el paso 5): el
+    // cierre tiene que decir la verdad en todos los casos, no "¡tu complejo
+    // está listo!" — sin verificar no aparece en el buscador ni recibe reservas.
     const enRevision = wizard.establecimientoParcial?.estadoVerificacion === "EN_REVISION";
     return (
       <div className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center gap-6 p-6 text-center">
@@ -74,9 +125,7 @@ export function WizardOnboarding() {
           </h1>
           <p className="mt-2 text-sm text-grafito">
             {wizard.establecimientoParcial?.nombre} tiene sus horarios, canchas y tarifas cargados.{" "}
-            {enRevision
-              ? "La solicitud de verificación ya está en camino — te avisamos por mail cuando la resolvamos. Hasta entonces no aparece en el buscador ni puede recibir reservas; el mes de prueba gratis arranca recién cuando se apruebe, así que no perdés días esperando."
-              : "Todavía no enviaste la solicitud de verificación, así que no aparece en el buscador ni puede recibir reservas. Te lo vamos a recordar en el panel — podés mandarla cuando quieras desde Configuración."}
+            {enRevision ? textoCierreEnRevision(complejoAdicional) : textoCierrePendiente(rol)}
           </p>
           {wizard.erroresFotos.length > 0 && (
             <p className="mt-3 text-sm text-pendiente">
@@ -107,8 +156,21 @@ export function WizardOnboarding() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-humo p-4 md:p-8">
       <div className="w-full max-w-2xl rounded-card bg-white p-6 shadow-card md:p-10">
+        {complejoAdicional && (
+          <div className="mb-6 text-sm">
+            <Link href="/panel/agenda" className="font-semibold text-azul hover:underline">
+              Volver al panel
+            </Link>
+            {wizard.establecimientoParcial && (
+              <p className="mt-1 text-grafito">
+                El complejo quedó creado a medias, lo podés terminar desde Configuración.
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="mb-8">
-          <BarraProgresoWizard pasoActual={wizard.pasoActual} />
+          <BarraProgresoWizard pasoActual={wizard.pasoActual} pasos={pasos} />
         </div>
 
         {wizard.pasoActual === 1 && (
@@ -173,6 +235,7 @@ export function WizardOnboarding() {
 
         {wizard.pasoActual === 6 && wizard.establecimientoParcial && (
           <PasoVerificacion
+            complejoAdicional={complejoAdicional}
             requiereSena={wizard.establecimientoParcial.requiereSena}
             solicitandoVerificacion={wizard.solicitandoVerificacion}
             errorVerificacion={wizard.errorVerificacion}

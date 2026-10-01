@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AlertTriangle, Clock, Menu, ShieldAlert, ShieldQuestion } from "lucide-react";
 
 import { usePerfil, useEstablecimientoActivo } from "@/hooks/api/use-perfil";
 import { SelectorEstablecimiento } from "@/components/panel/selector-establecimiento";
-import { ModalCrearEstablecimiento } from "@/components/panel/modal-crear-establecimiento";
+import { ModalPanel } from "@/components/panel/modal-panel";
+import { MENSAJE_LIMITE_ESTABLECIMIENTOS, rutaCrearComplejo } from "@/lib/panel/nuevo-complejo";
 import { BannerVerificacionPendiente } from "@/components/panel/banner-verificacion-pendiente";
 import { ID_BOTON_ABRIR_MENU, ID_MENU_LATERAL, useMenuMovil } from "@/components/panel/menu-movil-panel";
 
@@ -37,9 +39,10 @@ export function HeaderPanel({
   nombre?: string;
   diasRestantesTrial?: number;
 } = {}) {
-  const { establecimiento } = useEstablecimientoActivo();
+  const router = useRouter();
+  const { establecimiento, misEstablecimientos } = useEstablecimientoActivo();
   const { data: perfil } = usePerfil();
-  const [creandoComplejo, setCreandoComplejo] = useState(false);
+  const [avisoLimite, setAvisoLimite] = useState(false);
   const menu = useMenuMovil();
 
   const esDuenoOAdmin = perfil?.rol === "OWNER" || perfil?.rol === "ADMIN";
@@ -58,6 +61,13 @@ export function HeaderPanel({
   // apenas alguien pide fecha/hora (que es siempre, desde el front público),
   // aunque tenga canchas activas y esté publicado. Sin este aviso el dueño no
   // tiene forma de enterarse de que su complejo es invisible.
+  // "+ Agregar complejo" abre el wizard (con 3 complejos, sólo avisa).
+  function crearComplejo() {
+    const ruta = rutaCrearComplejo(misEstablecimientos.length);
+    if (ruta === null) setAvisoLimite(true);
+    else router.push(ruta);
+  }
+
   const sinHorarios = esDuenoOAdmin && !!establecimiento && establecimiento.horariosAtencion.length === 0;
 
   return (
@@ -78,7 +88,7 @@ export function HeaderPanel({
             </button>
           )}
           <h1 className="truncate font-display text-base font-bold text-tinta">{nombreVisible}</h1>
-          <SelectorEstablecimiento onCrear={() => setCreandoComplejo(true)} />
+          <SelectorEstablecimiento onCrear={crearComplejo} />
         </div>
 
         <div className="flex items-center gap-2 max-lg:w-full max-lg:flex-wrap max-lg:empty:hidden">
@@ -147,7 +157,25 @@ export function HeaderPanel({
 
       <BannerVerificacionPendiente />
 
-      {creandoComplejo && <ModalCrearEstablecimiento onClose={() => setCreandoComplejo(false)} />}
+      {avisoLimite && (
+        <ModalPanel titulo="Nuevo complejo" onClose={() => setAvisoLimite(false)}>
+          <div className="flex flex-col items-center gap-3 rounded-input bg-humo p-5 text-center">
+            <AlertTriangle className="size-6 text-cancelado" aria-hidden />
+            <p className="text-sm font-semibold text-tinta">{MENSAJE_LIMITE_ESTABLECIMIENTOS}</p>
+            <p className="text-xs text-grafito">
+              Para crear uno nuevo, eliminá alguno existente — deshabilitarlo no libera cupo. Se elimina desde la Zona
+              de riesgo, en Configuración de ese complejo.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setAvisoLimite(false)}
+            className="mt-4 flex h-11 w-full items-center justify-center rounded-full bg-azul px-5 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
+          >
+            Entendido
+          </button>
+        </ModalPanel>
+      )}
     </>
   );
 }

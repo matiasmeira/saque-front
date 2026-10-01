@@ -13,15 +13,15 @@ const OPCION_CREAR = "__crear__";
  *
  * "+ Agregar complejo" viaja como una opción más del `<select>` nativo (no
  * hay otro lugar para alojarlo sin salir del componente Selector que ya usa
- * el resto de la app) y no cambia la selección real: sólo abre el modal. Si
- * ya se llegó al límite de 3, el modal es quien avisa y no deja guardar —
- * acá no se oculta la opción para no esconder por qué "no pasa nada" al
- * elegirla.
+ * el resto de la app) y no cambia la selección real: `onCrear` abre el wizard
+ * de complejo nuevo. Si ya se llegó al límite de 3, quien lo recibe avisa en
+ * vez de navegar — acá no se oculta la opción para no esconder por qué "no
+ * pasa nada" al elegirla.
  *
  * Con CERO establecimientos (recién registrado, todavía no creó ninguno) no
  * hay nada que un <select> pueda mostrar como "seleccionado" distinto de la
  * propia opción de crear, así que un click sobre la MISMA opción ya elegida
- * no dispara onChange en el navegador y el modal nunca se abriría. Para ese
+ * no dispara onChange en el navegador y `onCrear` nunca se llamaría. Para ese
  * caso puntual se muestra un botón en vez del select.
  */
 export function SelectorEstablecimiento({ onCrear }: { onCrear: () => void }) {

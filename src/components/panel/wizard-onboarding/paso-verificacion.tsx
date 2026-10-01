@@ -2,6 +2,7 @@
 
 import { FormSolicitudVerificacion } from "@/components/panel/form-solicitud-verificacion";
 import type { DatosSolicitudVerificacion } from "@/lib/panel/verificacion";
+import { textoPasoVerificacion } from "@/lib/panel/nuevo-complejo";
 
 /**
  * Paso 6, el último del wizard: la solicitud de verificación. Son los 4 datos
@@ -14,6 +15,7 @@ import type { DatosSolicitudVerificacion } from "@/lib/panel/verificacion";
  * depende de ningún cobro online.
  */
 export function PasoVerificacion({
+  complejoAdicional,
   requiereSena,
   solicitandoVerificacion,
   errorVerificacion,
@@ -23,6 +25,8 @@ export function PasoVerificacion({
   onOmitirVerificacion,
   onLimpiarErrorVerificacion,
 }: {
+  /** Complejo adicional: no se promete el mes de prueba, que es del primero. */
+  complejoAdicional: boolean;
   requiereSena: boolean;
   solicitandoVerificacion: boolean;
   errorVerificacion: string | null;
@@ -36,11 +40,7 @@ export function PasoVerificacion({
     <div className="space-y-6">
       <div>
         <h2 className="font-display text-xl font-extrabold text-tinta">Verificación</h2>
-        <p className="mt-1 text-sm text-grafito">
-          Enviá estos datos para que confirmemos que el complejo es real. Hasta que lo aprobemos no vas a aparecer
-          en el buscador ni vas a poder recibir reservas — el mes de prueba gratis arranca recién cuando se
-          apruebe, así que no perdés días esperando.
-        </p>
+        <p className="mt-1 text-sm text-grafito">{textoPasoVerificacion(complejoAdicional)}</p>
       </div>
 
       {requiereSena && (

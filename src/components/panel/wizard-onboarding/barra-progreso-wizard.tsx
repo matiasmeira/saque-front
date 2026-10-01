@@ -1,15 +1,16 @@
 import { Check } from "lucide-react";
 
-const PASOS = ["Identidad", "Políticas", "Horarios", "Canchas", "Tarifas", "Verificación"];
-
 /**
  * Barra de progreso única del wizard: reemplaza las 4 variantes distintas
  * que traía cada pantalla de Stitch (con/sin etiquetas, 4 vs. 6 puntos,
  * texto "Paso X de Y" presente o no). Los puntos "perforan" el track de
  * fondo con `bg-white`, porque este componente siempre vive dentro de la
  * card blanca del wizard (ver WizardOnboarding, Task 6).
+ *
+ * Los pasos vienen de afuera (`pasosDelWizard(rol)`): un ADMIN no tiene paso
+ * de verificación y la barra no debe prometérselo.
  */
-export function BarraProgresoWizard({ pasoActual }: { pasoActual: number }) {
+export function BarraProgresoWizard({ pasoActual, pasos: PASOS }: { pasoActual: number; pasos: string[] }) {
   return (
     <div className="w-full">
       <p className="mb-4 text-center text-xs font-semibold text-grafito">
