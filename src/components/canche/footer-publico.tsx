@@ -68,6 +68,7 @@ const REDES = [
 
 const NAVEGACION = [
   { href: "/buscar", label: "Buscar canchas" },
+  { href: "/software-para-clubes", label: "Software para clubes" },
   { href: "/#como-funciona", label: "Cómo funciona" },
 ];
 

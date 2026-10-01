@@ -7,7 +7,7 @@ import { useHaySesion } from "@/hooks/api/use-sesion";
 import { MenuUsuario } from "@/components/canche/menu-usuario";
 
 /**
- * Slot derecho del header público. "Software para negocios" es un link
+ * Slot derecho del header público. "Software para clubes" es un link
  * discreto a propósito: es la puerta de entrada B2B, pero no puede competir
  * visualmente con la acción de sesión. Para alguien ya logueado no aplica
  * (cualquier rol ya tiene cuenta), así que desaparece junto con "Ingresar".
@@ -40,10 +40,10 @@ export function NavSesion({
     <nav className="flex items-center gap-5 text-sm">
       {sinSesionUtil && (
         <Link
-          href="/negocios"
+          href="/software-para-clubes"
           className={`hidden min-h-11 items-center decoration-celeste decoration-2 underline-offset-4 transition-colors hover:underline sm:inline-flex ${textoSecundario}`}
         >
-          Software para negocios
+          Software para clubes
         </Link>
       )}
 
