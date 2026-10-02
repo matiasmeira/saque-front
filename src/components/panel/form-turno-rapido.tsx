@@ -6,6 +6,7 @@ import { formatearPrecio } from "@/lib/formato";
 import { establecimientos } from "@/lib/api/endpoints/establecimientos";
 import { keys } from "@/lib/api/keys";
 import type { Cancha } from "@/lib/panel/canchas";
+import { canchaInicialId } from "@/lib/panel/alta-turno";
 
 export type DatosTurnoManual = {
   canchaId: number;
@@ -72,7 +73,9 @@ export function FormTurnoRapido({
   const [telefono, setTelefono] = useState(telefonoInicial ?? "");
   const [senaCobrada, setSenaCobrada] = useState(false);
 
-  const cancha = canchas.find((c) => c.id === canchaSel) ?? canchas[0];
+  // Si la cancha pedida no existe (canchaId 0, o la lista todavía no cargó), se
+  // cae a la primera; sin canchas, `cancha` es undefined y el form no se arma.
+  const cancha = canchas.find((c) => c.id === canchaInicialId(canchas, canchaSel));
 
   const consulta = useQuery({
     queryKey: keys.disponibilidad(establecimientoId, fecha),
@@ -81,7 +84,7 @@ export function FormTurnoRapido({
   });
 
   const dia = consulta.data?.dias[0];
-  const opciones = dia?.canchas.find((c) => c.canchaId === canchaSel)?.opcionesDuracion ?? [];
+  const opciones = dia?.canchas.find((c) => c.canchaId === cancha?.id)?.opcionesDuracion ?? [];
 
   // Nada de esto se guarda en estado "corregido": si lo elegido dejó de estar
   // disponible (cambió la cancha, la duración, o alguien reservó mientras
@@ -96,7 +99,7 @@ export function FormTurnoRapido({
 
   function guardar(e: FormEvent) {
     e.preventDefault();
-    if (!nombre.trim() || !telefono.trim() || !slot) return;
+    if (!cancha || !nombre.trim() || !telefono.trim() || !slot) return;
     onGuardar({
       canchaId: cancha.id,
       fechaHoraInicio: slot.inicio,
@@ -107,6 +110,23 @@ export function FormTurnoRapido({
     });
   }
 
+  if (!cancha) {
+    return (
+      <div className="space-y-4">
+        <p role="alert" className="text-sm text-grafito">
+          Para cargar un turno primero necesitás tener una cancha. Cargá una desde Canchas y volvé.
+        </p>
+        <button
+          type="button"
+          onClick={onCancelar}
+          className="flex h-11 w-full items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+        >
+          Cerrar
+        </button>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={guardar} className="space-y-4">
       <div>
@@ -115,7 +135,7 @@ export function FormTurnoRapido({
         </label>
         <select
           id="turno-cancha"
-          value={canchaSel}
+          value={cancha.id}
           onChange={(e) => {
             setCanchaSel(Number(e.target.value));
             setDuracionSel(null);

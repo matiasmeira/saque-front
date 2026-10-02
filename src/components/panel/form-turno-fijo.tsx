@@ -105,6 +105,23 @@ export function FormTurnoFijo({
     });
   }
 
+  if (!cancha) {
+    return (
+      <div className="space-y-4">
+        <p role="alert" className="text-sm text-grafito">
+          Para cargar un turno fijo primero necesitás tener una cancha. Cargá una desde Canchas y volvé.
+        </p>
+        <button
+          type="button"
+          onClick={onCancelar}
+          className="flex h-11 w-full items-center justify-center rounded-full border border-borde font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+        >
+          Cerrar
+        </button>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={guardar} className="space-y-4">
       <div>

@@ -32,6 +32,7 @@ import { rangoDeAgenda } from "@/lib/horarios";
 import type { TurnoConReserva } from "@/lib/api/adaptadores/agenda";
 import type { MetodoPago } from "@/lib/api/tipos/comunes";
 import { type Cancha } from "@/lib/panel/canchas";
+import { puedeCrearTurno } from "@/lib/panel/alta-turno";
 
 type Vista = "dia" | "semana";
 type PanelAbierto =
@@ -103,6 +104,11 @@ export default function PanelAgenda() {
     enabled: establecimientoId !== null,
   });
   const canchas = (consultaCanchas.data ?? []).map(aCanchaPanel);
+  // Del estado del server (lista de canchas cargada), no del local.
+  const altaTurno = puedeCrearTurno(canchas, {
+    cargando: consultaCanchas.isPending,
+    hayError: consultaCanchas.isError,
+  });
 
   const acciones = useAccionesReserva();
 
@@ -403,11 +409,19 @@ export default function PanelAgenda() {
               <button
                 type="button"
                 onClick={abrirNuevoGenerico}
-                className="flex h-10 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste"
+                disabled={!altaTurno.puede}
+                title={altaTurno.puede ? undefined : altaTurno.texto}
+                aria-describedby={altaTurno.puede ? undefined : "motivo-sin-alta-turno"}
+                className="flex h-10 items-center gap-1.5 rounded-full bg-azul px-4 font-display text-sm font-bold text-white transition-colors hover:bg-azul-oscuro focus:outline-none focus:ring-2 focus:ring-celeste disabled:cursor-not-allowed disabled:bg-borde disabled:text-grafito"
               >
                 <Plus className="size-4" aria-hidden />
                 Nuevo turno
               </button>
+              {!altaTurno.puede && (
+                <span id="motivo-sin-alta-turno" className="sr-only">
+                  {altaTurno.texto}
+                </span>
+              )}
 
               {/*
                 Sólo el dueño: POST /turnos-fijos exige OWNER/ADMIN, un
@@ -422,7 +436,10 @@ export default function PanelAgenda() {
                       canchaId: vista === "dia" ? (canchas[0]?.id ?? 0) : (canchaSeleccionada?.id ?? 0),
                     })
                   }
-                  className="flex h-10 items-center gap-1.5 rounded-full border border-borde px-4 font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+                  disabled={!altaTurno.puede}
+                  title={altaTurno.puede ? undefined : altaTurno.texto}
+                  aria-describedby={altaTurno.puede ? undefined : "motivo-sin-alta-turno"}
+                  className="flex h-10 items-center gap-1.5 rounded-full border border-borde px-4 font-display text-sm font-bold text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
                 >
                   <Repeat className="size-4" aria-hidden />
                   Turno fijo
@@ -527,7 +544,7 @@ export default function PanelAgenda() {
         </main>
       </div>
 
-      {panelAbierto?.tipo === "nuevo" && (
+      {panelAbierto?.tipo === "nuevo" && altaTurno.puede && (
         <DrawerPanel
           titulo="Nuevo turno"
           subtitulo={`${canchas.find((c) => c.id === panelAbierto.canchaId)?.nombre ?? ""} · ${fechaLarga(panelAbierto.fecha)}`}
@@ -548,7 +565,7 @@ export default function PanelAgenda() {
         </DrawerPanel>
       )}
 
-      {panelAbierto?.tipo === "turnoFijo" && (
+      {panelAbierto?.tipo === "turnoFijo" && altaTurno.puede && (
         <DrawerPanel
           titulo="Turno fijo"
           subtitulo="Se repite todas las semanas, hasta fin de año"
