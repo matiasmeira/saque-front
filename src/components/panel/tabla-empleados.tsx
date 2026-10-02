@@ -1,6 +1,7 @@
 import { KeyRound, ShieldCheck, UserX } from "lucide-react";
 import { etiquetaPermiso } from "@/lib/permisos-empleado";
 import type { EmpleadoResponse } from "@/lib/api/tipos/empleados";
+import { EtiquetaMovil } from "@/components/panel/etiqueta-movil";
 
 /** "Gestionar caja, Cobrar turnos +2" — el detalle completo vive en la ficha. */
 function resumenPermisos(empleado: EmpleadoResponse): string {
@@ -10,7 +11,7 @@ function resumenPermisos(empleado: EmpleadoResponse): string {
   return `${etiquetas.slice(0, 2).join(", ")} +${etiquetas.length - 2}`;
 }
 
-const COLUMNAS = "grid-cols-[1.3fr_1fr_2fr_auto]";
+const COLUMNAS = "md:grid-cols-[1.3fr_1fr_2fr_auto]";
 
 /**
  * No hay columna "Desde": `EmpleadoResponse` no trae fecha de alta.
@@ -33,7 +34,7 @@ export function TablaEmpleados({
 }) {
   return (
     <div className="overflow-hidden rounded-card bg-white shadow-card">
-      <div className={`grid ${COLUMNAS} gap-3 bg-humo px-6 py-3 text-xs font-semibold uppercase tracking-wide text-grafito`}>
+      <div className={`hidden md:grid ${COLUMNAS} gap-3 bg-humo px-6 py-3 text-xs font-semibold uppercase tracking-wide text-grafito`}>
         <span>Nombre</span>
         <span>Estado</span>
         <span>Permisos</span>
@@ -42,11 +43,12 @@ export function TablaEmpleados({
 
       <div className="divide-y divide-borde/60">
         {empleados.map((empleado) => (
-          <div key={empleado.id} className={`grid ${COLUMNAS} items-center gap-3 px-6 py-3.5 transition-colors hover:bg-humo/60`}>
+          <div key={empleado.id} className={`grid grid-cols-2 ${COLUMNAS} gap-3 px-4 py-3.5 transition-colors hover:bg-humo/60 md:items-center md:px-6`}>
             <span className={`truncate text-sm font-semibold ${empleado.activo ? "text-tinta" : "text-grafito line-through"}`}>
               {empleado.nombre}
             </span>
             <span>
+              <EtiquetaMovil>Estado</EtiquetaMovil>
               <span
                 className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
                   empleado.activo ? "bg-disponible-suave text-disponible" : "bg-ocupado-suave text-grafito"
@@ -55,8 +57,11 @@ export function TablaEmpleados({
                 {empleado.activo ? "Activo" : "Inactivo"}
               </span>
             </span>
-            <span className="truncate text-sm text-grafito">{resumenPermisos(empleado)}</span>
-            <span className="flex items-center justify-end gap-1">
+            <span className="truncate text-sm text-grafito max-md:col-span-2 max-md:whitespace-normal">
+              <EtiquetaMovil>Permisos</EtiquetaMovil>
+              {resumenPermisos(empleado)}
+            </span>
+            <span className="flex items-center justify-end gap-1 max-md:col-span-2 max-md:empty:hidden">
               {empleado.activo && (
                 <>
                   <button

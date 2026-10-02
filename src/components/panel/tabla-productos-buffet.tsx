@@ -2,6 +2,7 @@ import { PackagePlus, Pencil } from "lucide-react";
 import { formatearPrecio } from "@/lib/formato";
 import { estadoStock, type EstadoStock } from "@/lib/stock";
 import type { ProductoBuffetResponse as ProductoBuffet } from "@/lib/api/tipos/buffet";
+import { EtiquetaMovil } from "@/components/panel/etiqueta-movil";
 
 const ESTILO_ESTADO: Record<EstadoStock, string> = {
   ok: "bg-disponible-suave text-disponible",
@@ -15,7 +16,7 @@ const ETIQUETA_ESTADO: Record<EstadoStock, string> = {
   agotado: "Agotado",
 };
 
-const COLUMNAS = "grid-cols-[2fr_1fr_1fr_1.2fr_auto]";
+const COLUMNAS = "md:grid-cols-[2fr_1fr_1fr_1.2fr_auto]";
 
 /** Gestión (editar / ajustar stock) es solo dueño — con ver_stock_buffet un empleado ve esta misma tabla pero sin esas acciones (ver page.tsx). */
 export function TablaProductosBuffet({
@@ -31,7 +32,7 @@ export function TablaProductosBuffet({
 }) {
   return (
     <div className="overflow-hidden rounded-card bg-white shadow-card">
-      <div className={`grid ${COLUMNAS} gap-3 px-6 py-3 text-xs font-semibold uppercase tracking-wide text-grafito`}>
+      <div className={`hidden md:grid ${COLUMNAS} gap-3 px-6 py-3 text-xs font-semibold uppercase tracking-wide text-grafito`}>
         <span>Nombre</span>
         <span>Precio</span>
         <span>Stock</span>
@@ -45,15 +46,22 @@ export function TablaProductosBuffet({
           return (
             <div
               key={producto.id}
-              className={`grid ${COLUMNAS} items-center gap-3 px-6 py-4 transition-colors hover:bg-humo/60`}
+              className={`grid grid-cols-2 ${COLUMNAS} gap-3 px-4 py-4 transition-colors hover:bg-humo/60 md:items-center md:px-6`}
             >
-              <span className="min-w-0">
+              <span className="min-w-0 max-md:col-span-2">
                 <span className="block truncate text-sm font-semibold text-tinta">{producto.nombre}</span>
                 {producto.descripcion && <span className="block truncate text-xs text-grafito">{producto.descripcion}</span>}
               </span>
-              <span className="text-sm text-tinta">{formatearPrecio(producto.precio)}</span>
-              <span className="text-sm text-tinta">{producto.stock}</span>
+              <span className="text-sm text-tinta">
+                <EtiquetaMovil>Precio</EtiquetaMovil>
+                {formatearPrecio(producto.precio)}
+              </span>
+              <span className="text-sm text-tinta">
+                <EtiquetaMovil>Stock</EtiquetaMovil>
+                {producto.stock}
+              </span>
               <span>
+                <EtiquetaMovil>Estado</EtiquetaMovil>
                 <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${ESTILO_ESTADO[estado]}`}>
                   {ETIQUETA_ESTADO[estado]}
                 </span>
