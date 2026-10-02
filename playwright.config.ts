@@ -31,8 +31,8 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [
-    { name: "escritorio", use: { ...devices["Desktop Chrome"] } },
-    { name: "movil", use: { ...devices["Pixel 7"] }, testMatch: /recarga-panel/ },
+    { name: "escritorio", use: { ...devices["Desktop Chrome"] }, testIgnore: /panel-movil/ },
+    { name: "movil", use: { ...devices["Pixel 7"] }, testMatch: /(recarga-panel|panel-movil)/ },
   ],
   webServer: [
     {

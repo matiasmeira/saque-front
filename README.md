@@ -70,7 +70,7 @@ npm run e2e         # tests e2e (ver más abajo)
 
 ## Tests e2e
 
-Playwright corre flujos completos (login y registro, reserva del jugador con y sin seña, agenda del dueño, recarga del panel) contra un back real y aislado. **Se corren en local; no corren en el CI.**
+Playwright corre flujos completos (login y registro, reserva del jugador con y sin seña, alta de complejo con el wizard, agenda del dueño, recarga del panel y panel a 390 px) contra un back real y aislado. **Se corren en local; no corren en el CI.**
 
 `npm run e2e` levanta solo:
 - el back e2e en `:8081` (perfil `e2e`, base `sacaladelangulo_e2e`, que se resetea y se llena con un seed al arrancar), y
