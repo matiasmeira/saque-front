@@ -17,8 +17,9 @@ import { useBloqueadoPorCaja, usePermisos } from "@/lib/permisos";
 import { PERMISOS_DE_AGENDA } from "@/lib/permisos-empleado";
 import { useRolPanel } from "@/lib/rol-panel";
 import { DIAS_SEMANA } from "@/lib/panel/tarifas";
+import { EtiquetaMovil } from "@/components/panel/etiqueta-movil";
 
-const COLUMNAS = "grid-cols-[1.1fr_0.8fr_0.95fr_1.1fr_1.15fr_1.15fr_auto]";
+const COLUMNAS = "md:grid-cols-[1.1fr_0.8fr_0.95fr_1.1fr_1.15fr_1.15fr_auto]";
 
 const FILTROS_ESTADO: { valor: "ACTIVO" | "CANCELADO"; etiqueta: string }[] = [
   { valor: "ACTIVO", etiqueta: "Activas" },
@@ -180,7 +181,7 @@ export default function PanelTurnosFijos() {
             <div className="space-y-4">
               <div className="overflow-hidden rounded-card bg-white shadow-card">
                 <div
-                  className={`grid ${COLUMNAS} gap-3 bg-humo px-6 py-3 text-xs font-semibold uppercase tracking-wide text-grafito`}
+                  className={`hidden md:grid ${COLUMNAS} gap-3 bg-humo px-6 py-3 text-xs font-semibold uppercase tracking-wide text-grafito`}
                 >
                   <span>Cancha</span>
                   <span>Día</span>
@@ -202,20 +203,27 @@ export default function PanelTurnosFijos() {
                     return (
                       <div
                         key={tf.id}
-                        className={`grid ${COLUMNAS} items-center gap-3 px-6 py-3.5 transition-colors hover:bg-humo/60`}
+                        className={`grid grid-cols-2 ${COLUMNAS} gap-3 px-4 py-3.5 transition-colors hover:bg-humo/60 md:items-center md:px-6`}
                       >
-                        <span className="truncate text-sm font-semibold text-tinta">{tf.canchaNombre}</span>
-                        <span className="truncate text-sm text-grafito">{diaLargo(tf.diaSemana)}</span>
+                        <span className="truncate text-sm font-semibold text-tinta max-md:col-span-2">{tf.canchaNombre}</span>
+                        <span className="truncate text-sm text-grafito">
+                          <EtiquetaMovil>Día</EtiquetaMovil>
+                          {diaLargo(tf.diaSemana)}
+                        </span>
                         <span className="text-sm text-grafito">
+                          <EtiquetaMovil>Horario</EtiquetaMovil>
                           {tf.horaInicio.slice(0, 5)}–{tf.horaFin.slice(0, 5)}
                         </span>
                         <span className="text-sm text-grafito">
+                          <EtiquetaMovil>Período</EtiquetaMovil>
                           {ddmm(tf.fechaInicioPeriodo)} al {ddmm(tf.fechaFinPeriodo)}
                         </span>
                         <span className="truncate text-sm text-grafito">
+                          <EtiquetaMovil>Cliente</EtiquetaMovil>
                           {tf.jugadorNombre ?? tf.nombreClienteManual ?? "Sin nombre"}
                         </span>
                         <span className="text-sm text-grafito">
+                          <EtiquetaMovil>{filtroEstado === "ACTIVO" ? "Próxima ocurrencia" : "Cancelada desde"}</EtiquetaMovil>
                           {filtroEstado === "ACTIVO"
                             ? tf.proximaOcurrencia
                               ? proximaOcurrenciaLabel(tf.proximaOcurrencia)
@@ -224,7 +232,7 @@ export default function PanelTurnosFijos() {
                               ? ddmm(tf.canceladoDesde)
                               : "—"}
                         </span>
-                        <span className="flex items-center justify-end gap-2">
+                        <span className="flex items-center justify-end gap-2 max-md:col-span-2 max-md:flex-wrap max-md:empty:hidden">
                           {/* Ninguna acción aplica sobre una serie CANCELADA: renovar exige
                               ACTIVO (400 del backend si se intenta) y cancelar/editar una
                               serie ya dada de baja no es un flujo real. Esta pestaña es de

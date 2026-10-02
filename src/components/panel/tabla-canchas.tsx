@@ -3,6 +3,7 @@ import { DEPORTES } from "@/lib/deportes";
 import { esCompuesta, type Cancha } from "@/lib/panel/canchas";
 import { formatearPrecio } from "@/lib/formato";
 import { hoyISO } from "@/lib/fecha";
+import { EtiquetaMovil } from "@/components/panel/etiqueta-movil";
 
 function ChipDeporte({ valor }: { valor: string }) {
   return (
@@ -83,7 +84,7 @@ function CeldaEstado({ cancha }: { cancha: Cancha }) {
   );
 }
 
-const COLUMNAS = "grid-cols-[1.2fr_1fr_1fr_1.2fr_1.6fr_0.9fr_auto]";
+const COLUMNAS = "md:grid-cols-[1.2fr_1fr_1fr_1.2fr_1.6fr_0.9fr_auto]";
 
 /**
  * Lista de canchas del complejo, físicas y compuestas mezcladas. Un
@@ -101,7 +102,7 @@ export function TablaCanchas({
 }) {
   return (
     <div className="overflow-hidden rounded-card bg-white shadow-card">
-      <div className={`grid ${COLUMNAS} gap-3 bg-humo px-6 py-3 text-xs font-semibold uppercase tracking-wide text-grafito`}>
+      <div className={`hidden md:grid ${COLUMNAS} gap-3 bg-humo px-6 py-3 text-xs font-semibold uppercase tracking-wide text-grafito`}>
         <span>Nombre</span>
         <span>Deportes</span>
         <span>Precio / seña</span>
@@ -115,19 +116,23 @@ export function TablaCanchas({
         {canchas.map((cancha) => (
           <div
             key={cancha.id}
-            className={`grid ${COLUMNAS} items-center gap-3 px-6 py-4 transition-colors hover:bg-humo/60 ${
+            className={`grid grid-cols-2 ${COLUMNAS} gap-3 px-4 py-4 transition-colors md:items-center md:px-6 hover:bg-humo/60 ${
               cancha.isActive ? "" : "opacity-60"
             }`}
           >
-            <span className="font-display text-sm font-bold text-tinta">{cancha.nombre}</span>
+            <span className="font-display text-sm font-bold text-tinta max-md:col-span-2">{cancha.nombre}</span>
 
-            <span className="flex flex-wrap gap-1">
-              {cancha.deportes.map((d) => (
-                <ChipDeporte key={d} valor={d} />
-              ))}
+            <span className="md:contents">
+              <EtiquetaMovil>Deportes</EtiquetaMovil>
+              <span className="flex flex-wrap gap-1">
+                {cancha.deportes.map((d) => (
+                  <ChipDeporte key={d} valor={d} />
+                ))}
+              </span>
             </span>
 
             <span className="text-sm text-tinta">
+              <EtiquetaMovil>Precio / seña</EtiquetaMovil>
               {cancha.preciosBase.length > 1 ? "Desde " : ""}
               {formatearPrecio(Math.min(...cancha.preciosBase.map((p) => p.precio)))}
               <span className="block text-[11px] text-grafito">
@@ -136,14 +141,21 @@ export function TablaCanchas({
             </span>
 
             <span className="text-sm text-tinta">
+              <EtiquetaMovil>Duración</EtiquetaMovil>
               {cancha.duracionesPermitidas.join(", ")} min
               {cancha.permiteInicioMediaHora && <span className="block text-[11px] text-grafito">Admite media hora</span>}
             </span>
 
-            <Composicion cancha={cancha} canchas={canchas} />
-            <CeldaEstado cancha={cancha} />
+            <div className="max-md:col-span-2 max-md:[order:1] md:contents">
+              <EtiquetaMovil>Composición</EtiquetaMovil>
+              <Composicion cancha={cancha} canchas={canchas} />
+            </div>
+            <div className="md:contents">
+              <EtiquetaMovil>Estado</EtiquetaMovil>
+              <CeldaEstado cancha={cancha} />
+            </div>
 
-            <div className="flex items-center gap-1 justify-self-end">
+            <div className="flex items-center gap-1 justify-self-end max-md:col-span-2 max-md:[order:2]">
               <button
                 type="button"
                 onClick={() => onEditar(cancha)}
