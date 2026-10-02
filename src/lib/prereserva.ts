@@ -10,7 +10,7 @@ export type RamaPrereserva = "confirmada" | "pendiente" | "vencida" | "otra";
  * `vencida` manda sobre el estado: el backend recién pasa la reserva a
  * CANCELADA_PRERESERVA cuando corre el job periódico de expiración, así que
  * el reloj de este cliente puede llegar a cero antes de que el estado remoto
- * cambie. Sin este chequeo la pantalla seguiría mostrando "Falta confirmar"
+ * cambie. Sin este chequeo la pantalla seguiría mostrando el aviso de seña pendiente
  * con el countdown en negativo.
  */
 export function ramaPrereserva(estado: EstadoReserva, vencida: boolean): RamaPrereserva {

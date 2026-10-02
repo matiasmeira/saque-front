@@ -71,7 +71,7 @@ test("complejo con seña: queda en pre-reserva con cuenta regresiva y el dueño 
   const reservaId = await reservar(page);
 
   await expect(page.getByRole("heading", { name: "Tu turno quedó reservado" })).toBeVisible();
-  await expect(page.getByText("Falta confirmar el pago de la seña")).toBeVisible();
+  await expect(page.getByText("Este turno requiere seña")).toBeVisible();
   await expect(page.getByText(/Te guardamos el turno del .+ por \d{2}:\d{2}/)).toBeVisible();
 
   await page.getByRole("link", { name: "Ver mis reservas" }).click();

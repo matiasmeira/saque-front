@@ -398,15 +398,16 @@ function EstadoPrereserva({
 
       {rama === "pendiente" && (
         // No se simula un pago que el backend no puede procesar: no hay
-        // integración de cobro y confirmar la reserva exige rol OWNER/ADMIN.
-        // Decirlo es más honesto que mostrar un botón que no hace nada.
+        // integración de cobro y la reserva con seña vence sola si nadie la
+        // confirma. Se avisa sin vueltas que no se va a confirmar.
         <div className="flex items-start gap-3 rounded-input border border-borde bg-white p-5">
           <Info className="mt-0.5 size-5 shrink-0 text-azul" aria-hidden />
           <div>
-            <p className="font-semibold text-tinta">Falta confirmar el pago de la seña</p>
+            <p className="font-semibold text-tinta">Este turno requiere seña</p>
             <p className="mt-1 text-sm leading-relaxed text-grafito">
-              El pago online todavía no está disponible. Comunicate con el complejo para
-              confirmar el turno antes de que se venza el tiempo.
+              El pago online de la seña todavía no está disponible, así que esta reserva no se va a
+              confirmar y se libera cuando termine el tiempo. Mientras tanto podés reservar en un
+              complejo sin seña.
             </p>
           </div>
         </div>
