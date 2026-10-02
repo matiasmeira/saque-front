@@ -1,5 +1,5 @@
 import { ArrowRight, BarChart3, Calendar, LayoutGrid, Wallet, type LucideIcon } from "lucide-react";
-import { Proximamente } from "@/components/landing-clubes/proximamente";
+import { Proximamente } from "@/components/canche/proximamente";
 
 /** Todo lo que se muestra en los mini mockups es ilustrativo (datos de ejemplo). */
 

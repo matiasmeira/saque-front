@@ -1,5 +1,5 @@
 import { ArrowRight, ChevronDown } from "lucide-react";
-import { Proximamente } from "@/components/landing-clubes/proximamente";
+import { Proximamente } from "@/components/canche/proximamente";
 
 /**
  * Cada respuesta está contrastada con DECISIONES.md: seña de 10 minutos y

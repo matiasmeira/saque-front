@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { LineasDeCancha } from "@/components/canche/lineas-de-cancha";
-import { Proximamente } from "@/components/landing-clubes/proximamente";
+import { Proximamente } from "@/components/canche/proximamente";
 
 export function CtaClubes() {
   return (

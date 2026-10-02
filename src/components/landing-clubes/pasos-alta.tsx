@@ -1,5 +1,5 @@
 import { ArrowRight } from "lucide-react";
-import { Proximamente } from "@/components/landing-clubes/proximamente";
+import { Proximamente } from "@/components/canche/proximamente";
 
 const PASOS = [
   { titulo: "Creá tu cuenta de dueño", texto: "Registrate con tus datos y entrá a tu panel." },
