@@ -21,7 +21,7 @@ import { SelectorUbicacion, type Ubicacion } from "@/components/canche/selector-
  * una hoja con precio, superficie, techada y servicios: ninguno de esos filtros
  * existe en el endpoint, y superficie y techada ni siquiera existen en el
  * modelo. Los controles se movían pero el listado nunca cambiaba, así que la
- * hoja se sacó — ver B8 en PLAN_CONEXION.md.
+ * hoja se sacó.
  */
 type Filtros = { deporte: string; fecha: string; franja: string };
 

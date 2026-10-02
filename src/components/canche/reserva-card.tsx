@@ -73,7 +73,7 @@ export function ReservaCard({
         {/*
           ReservaResponse no trae el establecimiento: sólo canchaId y
           canchaNombre. Sin nombre ni dirección del complejo no hay "dónde"
-          que mostrar ni link a Google Maps. Ver PLAN_CONEXION.md §6.
+          que mostrar ni link a Google Maps.
         */}
         <p className="flex items-center gap-1.5 text-borde">
           <MapPin className="size-4 shrink-0" aria-hidden />

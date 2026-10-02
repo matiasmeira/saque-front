@@ -35,8 +35,6 @@ type Grupo = { label: string; items: Item[] };
  *
  * Cada `visible` de acá tiene que reflejar el gateo REAL del backend: si deja
  * pasar de más, el empleado entra a una pantalla que no carga.
- *
- * Ver PLAN_CONEXION.md §5.7 y B7.
  */
 const GRUPOS: Grupo[] = [
   {

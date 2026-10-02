@@ -45,7 +45,7 @@ import type { ReservaResponse } from "@/lib/api/tipos/reservas";
  * elige qué bloque mostrar con ramaPrereserva (lib/prereserva.ts) en vez de
  * asumir un único camino.
  *
- * BLOQUEO CONOCIDO (ver PLAN_CONEXION.md, B1) — sólo alcanza a la rama
+ * BLOQUEO CONOCIDO — sólo alcanza a la rama
  * PENDIENTE_SENA: el jugador puede crear la prereserva pero NO confirmarla.
  * PUT /reservas/{id}/confirmar exige rol OWNER o ADMIN, y no hay ninguna
  * integración de pagos en el backend (MERCADO_PAGO es sólo un valor del enum

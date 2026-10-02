@@ -1,6 +1,6 @@
 /**
  * Error normalizado de la API. El backend devuelve tres formas de error
- * incompatibles entre si (ver PLAN_CONEXION.md seccion 2.5); este tipo las
+ * incompatibles entre si; este tipo las
  * colapsa en una sola para que la UI no tenga que distinguirlas.
  */
 export class ApiError extends Error {

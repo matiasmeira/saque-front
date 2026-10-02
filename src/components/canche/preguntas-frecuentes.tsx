@@ -5,8 +5,8 @@ import { ChevronDown } from "lucide-react";
 
 /**
  * Nota: no hay una pregunta sobre "cómo pago la reserva" a propósito.
- * Hoy el jugador no puede pagar/confirmar online (ver B1 en
- * PLAN_CONEXION.md del backend) — prometerlo acá sería mentirle al
+ * Hoy el jugador no puede pagar/confirmar online (el backend no lo permite) —
+ * prometerlo acá sería mentirle al
  * usuario. Se agrega cuando el pago online exista de verdad.
  */
 const PREGUNTAS = [

@@ -69,7 +69,7 @@ function descargarCSV(ventas: VentaResumenResponse[]) {
  *
  * Era "Pagos y liquidaciones" y auditaba la comisión de la plataforma. Nada de
  * eso existe en el backend: no hay PagoController, ni comisión, ni estado de
- * liquidación, ni Split (B3 del PLAN_CONEXION). Se fueron la tabla de pagos por
+ * liquidación, ni Split. Se fueron la tabla de pagos por
  * reserva, el drawer de "registrar cobro" (esa corrección hoy se hace donde
  * corresponde: cobrando el turno en la agenda) y el mock entero de pagos.
  *
