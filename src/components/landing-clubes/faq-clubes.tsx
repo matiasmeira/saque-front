@@ -31,7 +31,7 @@ const PREGUNTAS = [
   {
     pregunta: "¿Cómo se manejan las reservas con seña?",
     respuesta:
-      "La reserva queda pendiente durante 10 minutos y la confirmás vos a mano desde el panel. Por ahora la seña no se paga online dentro de la plataforma.",
+      "Cuando un jugador reserva un turno con seña, la reserva queda pendiente 10 minutos. El cobro online de la seña con Mercado Pago llega pronto: hasta entonces, las reservas con seña no se confirman.",
   },
   {
     pregunta: "¿Cuántos complejos puedo tener?",

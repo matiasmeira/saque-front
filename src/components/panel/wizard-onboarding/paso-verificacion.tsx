@@ -10,9 +10,10 @@ import { textoPasoVerificacion } from "@/lib/panel/nuevo-complejo";
  * ("omitir por ahora"): el complejo ya existe y sigue armable, sólo queda
  * PENDIENTE hasta que la mande (el panel se lo va a recordar).
  *
- * Si el complejo exige seña, un aviso cuenta cómo se confirman hoy (a mano,
- * desde el panel). Mercado Pago no existe en el backend, así que este paso no
- * depende de ningún cobro online.
+ * Si el complejo exige seña, un aviso cuenta cómo funciona hoy: la reserva queda
+ * pendiente 10 minutos y las señas no se confirman hasta que llegue el cobro
+ * online con Mercado Pago. Mercado Pago no existe en el backend, así que este paso
+ * no depende de ningún cobro online.
  */
 export function PasoVerificacion({
   complejoAdicional,
@@ -45,8 +46,8 @@ export function PasoVerificacion({
 
       {requiereSena && (
         <div className="rounded-input border border-borde bg-humo p-4 text-sm text-grafito">
-          Por ahora las señas las confirmás vos a mano desde el panel: cuando un jugador reserva, tenés 10 minutos
-          para confirmar el turno o la reserva vence. El cobro online con Mercado Pago llega más adelante.
+          Cuando un jugador reserva un turno con seña, la reserva queda pendiente 10 minutos. El cobro online de la
+          seña con Mercado Pago llega pronto: hasta entonces, las reservas con seña no se confirman.
         </div>
       )}
 
