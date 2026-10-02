@@ -10,6 +10,7 @@ import { SelectorEstablecimiento } from "@/components/panel/selector-establecimi
 import { ModalPanel } from "@/components/panel/modal-panel";
 import { MENSAJE_LIMITE_ESTABLECIMIENTOS, rutaCrearComplejo } from "@/lib/panel/nuevo-complejo";
 import { BannerVerificacionPendiente } from "@/components/panel/banner-verificacion-pendiente";
+import { hayBannerVerificacion } from "@/lib/panel/banner-verificacion";
 import { ID_BOTON_ABRIR_MENU, ID_MENU_LATERAL, useMenuMovil } from "@/components/panel/menu-movil-panel";
 
 /**
@@ -68,12 +69,14 @@ export function HeaderPanel({
     else router.push(ruta);
   }
 
+  // En celular el banner ya dice lo mismo, a lo ancho: la píldora sobraría.
+  const ocultarPildoraSinVerificar = hayBannerVerificacion(perfil?.rol, estadoVerificacion);
   const sinHorarios = esDuenoOAdmin && !!establecimiento && establecimiento.horariosAtencion.length === 0;
 
   return (
     <>
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-borde bg-white px-4 sm:px-6 max-lg:h-auto max-lg:min-h-16 max-lg:flex-wrap max-lg:gap-y-2 max-lg:py-2 lg:px-8">
-        <div className="flex min-w-0 items-center gap-4">
+        <div className="flex min-w-0 items-center gap-4 max-lg:w-full">
           {menu && (
             <button
               id={ID_BOTON_ABRIR_MENU}
@@ -88,17 +91,19 @@ export function HeaderPanel({
             </button>
           )}
           <h1 className="truncate font-display text-base font-bold text-tinta">{nombreVisible}</h1>
-          <SelectorEstablecimiento onCrear={crearComplejo} />
+          <div className="min-w-0 max-lg:flex-1">
+            <SelectorEstablecimiento onCrear={crearComplejo} />
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 max-lg:w-full max-lg:flex-wrap max-lg:empty:hidden">
+        <div className="flex items-center gap-2 max-lg:w-full max-lg:overflow-x-auto max-lg:[scrollbar-width:none] max-lg:empty:hidden max-lg:[&>*]:shrink-0 max-lg:[&>*]:whitespace-nowrap">
           {sinHorarios && (
             <Link
               href="/panel/configuracion"
               className="inline-flex items-center gap-1.5 rounded-full bg-pendiente-suave px-3 py-1.5 text-xs font-semibold text-pendiente hover:underline"
             >
               <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
-              Sin horarios cargados · no aparecés en las búsquedas
+              <span>Sin horarios cargados<span className="max-lg:hidden"> · no aparecés en las búsquedas</span></span>
             </Link>
           )}
           {estadoVisible === "despublicado" && esDueno && (
@@ -107,7 +112,7 @@ export function HeaderPanel({
               className="inline-flex items-center gap-1.5 rounded-full bg-cancelado-suave px-3 py-1.5 text-xs font-semibold text-cancelado hover:underline"
             >
               <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
-              Complejo despublicado · rehabilitar
+              <span>Complejo despublicado<span className="max-lg:hidden"> · rehabilitar</span></span>
             </Link>
           )}
           {estadoVisible === "despublicado" && !esDueno && (
@@ -119,10 +124,12 @@ export function HeaderPanel({
           {esDueno && estadoVerificacion === "PENDIENTE" && (
             <Link
               href="/panel/configuracion#verificacion"
-              className="inline-flex items-center gap-1.5 rounded-full bg-pendiente-suave px-3 py-1.5 text-xs font-semibold text-pendiente hover:underline"
+              className={`inline-flex items-center gap-1.5 rounded-full bg-pendiente-suave px-3 py-1.5 text-xs font-semibold text-pendiente hover:underline ${
+                ocultarPildoraSinVerificar ? "max-lg:hidden" : ""
+              }`}
             >
               <ShieldQuestion className="size-3.5 shrink-0" aria-hidden />
-              Sin verificar · completá tus datos
+              <span>Sin verificar<span className="max-lg:hidden"> · completá tus datos</span></span>
             </Link>
           )}
           {estadoVerificacion === "EN_REVISION" && (
@@ -137,7 +144,7 @@ export function HeaderPanel({
               className="inline-flex items-center gap-1.5 rounded-full bg-cancelado-suave px-3 py-1.5 text-xs font-semibold text-cancelado hover:underline"
             >
               <ShieldAlert className="size-3.5 shrink-0" aria-hidden />
-              Verificación rechazada · corregir
+              <span>Verificación rechazada<span className="max-lg:hidden"> · corregir</span></span>
             </Link>
           )}
           {estadoVisible === "publicado" && typeof diasRestantesTrial === "number" && (

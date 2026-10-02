@@ -63,6 +63,7 @@ export function SelectorEstablecimiento({ onCrear }: { onCrear: () => void }) {
       value={String(establecimientoId)}
       onChange={manejarCambio}
       opciones={opciones}
+      claseLista="max-lg:left-0 max-lg:w-full max-lg:translate-x-0"
     />
   );
 }

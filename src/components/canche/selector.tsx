@@ -23,11 +23,14 @@ export function Selector({
   value,
   onChange,
   opciones,
+  claseLista = "",
 }: {
   id: string;
   value: string;
   onChange: (valor: string) => void;
   opciones: OpcionSelector[];
+  /** Clases extra para la lista desplegada (por ejemplo, anclarla distinto en pantallas chicas). */
+  claseLista?: string;
 }) {
   const [abierto, setAbierto] = useState(false);
   const contenedorRef = useRef<HTMLDivElement>(null);
@@ -73,7 +76,7 @@ export function Selector({
           id={idListbox}
           role="listbox"
           aria-labelledby={id}
-          className="absolute left-1/2 top-full z-20 mt-2 max-h-64 min-w-[10rem] origin-top -translate-x-1/2 animate-desplegar overflow-auto rounded-card border border-borde bg-white py-1 shadow-lg"
+          className={`absolute left-1/2 top-full z-20 mt-2 max-h-64 min-w-[10rem] origin-top -translate-x-1/2 animate-desplegar overflow-auto rounded-card border border-borde bg-white py-1 shadow-lg ${claseLista}`}
         >
           {opciones.map((o) => (
             <li key={o.valor} role="option" aria-selected={o.valor === value}>
