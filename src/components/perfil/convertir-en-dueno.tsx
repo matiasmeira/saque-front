@@ -32,9 +32,9 @@ export function DialogoConvertirEnDueno({ onClose }: { onClose: () => void }) {
     <ModalPanel titulo="¿Convertir tu cuenta en cuenta de dueño?" onClose={onClose}>
       <div className="space-y-3 text-sm text-grafito">
         <p>
-          Seguís entrando con el mismo email y la misma contraseña. Tus reservas anteriores quedan
-          guardadas, pero una cuenta de dueño no tiene la sección Mis reservas, así que dejás de verlas
-          desde la app.
+          Seguís entrando con el mismo email y la misma contraseña. Una cuenta de dueño no puede
+          reservar canchas como jugador ni tiene la sección Mis reservas: tus reservas anteriores
+          quedan guardadas, pero dejás de verlas desde la app.
         </p>
         <p>
           Después te llevamos a cargar tu complejo. Tu mes de prueba gratis arranca cuando aprobemos tu
