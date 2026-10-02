@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePerfil } from "@/hooks/api/use-perfil";
 import { useHaySesion } from "@/hooks/api/use-sesion";
 import { useRolPanel } from "@/lib/rol-panel";
+import { guardiaDebeEsperar, perfilPendiente } from "@/lib/perfil-pendiente";
 import { useEmparejado, useEmpleadoIdSesion } from "@/lib/sesion-caja";
 import type { PermisoEmpleado } from "@/lib/api/tipos/comunes";
 
@@ -45,20 +46,23 @@ export function useCajaSinEmpleado(): boolean {
   const searchParams = useSearchParams();
   const empleadoIdSesion = useEmpleadoIdSesion();
   const emparejado = useEmparejado();
-  const perfilPendiente = usePerfilPendiente();
+  // Acá sí hace falta distinguir "sin sesión" (guardiaDebeEsperar lo oculta).
+  const sinResolver = perfilPendiente(useEstadoIdentidad());
   const { data: perfil } = usePerfil();
   if (searchParams.get("rol")) return false;
   // Hay JWT guardado pero GET /me todavía no resolvió: no se sabe todavía si
   // es un dueño real. Esperar en vez de expulsarlo por una carrera (mismo
   // patrón que admin/ofertas/page.tsx).
-  if (perfilPendiente) return false;
+  if (sinResolver) return false;
   const duenoLogueado = perfil?.rol === "OWNER" || perfil?.rol === "ADMIN";
   return emparejado && !empleadoIdSesion && !duenoLogueado;
 }
 
 /**
- * true si hay una sesión guardada (JWT en localStorage) pero GET /me todavía
- * no resolvió. Mientras está en vuelo, useRolPanel() cae a "empleado" y
+ * true si las guardias de pantalla tienen que esperar: hay una sesión guardada
+ * (JWT en localStorage) pero GET /me todavía no resolvió, no hay sesión (la
+ * redirige GuardSesionPanel), o todavía no se hidrató (ahí useHaySesion() miente con false;
+ * ver perfil-pendiente.ts). Mientras está en vuelo, useRolPanel() cae a "empleado" y
  * usePermisos() a "sin permisos" — son valores por defecto, no un dato real.
  * Cualquier efecto que redirija por rol o por permiso tiene que esperar esto
  * antes de disparar: si no, un dueño real (o un empleado con el permiso real)
@@ -67,9 +71,23 @@ export function useCajaSinEmpleado(): boolean {
  * deshace sola cuando el perfil de verdad llega.
  */
 export function usePerfilPendiente(): boolean {
+  return guardiaDebeEsperar(useEstadoIdentidad());
+}
+
+function useEstadoIdentidad() {
   const haySesion = useHaySesion();
   const { isPending } = usePerfil();
-  return haySesion && isPending;
+  // false en el servidor y en el primer commit de la hidratación, true después.
+  const hidratado = useSyncExternalStore(
+    suscribirseNada,
+    () => true,
+    () => false,
+  );
+  return { hidratado, haySesion, perfilCargando: isPending };
+}
+
+function suscribirseNada() {
+  return () => {};
 }
 
 /**
