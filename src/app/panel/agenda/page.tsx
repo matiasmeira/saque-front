@@ -481,6 +481,7 @@ export default function PanelAgenda() {
               <TimelineAgenda
                 columnas={columnas}
                 horaActual={horaActual}
+                anchoMinColumna={vista === "dia" ? 140 : 100}
                 mostrarLineaAhora={dias.includes(hoyISO())}
                 abre={abre}
                 cierra={cierra}

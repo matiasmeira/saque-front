@@ -12,6 +12,12 @@ import type { BloqueoDelDia, EstadoTurno, SinCupoPorPool, Turno } from "@/lib/pa
  * Densidad de escritorio: filas de 30 minutos, compactas (Parte 9,
  * C2 pide "sin scroll horizontal a 1440px" — la altura no tiene esa
  * restricción, así que la página scrollea vertical sin problema).
+ *
+ * Por debajo de lg no entran N columnas en 1fr (con 5 canchas son ~50px cada
+ * una): las columnas tienen un ancho mínimo (`anchoMinColumna`) y la grilla
+ * scrollea dentro de su propio contenedor, con la columna de horas fija a la
+ * izquierda y la cabecera de canchas/días fija arriba. Desde lg nada de esto
+ * aplica y la grilla es la de siempre.
  */
 const ROW_MIN = 30;
 const ROW_H = 32;
@@ -62,6 +68,10 @@ function armarGrilla(abre: string, cierra: string): Grilla {
   };
 }
 
+/** `--n` y `--col-min` los define el contenedor de TimelineAgenda. */
+const CLASE_GRILLA_COLUMNAS =
+  "grid flex-1 grid-cols-[repeat(var(--n),minmax(0,1fr))] max-lg:grid-cols-[repeat(var(--n),minmax(var(--col-min),1fr))]";
+
 const ICONO_ESTADO: Record<EstadoTurno, typeof CheckCircle2> = {
   ocupado: CheckCircle2,
   pendiente: Clock,
@@ -84,6 +94,7 @@ export function TimelineAgenda({
   cierra,
   onClickLibre,
   onClickTurno,
+  anchoMinColumna = 140,
 }: {
   columnas: ColumnaTimeline[];
   horaActual: Date;
@@ -93,6 +104,8 @@ export function TimelineAgenda({
   cierra: string;
   onClickLibre: (columnaId: string | number, hora: string) => void;
   onClickTurno: (turno: Turno) => void;
+  /** Ancho mínimo de cada columna (px) por debajo de lg. Desde lg se reparte en partes iguales. */
+  anchoMinColumna?: number;
 }) {
   const grilla = armarGrilla(abre, cierra);
   const minutosAhora = horaActual.getHours() * 60 + horaActual.getMinutes();
@@ -101,49 +114,57 @@ export function TimelineAgenda({
   const lineaTop = grilla.fila(minutosAhora) * ROW_H;
 
   return (
-    <div className="overflow-hidden rounded-card bg-white shadow-card">
-      <div className="flex border-b border-borde bg-humo">
-        <div className="w-16 shrink-0" />
-        <div className="grid flex-1" style={{ gridTemplateColumns: `repeat(${columnas.length}, minmax(0, 1fr))` }}>
-          {columnas.map((col) => (
-            <div key={col.id} className="min-w-0 border-l border-borde px-2 py-2.5 text-center">
-              <p className="truncate font-display text-xs font-bold text-tinta">{col.titulo}</p>
-              {col.subtitulo && <p className="truncate text-[10px] text-grafito">{col.subtitulo}</p>}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="relative flex">
-        <div className="w-16 shrink-0" style={{ height: grilla.totalFilas * ROW_H }}>
-          {grilla.horasEnPunto.map((m) => (
-            <div key={m} className="relative" style={{ height: ROW_H * 2 }}>
-              <span className="absolute -top-2 right-2 text-[10px] text-grafito">
-                {String(Math.floor(m / 60) % 24).padStart(2, "0")}:00
-              </span>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid flex-1" style={{ gridTemplateColumns: `repeat(${columnas.length}, minmax(0, 1fr))` }}>
-          {columnas.map((col) => (
-            <ColumnaAgenda
-              key={col.id}
-              columna={col}
-              grilla={grilla}
-              onClickLibre={(hora) => onClickLibre(col.id, hora)}
-              onClickTurno={onClickTurno}
-            />
-          ))}
-        </div>
-
-        {mostrarLineaAhora && dentroDeHorario && (
-          <div className="pointer-events-none absolute inset-x-0 z-20" style={{ top: lineaTop }}>
-            <div className="absolute -left-1 -top-[5px] size-3 rounded-full bg-celeste" aria-hidden />
-            <div className="h-0.5 bg-celeste" aria-hidden />
-            <span className="sr-only">Hora actual</span>
+    <div
+      className="overflow-hidden rounded-card bg-white shadow-card max-lg:max-h-[75dvh] max-lg:overflow-auto"
+      style={{ "--n": columnas.length, "--col-min": `${anchoMinColumna}px` } as React.CSSProperties}
+    >
+      <div className="max-lg:min-w-[calc(4rem+var(--n)*var(--col-min))] lg:contents">
+        <div className="flex border-b border-borde bg-humo max-lg:sticky max-lg:top-0 max-lg:z-30">
+          <div className="w-16 shrink-0 max-lg:sticky max-lg:left-0 max-lg:z-10 max-lg:bg-humo" />
+          <div className={CLASE_GRILLA_COLUMNAS}>
+            {columnas.map((col) => (
+              <div key={col.id} className="min-w-0 border-l border-borde px-2 py-2.5 text-center">
+                <p className="truncate font-display text-xs font-bold text-tinta">{col.titulo}</p>
+                {col.subtitulo && <p className="truncate text-[10px] text-grafito">{col.subtitulo}</p>}
+              </div>
+            ))}
           </div>
-        )}
+        </div>
+
+        <div className="relative flex">
+          <div
+            className="w-16 shrink-0 max-lg:sticky max-lg:left-0 max-lg:z-10 max-lg:bg-white"
+            style={{ height: grilla.totalFilas * ROW_H }}
+          >
+            {grilla.horasEnPunto.map((m) => (
+              <div key={m} className="relative" style={{ height: ROW_H * 2 }}>
+                <span className="absolute -top-2 right-2 text-[10px] text-grafito">
+                  {String(Math.floor(m / 60) % 24).padStart(2, "0")}:00
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className={CLASE_GRILLA_COLUMNAS}>
+            {columnas.map((col) => (
+              <ColumnaAgenda
+                key={col.id}
+                columna={col}
+                grilla={grilla}
+                onClickLibre={(hora) => onClickLibre(col.id, hora)}
+                onClickTurno={onClickTurno}
+              />
+            ))}
+          </div>
+
+          {mostrarLineaAhora && dentroDeHorario && (
+            <div className="pointer-events-none absolute inset-x-0 z-20" style={{ top: lineaTop }}>
+              <div className="absolute -left-1 -top-[5px] size-3 rounded-full bg-celeste" aria-hidden />
+              <div className="h-0.5 bg-celeste" aria-hidden />
+              <span className="sr-only">Hora actual</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
