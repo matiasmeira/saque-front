@@ -96,6 +96,13 @@ describe("esErrorTelefonoNoVerificado", () => {
     expect(esErrorTelefonoNoVerificado(error)).toBe(false);
   });
 
+  it("el 403 de dueño que reserva no se toma por teléfono y se muestra tal cual", () => {
+    const error = parsearError(403, { error: "Las reservas son para cuentas de jugador." });
+
+    expect(esErrorTelefonoNoVerificado(error)).toBe(false);
+    expect(mensajeVisible(error)).toBe("Las reservas son para cuentas de jugador.");
+  });
+
   it("no dispara fuera de 403/409 aunque el mensaje coincida", () => {
     const error = parsearError(400, { error: "Falta verificar el teléfono" });
 

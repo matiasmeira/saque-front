@@ -13,6 +13,7 @@ import { partirFechaHora } from "@/lib/api/fechas";
 import { aMinutos } from "@/lib/disponibilidad";
 import { rangoDeAgenda } from "@/lib/horarios";
 import { familiasDeDeportes } from "@/lib/deportes";
+import { AVISO_RESERVA_SOLO_JUGADOR, puedeReservarComoJugador } from "@/lib/puede-reservar";
 import type { ModoGrilla } from "@/lib/reserva-link";
 import { useHaySesion } from "@/hooks/api/use-sesion";
 import { usePerfil } from "@/hooks/api/use-perfil";
@@ -125,7 +126,11 @@ export function GrillaDisponibilidad({
 
   // Sólo lectura en modo panel: un establecimiento no verificado puede no
   // tener slug público todavía, y aunque lo tuviera, la preview no reserva.
-  const modo: ModoGrilla = fuente.tipo === "publico" ? { slug: fuente.slug } : { soloLectura: true };
+  // Una cuenta de dueño no puede reservar: en la ficha pública la grilla pasa
+  // a sólo lectura y se avisa. Sin perfil (anónimo o cargando) se ofrece igual.
+  const ofreceReservar = fuente.tipo === "publico" && puedeReservarComoJugador(perfil?.rol);
+  const avisoSoloJugador = fuente.tipo === "publico" && !ofreceReservar;
+  const modo: ModoGrilla = ofreceReservar && fuente.tipo === "publico" ? { slug: fuente.slug } : { soloLectura: true };
 
   const reservasPropiasPorCancha = new Map<number, { desde: number; hasta: number }[]>();
   for (const r of misReservas.data?.content ?? []) {
@@ -194,6 +199,12 @@ export function GrillaDisponibilidad({
           </div>
         </div>
       </div>
+
+      {avisoSoloJugador && (
+        <p role="note" className="mb-4 rounded-card bg-white p-6 text-sm text-grafito">
+          {AVISO_RESERVA_SOLO_JUGADOR}
+        </p>
+      )}
 
       {disponibilidad.isPending && (
         <p className="rounded-card bg-white p-6 text-sm text-grafito">Buscando turnos...</p>
