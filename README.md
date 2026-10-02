@@ -65,7 +65,33 @@ Otros comandos:
 npm run typecheck   # tsc --noEmit
 npm run lint        # ESLint
 npx vitest run      # tests (también: npm test)
+npm run e2e         # tests e2e (ver más abajo)
 ```
+
+## Tests e2e
+
+Playwright corre flujos completos (login y registro, reserva del jugador con y sin seña, agenda del dueño, recarga del panel) contra un back real y aislado. **Se corren en local; no corren en el CI.**
+
+`npm run e2e` levanta solo:
+- el back e2e en `:8081` (perfil `e2e`, base `sacaladelangulo_e2e`, que se resetea y se llena con un seed al arrancar), y
+- un front `next dev` en `:3001` con `distDir` propio (`.next-e2e`), apuntando a ese back.
+
+Tus servidores de desarrollo (`:8080` y `:3000`) y la carpeta `.next` no se tocan. Nunca apuntes los e2e a esos puertos.
+
+**Requisitos (una sola vez)**
+1. Crear la base `sacaladelangulo_e2e`: ver la sección "Tests e2e" del README del backend (repo `sacaladelangulo`, que tiene que estar al lado de este, o indicar su ruta con `E2E_BACK_DIR`).
+2. Copiar `e2e/.env.e2e.example` a `e2e/.env.e2e` (está en `.gitignore`) y completar `DB_USERNAME`, `DB_PASSWORD` y `JWT_SECRET`.
+
+**Uso**
+
+```bash
+npm run e2e      # corrida completa, en consola
+npm run e2e:ui   # modo interactivo de Playwright
+```
+
+Después de cada corrida queda el reporte HTML en `playwright-report/` (`npx playwright show-report`) y, para los tests que fallan, capturas, video y trazas en `test-results/`.
+
+**Corrida oficial = con los servidores e2e bajados.** Si ya hay algo escuchando en `:8081` o `:3001`, Playwright lo reusa para iterar rápido, pero entonces la base **no se resetea** y los límites de uso del back (login 15 por 5 min y `registro/iniciar` 10 por 10 min, por IP) **se acumulan** entre corridas, así que pueden aparecer 429 que no son un bug de la app.
 
 ## CI
 
