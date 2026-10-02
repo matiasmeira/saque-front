@@ -49,3 +49,7 @@ SAQUE-FRONTEND-SPEC.md
 # archivos de trabajo locales (no se versionan)
 /stitch/
 /PLAN_CONEXION.md
+/.agents/
+/skills-lock.json
+/AGENTS.md
+/docs/superpowers/
