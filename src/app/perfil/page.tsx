@@ -8,11 +8,13 @@ import { FooterPublico } from "@/components/canche/footer-publico";
 import { EmptyState } from "@/components/canche/empty-state";
 import { Dato } from "@/components/perfil/dato";
 import { Insignia } from "@/components/perfil/insignia";
+import { ConvertirEnDueno } from "@/components/perfil/convertir-en-dueno";
 import { VerificacionTelefono } from "@/components/perfil/verificacion-telefono";
 import { PLANES } from "@/components/perfil/etiquetas";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
 import { usePerfil, useLogout } from "@/hooks/api/use-perfil";
 import { useHaySesion } from "@/hooks/api/use-sesion";
+import { puedeConvertirseEnDueno } from "@/lib/convertir-en-dueno";
 import { borrarUsuario } from "@/lib/usuario";
 import type { PerfilResponse } from "@/lib/api/tipos/auth";
 
@@ -115,6 +117,8 @@ function Contenido({ perfil }: { perfil: PerfilResponse }) {
       </section>
 
       <VerificacionTelefono verificado={perfil.telefonoVerificado} />
+
+      {puedeConvertirseEnDueno(perfil.rol) && <ConvertirEnDueno />}
 
       <button
         type="button"

@@ -122,6 +122,23 @@ export function useLogin() {
 }
 
 /**
+ * Convierte la cuenta del jugador en cuenta de dueño. El token sigue siendo el
+ * mismo (el rol sale de la base), así que alcanza con reemplazar el perfil en
+ * la caché: quien navegue después ya ve rol OWNER.
+ */
+export function useConvertirEnDueno() {
+  const queryClient = useQueryClient();
+
+  return useMutation<PerfilResponse, ApiError, void>({
+    mutationFn: () => usuarios.convertirEnDueno(),
+    onSuccess: (perfil) => {
+      queryClient.setQueryData(keys.perfil(), perfil);
+      queryClient.invalidateQueries({ queryKey: keys.establecimientos.mios() });
+    },
+  });
+}
+
+/**
  * Cierra sesion. Avisa al back ANTES de borrar el token (el endpoint necesita
  * autenticacion para incrementar tokenVersion). Si la llamada falla, igual se
  * limpia el cliente: quedarse logueado localmente seria peor.

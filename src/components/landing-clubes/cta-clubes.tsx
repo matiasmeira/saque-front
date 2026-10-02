@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BotonCuentaClub } from "@/components/landing-clubes/boton-cuenta-club";
 import { LineasDeCancha } from "@/components/canche/lineas-de-cancha";
 import { Proximamente } from "@/components/canche/proximamente";
 
@@ -10,12 +10,7 @@ export function CtaClubes() {
         <h2 className="text-3xl text-white sm:text-5xl sm:leading-[1.02]">Tu próximo turno puede empezar mejor organizado</h2>
         <p className="mx-auto mt-5 max-w-xl text-lg text-[#9DB6D6]">Creá tu cuenta, configurá tu complejo y empezá a recibir reservas.</p>
         <div className="mt-8 flex flex-col items-center gap-4">
-          <Link
-            href="/registro/dueno"
-            className="inline-flex h-14 w-full items-center justify-center rounded-full bg-azul px-8 font-display text-base font-bold text-white transition-colors hover:bg-azul-oscuro sm:w-auto"
-          >
-            Crear cuenta para mi club
-          </Link>
+          <BotonCuentaClub className="inline-flex h-14 w-full items-center justify-center rounded-full bg-azul px-8 font-display text-base font-bold text-white transition-colors hover:bg-azul-oscuro sm:w-auto" />
           <Proximamente oscuro>Solicitar una demo</Proximamente>
         </div>
       </div>

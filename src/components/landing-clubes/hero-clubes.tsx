@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BotonCuentaClub } from "@/components/landing-clubes/boton-cuenta-club";
 import { HeaderPublico } from "@/components/canche/header-publico";
 import { LineasDeCancha } from "@/components/canche/lineas-de-cancha";
 import { MockupAgenda } from "@/components/landing-clubes/mockup-agenda";
@@ -18,12 +18,7 @@ export function HeroClubes() {
           </p>
 
           <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-            <Link
-              href="/registro/dueno"
-              className="inline-flex h-12 items-center justify-center rounded-full bg-azul px-6 font-display text-base font-bold text-white transition-colors hover:bg-azul-oscuro"
-            >
-              Crear cuenta para mi club
-            </Link>
+            <BotonCuentaClub className="inline-flex h-12 items-center justify-center rounded-full bg-azul px-6 font-display text-base font-bold text-white transition-colors hover:bg-azul-oscuro" />
             <a
               href="#como-empezar"
               className="inline-flex h-12 items-center justify-center rounded-full border-[1.5px] border-white/60 px-6 font-display text-base font-bold text-white transition-colors hover:bg-white/10"

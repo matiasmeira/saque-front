@@ -90,6 +90,14 @@ export const auth = {
 export const usuarios = {
   me: () => apiFetch<PerfilResponse>("/api/v1/usuarios/me"),
 
+  /**
+   * PLAYER -> OWNER sobre la cuenta propia, sin body. Devuelve el perfil nuevo
+   * (rol OWNER, plan TRIAL). Idempotente para OWNER; 403 para ADMIN/EMPLOYEE.
+   * El token no cambia: el rol se lee de la base en cada request.
+   */
+  convertirEnDueno: () =>
+    apiFetch<PerfilResponse>("/api/v1/usuarios/me/convertir-en-dueno", { method: "POST" }),
+
   solicitarCodigoTelefono: (body: SolicitarCodigoRequest) =>
     apiFetch<void>("/api/v1/usuarios/telefono/solicitar-codigo", {
       method: "POST",
