@@ -72,7 +72,7 @@ export function HeaderPanel({
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center justify-between border-b border-borde bg-white px-4 max-lg:h-auto max-lg:min-h-16 max-lg:flex-wrap max-lg:gap-y-2 max-lg:py-2 lg:px-8">
+      <header className="flex h-16 shrink-0 items-center justify-between border-b border-borde bg-white px-4 sm:px-6 max-lg:h-auto max-lg:min-h-16 max-lg:flex-wrap max-lg:gap-y-2 max-lg:py-2 lg:px-8">
         <div className="flex min-w-0 items-center gap-4">
           {menu && (
             <button

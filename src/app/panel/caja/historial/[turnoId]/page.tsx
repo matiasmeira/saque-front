@@ -58,7 +58,7 @@ export default function DetalleTurnoCaja({ params }: { params: Promise<{ turnoId
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <HeaderPanel />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <Link href="/panel/caja/historial" className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-grafito transition-colors hover:text-azul">
             <ArrowLeft className="size-4" aria-hidden />
             Volver al historial

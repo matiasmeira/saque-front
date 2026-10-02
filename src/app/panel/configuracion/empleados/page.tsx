@@ -127,7 +127,7 @@ export default function PanelEmpleados() {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <HeaderPanel />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <Link href="/panel/configuracion" className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-grafito hover:text-tinta">
             <ChevronLeft className="size-4" aria-hidden />
             Configuración

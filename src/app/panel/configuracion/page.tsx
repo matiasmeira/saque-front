@@ -295,7 +295,7 @@ export default function PanelConfiguracion() {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <HeaderPanel />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <h1 className="mb-6 font-display text-2xl font-extrabold tracking-tight text-tinta">Configuración</h1>
 
           {errorAccion && (

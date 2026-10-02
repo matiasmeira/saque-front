@@ -98,7 +98,7 @@ export default function ResumenCierreCaja({ params }: { params: Promise<{ turnoI
         <SidebarPanel />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <HeaderPanel />
-          <main className="flex-1 overflow-y-auto px-8 py-8">
+          <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             <p className="text-sm text-grafito">No encontramos ese turno de caja.</p>
           </main>
         </div>
@@ -122,7 +122,7 @@ export default function ResumenCierreCaja({ params }: { params: Promise<{ turnoI
           <HeaderPanel />
         </div>
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8 print:overflow-visible print:px-0 print:py-0">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8 lg:py-8 print:overflow-visible print:px-0 print:py-0">
           <div className="mx-auto max-w-lg space-y-6">
             <div className="flex items-center justify-between print:hidden">
               <h1 className="font-display text-2xl font-extrabold tracking-tight text-tinta">Caja cerrada</h1>

@@ -30,7 +30,7 @@ export function BannerVerificacionPendiente() {
   if (establecimiento?.estadoVerificacion !== "PENDIENTE") return null;
 
   return (
-    <div className="flex flex-col items-start gap-2 border-b border-pendiente/30 bg-pendiente-suave px-8 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col items-start gap-2 border-b border-pendiente/30 bg-pendiente-suave px-4 py-3 sm:px-6 lg:px-8 sm:flex-row sm:items-center sm:justify-between">
       <p className="flex items-start gap-2 text-sm text-tinta sm:items-center">
         <ShieldQuestion className="mt-0.5 size-4 shrink-0 text-pendiente sm:mt-0" aria-hidden />
         <span>
