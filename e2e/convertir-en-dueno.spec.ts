@@ -3,14 +3,13 @@ import { API } from "./helpers/api";
 import { ultimoCodigo } from "./helpers/mails";
 import { CLAVE_E2E, emailUnico } from "./helpers/usuarios";
 
-// Pendiente 86: se activa (quitar los fixme) cuando exista
-// POST /usuarios/me/convertir-en-dueno en el back.
+// POST /usuarios/me/convertir-en-dueno (pendiente 86).
 // No usa jugador.e2e@canche.test: otros specs dependen de que siga siendo PLAYER.
 test.describe("convertir la cuenta en cuenta de dueño", () => {
   test.describe("jugador nuevo", () => {
     test.use({ storageState: { cookies: [], origins: [] } });
 
-    test.fixme("se convierte en dueño con el mismo token", async ({ page }) => {
+    test("la landing ofrece convertir, y /perfil la convierte en dueño con el mismo token", async ({ page }) => {
       const email = emailUnico("jugador-convierte");
 
       // 1. Registrar un jugador nuevo por /ingresar.
@@ -29,7 +28,21 @@ test.describe("convertir la cuenta en cuenta de dueño", () => {
       const token = await page.evaluate(() => localStorage.getItem("saque:token"));
       expect(token).toBeTruthy();
 
-      // 2. /perfil -> tarjeta -> diálogo -> convertir.
+      // 2a. Landing de clubes: el jugador ve "Registrar mi complejo" y abre el mismo diálogo;
+      // "Ahora no" lo cierra sin convertir (un solo registro para los dos casos: rate limit).
+      await page.goto("/software-para-clubes");
+      await page.getByRole("button", { name: "Registrar mi complejo" }).first().click();
+      const dialogo = page.getByRole("dialog", { name: "¿Convertir tu cuenta en cuenta de dueño?" });
+      await expect(dialogo).toBeVisible();
+      await dialogo.getByRole("button", { name: "Ahora no" }).click();
+      await expect(dialogo).toHaveCount(0);
+      await expect(page).toHaveURL(/\/software-para-clubes$/);
+      const sinConvertir = await page.request.get(`${API}/api/v1/usuarios/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      expect(await sinConvertir.json()).toMatchObject({ rol: "PLAYER" });
+
+      // 2b. /perfil -> tarjeta -> diálogo -> convertir.
       await page.goto("/perfil");
       await expect(page.getByRole("heading", { name: "¿Tenés un complejo?" })).toBeVisible();
       await page.getByRole("button", { name: "Registrar mi complejo" }).click();
@@ -57,7 +70,7 @@ test.describe("convertir la cuenta en cuenta de dueño", () => {
   test.describe("dueño del seed", () => {
     test.use({ storageState: "e2e/.auth/dueno.json" });
 
-    test.fixme("no ve la tarjeta en /perfil", async ({ page }) => {
+    test("no ve la tarjeta en /perfil", async ({ page }) => {
       await page.goto("/perfil");
       await expect(page.getByRole("heading", { name: "Mi perfil" })).toBeVisible();
       await expect(page.getByRole("heading", { name: "¿Tenés un complejo?" })).toHaveCount(0);
