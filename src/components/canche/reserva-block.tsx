@@ -1,5 +1,6 @@
 import { Phone, Star } from "lucide-react";
 
+import { requiereTelefonoEfectivo } from "@/lib/verificacion-telefono";
 import { formatearPrecio } from "@/lib/formato";
 import type { ComplejoDetalleResponse } from "@/lib/api/tipos/publico";
 
@@ -34,7 +35,7 @@ export function ReservaBlock({ complejo }: { complejo: ComplejoDetalleResponse }
             </p>
           )}
 
-          {complejo.requiereTelefonoVerificado && (
+          {requiereTelefonoEfectivo(complejo.requiereTelefonoVerificado) && (
             <p className="mt-1 flex items-center gap-1.5 text-sm text-grafito">
               <Phone className="size-3.5 shrink-0" aria-hidden />
               Exige celular verificado para reservar

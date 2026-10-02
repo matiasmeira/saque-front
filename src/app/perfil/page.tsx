@@ -29,8 +29,8 @@ import type { PerfilResponse } from "@/lib/api/tipos/auth";
  *    hacía era borrar el localStorage. Ofrecerlo era mentir sobre algo grave.
  *  - PerfilResponse NO trae el número de teléfono, sólo telefonoVerificado.
  *    Por eso no se puede mostrar el número: sólo si está verificado o no.
- *  - Sí se agrega la verificación de teléfono, que existe en el backend y la
- *    pantalla no exponía.
+ *  - La verificación de teléfono está apagada (VERIFICACION_TELEFONO_HABILITADA):
+ *    se muestra "Próximamente".
  */
 export default function Perfil() {
   const haySesion = useHaySesion();

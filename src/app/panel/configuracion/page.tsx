@@ -1,5 +1,6 @@
 "use client";
 
+import { requiereTelefonoEfectivo } from "@/lib/verificacion-telefono";
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -178,7 +179,7 @@ export default function PanelConfiguracion() {
         latitud: actual.latitud,
         longitud: actual.longitud,
         requiereSena: actual.requiereSena,
-        requiereTelefonoVerificado: actual.requiereTelefonoVerificado,
+        requiereTelefonoVerificado: requiereTelefonoEfectivo(actual.requiereTelefonoVerificado),
         // Va SIEMPRE: omitirlo borra los horarios del establecimiento.
         horariosAtencion: actual.horariosAtencion,
         ...cambios,

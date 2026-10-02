@@ -7,6 +7,8 @@ import { Loader2, Phone } from "lucide-react";
 import { usuarios } from "@/lib/api/endpoints/auth";
 import { keys } from "@/lib/api/keys";
 import { ApiError, mensajeVisible } from "@/lib/api/errores";
+import { Proximamente } from "@/components/canche/proximamente";
+import { VERIFICACION_TELEFONO_HABILITADA } from "@/lib/verificacion-telefono";
 import { Insignia } from "@/components/perfil/insignia";
 
 /**
@@ -17,6 +19,26 @@ import { Insignia } from "@/components/perfil/insignia";
  * telefonoVerificado, no el teléfono.
  */
 export function VerificacionTelefono({ verificado }: { verificado: boolean }) {
+  if (!VERIFICACION_TELEFONO_HABILITADA) return <TelefonoProximamente />;
+  return <VerificacionTelefonoActiva verificado={verificado} />;
+}
+
+/** Con la verificación apagada: sin input ni botones, y sin llamar al backend. */
+function TelefonoProximamente() {
+  return (
+    <section className="mt-6 rounded-card bg-white p-6 sm:p-8">
+      <h2 className="flex items-center gap-2 font-display text-lg font-bold text-tinta">
+        <Phone className="size-[18px] text-azul" aria-hidden />
+        Teléfono
+      </h2>
+      <p className="mt-3">
+        <Proximamente>Verificación de teléfono</Proximamente>
+      </p>
+    </section>
+  );
+}
+
+function VerificacionTelefonoActiva({ verificado }: { verificado: boolean }) {
   const queryClient = useQueryClient();
   const [paso, setPaso] = useState<"inicial" | "telefono" | "codigo">("inicial");
   const [telefono, setTelefono] = useState("");

@@ -1,5 +1,6 @@
 "use client";
 
+import { requiereTelefonoEfectivo } from "@/lib/verificacion-telefono";
 import { useEffect, useState, type FormEvent } from "react";
 import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
@@ -66,9 +67,6 @@ export function FormDatosComplejo({
   const [nombre, setNombre] = useState(establecimiento?.nombre ?? "");
   const [direccion, setDireccion] = useState(establecimiento?.direccion ?? "");
   const [requiereSena, setRequiereSena] = useState(establecimiento?.requiereSena ?? false);
-  const [requiereTelefonoVerificado, setRequiereTelefonoVerificado] = useState(
-    establecimiento?.requiereTelefonoVerificado ?? false,
-  );
   const [ubicacion, setUbicacion] = useState<Ubicacion | null>(null);
   /**
    * Corrección manual del pin, junto con la dirección/localidad para la que
@@ -154,7 +152,7 @@ export function FormDatosComplejo({
       latitud: coords.lat,
       longitud: coords.lng,
       requiereSena: senaForzada ? true : requiereSena,
-      requiereTelefonoVerificado,
+      requiereTelefonoVerificado: requiereTelefonoEfectivo(establecimiento?.requiereTelefonoVerificado ?? false),
     });
   }
 
@@ -230,16 +228,20 @@ export function FormDatosComplejo({
         <label className="flex items-start gap-2.5">
           <input
             type="checkbox"
-            checked={requiereTelefonoVerificado}
-            onChange={(e) => setRequiereTelefonoVerificado(e.target.checked)}
-            className="mt-0.5 size-4 shrink-0 rounded border-borde accent-azul"
+            checked={false}
+            disabled
+            readOnly
+            className="mt-0.5 size-4 shrink-0 rounded border-borde accent-azul disabled:opacity-60"
           />
           <span>
-            <span className="block text-sm font-semibold text-tinta">
+            <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-grafito/70">
               Exigir teléfono verificado para reservar
+              <span className="rounded-full bg-celeste-suave px-2.5 py-0.5 text-xs font-semibold text-grafito">
+                Próximamente
+              </span>
             </span>
-            <span className="block text-xs text-grafito">
-              El jugador va a necesitar verificar su celular desde su perfil antes de poder reservar acá.
+            <span className="block text-xs text-grafito/70">
+              Todavía no se puede verificar el teléfono, así que no se exige para reservar.
             </span>
           </span>
         </label>

@@ -1,5 +1,6 @@
 "use client";
 
+import { requiereTelefonoEfectivo } from "@/lib/verificacion-telefono";
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
@@ -28,7 +29,6 @@ export function PasoPoliticas({
   const senaForzada = plan === "FREE";
 
   const [requiereSena, setRequiereSena] = useState(false);
-  const [requiereTelefonoVerificado, setRequiereTelefonoVerificado] = useState(false);
   const [montoSenaDefault, setMontoSenaDefault] = useState("0");
   const [horas, setHoras] = useState("24");
   const [minutos, setMinutos] = useState("30");
@@ -51,7 +51,7 @@ export function PasoPoliticas({
     setErrores({});
     onConfirmar({
       requiereSena: senaActiva,
-      requiereTelefonoVerificado,
+      requiereTelefonoVerificado: requiereTelefonoEfectivo(false),
       ...datos,
     });
   }
@@ -111,14 +111,22 @@ export function PasoPoliticas({
 
       <label className="flex items-start justify-between gap-3 rounded-input border border-borde p-4">
         <span>
-          <span className="block text-sm font-semibold text-tinta">Requiere teléfono verificado</span>
-          <span className="block text-xs text-grafito">Los usuarios van a tener que validar su número por SMS.</span>
+          <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-grafito/70">
+            Requiere teléfono verificado
+            <span className="rounded-full bg-celeste-suave px-2.5 py-0.5 text-xs font-semibold text-grafito">
+              Próximamente
+            </span>
+          </span>
+          <span className="block text-xs text-grafito/70">
+            Todavía no se puede verificar el teléfono, así que no se exige para reservar.
+          </span>
         </span>
         <input
           type="checkbox"
-          checked={requiereTelefonoVerificado}
-          onChange={(e) => setRequiereTelefonoVerificado(e.target.checked)}
-          className="mt-0.5 size-5 shrink-0 rounded border-borde accent-azul"
+          checked={false}
+          disabled
+          readOnly
+          className="mt-0.5 size-5 shrink-0 rounded border-borde accent-azul disabled:opacity-60"
         />
       </label>
 

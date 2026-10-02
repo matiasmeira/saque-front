@@ -1,5 +1,6 @@
 "use client";
 
+import { requiereTelefonoEfectivo } from "@/lib/verificacion-telefono";
 import { use, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -242,7 +243,7 @@ export default function Checkout({ params }: { params: Promise<{ id: string }> }
                 </p>
               )}
 
-              {!reserva && complejo.data?.requiereTelefonoVerificado && (
+              {!reserva && requiereTelefonoEfectivo(complejo.data?.requiereTelefonoVerificado ?? false) && (
                 <p className="mt-2 flex items-start gap-1.5 text-sm text-grafito">
                   <Phone className="mt-0.5 size-4 shrink-0" aria-hidden />
                   <span>

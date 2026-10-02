@@ -1,5 +1,6 @@
 "use client";
 
+import { requiereTelefonoEfectivo } from "@/lib/verificacion-telefono";
 import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -81,7 +82,7 @@ export function useWizardOnboarding({ onComplejoCreado }: { onComplejoCreado?: (
           latitud: datosIdentidad.latitud,
           longitud: datosIdentidad.longitud,
           requiereSena: politicas.requiereSena,
-          requiereTelefonoVerificado: politicas.requiereTelefonoVerificado,
+          requiereTelefonoVerificado: requiereTelefonoEfectivo(politicas.requiereTelefonoVerificado),
           horariosAtencion: [],
           servicios: datosIdentidad.servicios,
         });
@@ -144,7 +145,7 @@ export function useWizardOnboarding({ onComplejoCreado }: { onComplejoCreado?: (
         latitud: actual.latitud,
         longitud: actual.longitud,
         requiereSena: actual.requiereSena,
-        requiereTelefonoVerificado: actual.requiereTelefonoVerificado,
+        requiereTelefonoVerificado: requiereTelefonoEfectivo(actual.requiereTelefonoVerificado),
         // Va SIEMPRE: omitirlo borra los horarios (ver Global Constraints del plan).
         horariosAtencion: horarios,
         // `servicios` se omite a propósito: ausente = no modificar.
