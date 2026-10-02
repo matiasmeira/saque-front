@@ -160,7 +160,7 @@ export function TablaCanchas({
                 type="button"
                 onClick={() => onEditar(cancha)}
                 aria-label={`Editar ${cancha.nombre}`}
-                className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+                className="flex size-8 max-md:size-11 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 <Pencil className="size-4" aria-hidden />
               </button>

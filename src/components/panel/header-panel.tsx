@@ -85,7 +85,7 @@ export function HeaderPanel({
               aria-label="Abrir menú"
               aria-expanded={menu.abierto}
               aria-controls={ID_MENU_LATERAL}
-              className="-ml-2 flex size-10 shrink-0 items-center justify-center rounded-full text-tinta transition-colors hover:bg-humo lg:hidden"
+              className="-ml-2 flex size-10 max-md:size-11 shrink-0 items-center justify-center rounded-full text-tinta transition-colors hover:bg-humo lg:hidden"
             >
               <Menu className="size-5" aria-hidden />
             </button>

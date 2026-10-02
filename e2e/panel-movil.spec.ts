@@ -138,3 +138,59 @@ test("header: un nombre de complejo larguísimo no desborda", async ({ page, req
     expect(baja.status(), "limpieza del complejo de prueba").toBe(204);
   }
 });
+
+/** Todos los botones y enlaces de ícono visibles (su nombre accesible es el aria-label) miden al menos 44 × 44. */
+async function medidasDeIconos(page: Page) {
+  const iconos = page.locator("main").locator("button[aria-label], a[aria-label]").filter({ has: page.locator("svg") });
+  const cajas: { nombre: string; width: number; height: number }[] = [];
+  for (const icono of await iconos.all()) {
+    if (!(await icono.isVisible())) continue;
+    const caja = await icono.boundingBox();
+    if (caja) cajas.push({ nombre: (await icono.getAttribute("aria-label")) ?? "", width: caja.width, height: caja.height });
+  }
+  return cajas;
+}
+
+test("botones de ícono: área de toque de al menos 44 px en canchas y gastos", async ({ page, request }) => {
+  const headers = { Authorization: `Bearer ${await tokenDe("dueno")}` };
+  const complejos = (await (await request.get(`${API}/api/v1/establecimientos`, { headers })).json()) as {
+    id: number;
+    nombre: string;
+  }[];
+  const complejo = complejos.find((c) => c.nombre === "Complejo E2E Sin Seña");
+  expect(complejo, "el seed e2e tiene el complejo").toBeDefined();
+  const hoy = new Date().toISOString().slice(0, 10);
+  const creado = await request.post(`${API}/api/v1/establecimientos/${complejo!.id}/gastos`, {
+    headers,
+    data: {
+      fecha: hoy,
+      monto: 1500,
+      categoria: "INSUMOS",
+      descripcion: "Gasto móvil 44px",
+      metodoPago: "EFECTIVO",
+      comprobanteUrl: "https://example.com/comprobante.png", // para que también aparezca el clip
+    },
+  });
+  expect(creado.status()).toBe(201);
+  const { id } = (await creado.json()) as { id: number };
+  try {
+    await page.goto("/panel/canchas");
+    await elegirComplejo(page, "Complejo E2E Sin Seña");
+    await expect(page.getByRole("button", { name: /^Editar Cancha/ })).toHaveCount(2);
+    const canchas = await medidasDeIconos(page);
+    expect(canchas.length).toBeGreaterThanOrEqual(2);
+
+    await page.goto("/panel/gastos");
+    await expect(page.getByRole("button", { name: "Editar Gasto móvil 44px" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Ver comprobante de Gasto móvil 44px" })).toBeVisible();
+    const gastos = await medidasDeIconos(page);
+    expect(gastos.length).toBeGreaterThanOrEqual(3); // comprobante, editar y eliminar
+
+    const chicos = [...canchas, ...gastos].filter((c) => c.width < 44 || c.height < 44);
+    expect(chicos, "botones de ícono por debajo de 44 px").toEqual([]);
+    expect(await desbordes(page)).toEqual([]);
+  } finally {
+    const baja = await request.delete(`${API}/api/v1/establecimientos/${complejo!.id}/gastos/${id}`, { headers });
+    expect(baja.status(), "limpieza del gasto de prueba").toBe(204);
+  }
+});

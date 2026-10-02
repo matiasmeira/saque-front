@@ -53,7 +53,7 @@ export function TablaGastos({
                   rel="noreferrer"
                   aria-label={`Ver comprobante de ${gasto.descripcion}`}
                   title="Ver comprobante"
-                  className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+                  className="flex size-8 max-md:size-11 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
                 >
                   <Paperclip className="size-4" aria-hidden />
                 </a>
@@ -63,7 +63,7 @@ export function TablaGastos({
                 onClick={() => onEditar(gasto)}
                 aria-label={`Editar ${gasto.descripcion}`}
                 title="Editar"
-                className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+                className="flex size-8 max-md:size-11 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 <Pencil className="size-4" aria-hidden />
               </button>
@@ -72,7 +72,7 @@ export function TablaGastos({
                 onClick={() => onEliminar(gasto)}
                 aria-label={`Eliminar ${gasto.descripcion}`}
                 title="Eliminar"
-                className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+                className="flex size-8 max-md:size-11 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
               >
                 <Trash2 className="size-4" aria-hidden />
               </button>

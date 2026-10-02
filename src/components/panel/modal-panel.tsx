@@ -47,7 +47,7 @@ export function ModalPanel({
             onClick={onClose}
             aria-label="Cerrar"
             data-dialogo-cerrar=""
-            className="flex size-9 shrink-0 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10"
+            className="flex size-9 max-md:size-11 shrink-0 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10"
           >
             <X className="size-5" aria-hidden />
           </button>

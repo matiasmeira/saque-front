@@ -350,7 +350,7 @@ export default function PanelAgenda() {
                 type="button"
                 onClick={irAnterior}
                 aria-label="Fecha anterior"
-                className="flex size-9 items-center justify-center rounded-full text-grafito transition-colors hover:bg-white"
+                className="flex size-9 max-md:size-11 items-center justify-center rounded-full text-grafito transition-colors hover:bg-white"
               >
                 <ChevronLeft className="size-[18px]" aria-hidden />
               </button>
@@ -361,7 +361,7 @@ export default function PanelAgenda() {
                 type="button"
                 onClick={irSiguiente}
                 aria-label="Fecha siguiente"
-                className="flex size-9 items-center justify-center rounded-full text-grafito transition-colors hover:bg-white"
+                className="flex size-9 max-md:size-11 items-center justify-center rounded-full text-grafito transition-colors hover:bg-white"
               >
                 <ChevronRight className="size-[18px]" aria-hidden />
               </button>

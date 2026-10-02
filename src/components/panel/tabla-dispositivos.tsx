@@ -67,7 +67,7 @@ export function TablaDispositivos({
                 onClick={() => onRevocar(dispositivo)}
                 aria-label={esEsta ? "Desvincular esta computadora" : `Revocar ${dispositivo.label}`}
                 title={esEsta ? "Desvincular esta computadora" : "Revocar"}
-                className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-cancelado transition-colors hover:bg-cancelado-suave max-md:col-span-2 max-md:justify-self-end"
+                className="flex h-9 max-md:h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-cancelado transition-colors hover:bg-cancelado-suave max-md:col-span-2 max-md:justify-self-end"
               >
                 <ShieldOff className="size-4 shrink-0" aria-hidden />
                 {esEsta ? "Desvincular" : "Revocar"}

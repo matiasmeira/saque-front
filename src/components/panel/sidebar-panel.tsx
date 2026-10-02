@@ -221,7 +221,7 @@ export function SidebarPanel() {
             type="button"
             onClick={menu.cerrar}
             aria-label="Cerrar menú"
-            className="ml-auto flex size-9 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10 lg:hidden"
+            className="ml-auto flex size-9 max-md:size-11 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10 lg:hidden"
           >
             <X className="size-5" aria-hidden />
           </button>

@@ -69,7 +69,7 @@ export function TicketBuffet({
             <li key={l.producto.id} className="rounded-input bg-humo p-2.5">
               <div className="flex items-start justify-between gap-2">
                 <span className="min-w-0 truncate text-sm font-semibold text-tinta">{l.producto.nombre}</span>
-                <button type="button" onClick={() => onQuitar(l.producto.id)} aria-label={`Quitar ${l.producto.nombre} del ticket`} className="shrink-0 text-grafito hover:text-cancelado">
+                <button type="button" onClick={() => onQuitar(l.producto.id)} aria-label={`Quitar ${l.producto.nombre} del ticket`} className="flex shrink-0 items-center justify-center text-grafito hover:text-cancelado max-md:-m-2.5 max-md:size-11">
                   <Trash2 className="size-3.5" aria-hidden />
                 </button>
               </div>
@@ -79,7 +79,7 @@ export function TicketBuffet({
                     type="button"
                     onClick={() => onDecrementar(l.producto.id)}
                     aria-label={`Restar una unidad de ${l.producto.nombre}`}
-                    className="flex size-6 items-center justify-center rounded-full bg-white text-tinta transition-colors hover:bg-borde"
+                    className="flex size-6 max-md:size-11 items-center justify-center rounded-full bg-white text-tinta transition-colors hover:bg-borde"
                   >
                     <Minus className="size-3" aria-hidden />
                   </button>
@@ -89,7 +89,7 @@ export function TicketBuffet({
                     onClick={() => onIncrementar(l.producto.id)}
                     disabled={l.cantidad >= l.producto.stock}
                     aria-label={`Sumar una unidad de ${l.producto.nombre}`}
-                    className="flex size-6 items-center justify-center rounded-full bg-white text-tinta transition-colors hover:bg-borde disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex size-6 max-md:size-11 items-center justify-center rounded-full bg-white text-tinta transition-colors hover:bg-borde disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <Plus className="size-3" aria-hidden />
                   </button>

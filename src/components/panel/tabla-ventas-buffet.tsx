@@ -86,7 +86,7 @@ export function TablaVentasBuffet({
                     onClick={() => onCancelar(venta)}
                     aria-label={`Cancelar la venta #${venta.id}`}
                     title="Cancelar la venta y devolver el stock"
-                    className="flex size-9 items-center justify-center rounded-full text-grafito transition-colors hover:bg-cancelado-suave hover:text-cancelado focus:outline-none focus:ring-2 focus:ring-celeste"
+                    className="flex size-9 max-md:size-11 items-center justify-center rounded-full text-grafito transition-colors hover:bg-cancelado-suave hover:text-cancelado focus:outline-none focus:ring-2 focus:ring-celeste"
                   >
                     <Ban className="size-4" aria-hidden />
                   </button>

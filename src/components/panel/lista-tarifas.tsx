@@ -60,7 +60,7 @@ export function ListaTarifas({
                   type="button"
                   onClick={() => onEditar(t)}
                   aria-label={`Editar tarifa ${etiquetaDias(t.dias)} ${t.horaDesde}–${t.horaHasta}`}
-                  className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-white"
+                  className="flex size-8 max-md:size-11 items-center justify-center rounded-full text-grafito transition-colors hover:bg-white"
                 >
                   <Pencil className="size-4" aria-hidden />
                 </button>
@@ -68,7 +68,7 @@ export function ListaTarifas({
                   type="button"
                   onClick={() => onQuitar(t)}
                   aria-label={`Quitar tarifa ${etiquetaDias(t.dias)} ${t.horaDesde}–${t.horaHasta}`}
-                  className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-white"
+                  className="flex size-8 max-md:size-11 items-center justify-center rounded-full text-grafito transition-colors hover:bg-white"
                 >
                   <Trash2 className="size-4" aria-hidden />
                 </button>

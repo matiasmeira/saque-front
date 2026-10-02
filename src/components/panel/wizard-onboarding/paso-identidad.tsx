@@ -317,7 +317,7 @@ export function PasoIdentidad({
                   type="button"
                   onClick={() => quitarFoto(f.id)}
                   aria-label="Quitar foto"
-                  className="absolute right-1.5 top-1.5 flex size-7 items-center justify-center rounded-full bg-tinta/70 text-white opacity-0 transition-opacity hover:bg-cancelado group-hover:opacity-100"
+                  className="absolute right-1.5 top-1.5 flex size-7 max-md:size-11 items-center justify-center rounded-full bg-tinta/70 text-white opacity-0 transition-opacity hover:bg-cancelado group-hover:opacity-100"
                 >
                   <Trash2 className="size-3.5" aria-hidden />
                 </button>

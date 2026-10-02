@@ -195,7 +195,7 @@ export function FormFotos({ establecimientoId }: { establecimientoId: number }) 
                 type="button"
                 onClick={() => setABorrar(foto)}
                 aria-label="Borrar foto"
-                className="absolute bottom-1.5 right-1.5 flex size-8 items-center justify-center rounded-full bg-tinta/70 text-white opacity-0 transition-opacity hover:bg-cancelado group-hover:opacity-100"
+                className="absolute bottom-1.5 right-1.5 flex size-8 max-md:size-11 items-center justify-center rounded-full bg-tinta/70 text-white opacity-0 transition-opacity hover:bg-cancelado group-hover:opacity-100"
               >
                 <Trash2 className="size-4" aria-hidden />
               </button>
@@ -220,7 +220,7 @@ export function FormFotos({ establecimientoId }: { establecimientoId: number }) 
                 type="button"
                 onClick={() => descartarPendiente(p.id)}
                 aria-label="Descartar"
-                className="shrink-0 text-grafito hover:text-tinta"
+                className="flex shrink-0 items-center justify-center text-grafito hover:text-tinta max-md:-m-2.5 max-md:size-11"
               >
                 <X className="size-4" aria-hidden />
               </button>

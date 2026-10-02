@@ -87,7 +87,7 @@ export function SeccionDiasNoLaborables({ establecimientoId }: { establecimiento
                   onClick={() => setAEliminar(dia)}
                   aria-label={`Eliminar ${fechaCompleta(dia.fecha)}`}
                   title="Eliminar"
-                  className="flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-cancelado transition-colors hover:bg-cancelado-suave"
+                  className="flex h-9 max-md:h-11 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-cancelado transition-colors hover:bg-cancelado-suave"
                 >
                   <Trash2 className="size-4 shrink-0" aria-hidden />
                   Eliminar

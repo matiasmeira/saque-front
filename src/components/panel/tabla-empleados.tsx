@@ -69,7 +69,7 @@ export function TablaEmpleados({
                     onClick={() => onEditarPermisos(empleado)}
                     aria-label={`Editar permisos de ${empleado.nombre}`}
                     title="Editar permisos"
-                    className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-white hover:text-azul"
+                    className="flex size-8 max-md:size-11 items-center justify-center rounded-full text-grafito transition-colors hover:bg-white hover:text-azul"
                   >
                     <ShieldCheck className="size-4" aria-hidden />
                   </button>
@@ -78,7 +78,7 @@ export function TablaEmpleados({
                     onClick={() => onCambiarPin(empleado)}
                     aria-label={`Cambiar el PIN de ${empleado.nombre}`}
                     title="Cambiar PIN"
-                    className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-white hover:text-azul"
+                    className="flex size-8 max-md:size-11 items-center justify-center rounded-full text-grafito transition-colors hover:bg-white hover:text-azul"
                   >
                     <KeyRound className="size-4" aria-hidden />
                   </button>
@@ -87,7 +87,7 @@ export function TablaEmpleados({
                     onClick={() => onDarDeBaja(empleado)}
                     aria-label={`Dar de baja a ${empleado.nombre}`}
                     title="Dar de baja"
-                    className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-cancelado-suave hover:text-cancelado"
+                    className="flex size-8 max-md:size-11 items-center justify-center rounded-full text-grafito transition-colors hover:bg-cancelado-suave hover:text-cancelado"
                   >
                     <UserX className="size-4" aria-hidden />
                   </button>

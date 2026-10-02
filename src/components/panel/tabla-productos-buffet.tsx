@@ -74,7 +74,7 @@ export function TablaProductosBuffet({
                       onClick={() => onAjustarStock(producto)}
                       aria-label={`Ajustar stock de ${producto.nombre}`}
                       title="Ajustar stock"
-                      className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+                      className="flex size-8 max-md:size-11 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
                     >
                       <PackagePlus className="size-4" aria-hidden />
                     </button>
@@ -83,7 +83,7 @@ export function TablaProductosBuffet({
                       onClick={() => onEditar(producto)}
                       aria-label={`Editar ${producto.nombre}`}
                       title="Editar"
-                      className="flex size-8 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
+                      className="flex size-8 max-md:size-11 items-center justify-center rounded-full text-grafito transition-colors hover:bg-humo focus:outline-none focus:ring-2 focus:ring-celeste"
                     >
                       <Pencil className="size-4" aria-hidden />
                     </button>
