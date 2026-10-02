@@ -2,6 +2,9 @@ import { ShieldOff } from "lucide-react";
 import { fechaLarga } from "@/lib/formato";
 import { esEstaComputadora } from "@/lib/dispositivo-actual";
 import type { DispositivoCajaResponse } from "@/lib/api/tipos/caja";
+import { EtiquetaMovil } from "@/components/panel/etiqueta-movil";
+
+const COLUMNAS = "md:grid-cols-[1.4fr_1fr_1fr_auto]";
 
 /**
  * Revocar es la herramienta de seguridad principal de esta sección: un botón a
@@ -28,7 +31,7 @@ export function TablaDispositivos({
 }) {
   return (
     <div className="overflow-hidden rounded-card bg-white shadow-card">
-      <div className="grid grid-cols-[1.4fr_1fr_1fr_auto] gap-3 bg-humo px-6 py-3 text-xs font-semibold uppercase tracking-wide text-grafito">
+      <div className={`hidden md:grid ${COLUMNAS} gap-3 bg-humo px-6 py-3 text-xs font-semibold uppercase tracking-wide text-grafito`}>
         <span>Nombre</span>
         <span>Emparejado</span>
         <span>Último uso</span>
@@ -41,9 +44,9 @@ export function TablaDispositivos({
           return (
             <div
               key={dispositivo.id}
-              className="grid grid-cols-[1.4fr_1fr_1fr_auto] items-center gap-3 px-6 py-3.5 transition-colors hover:bg-humo/60"
+              className={`grid grid-cols-2 ${COLUMNAS} gap-3 px-4 py-3.5 transition-colors hover:bg-humo/60 md:items-center md:px-6`}
             >
-              <span className="flex min-w-0 items-center gap-2 truncate px-2 text-sm font-semibold text-tinta">
+              <span className="flex min-w-0 items-center gap-2 truncate px-2 text-sm font-semibold text-tinta max-md:col-span-2 max-md:px-0">
                 <span className="truncate">{dispositivo.label}</span>
                 {esEsta && (
                   <span className="shrink-0 rounded-full bg-celeste-suave px-2 py-0.5 text-xs font-semibold text-azul">
@@ -51,8 +54,12 @@ export function TablaDispositivos({
                   </span>
                 )}
               </span>
-              <span className="text-sm text-grafito">{fechaLarga(dispositivo.createdAt.slice(0, 10))}</span>
               <span className="text-sm text-grafito">
+                <EtiquetaMovil>Emparejado</EtiquetaMovil>
+                {fechaLarga(dispositivo.createdAt.slice(0, 10))}
+              </span>
+              <span className="text-sm text-grafito">
+                <EtiquetaMovil>Último uso</EtiquetaMovil>
                 {dispositivo.lastUsedAt ? fechaLarga(dispositivo.lastUsedAt.slice(0, 10)) : "Nunca"}
               </span>
               <button
@@ -60,7 +67,7 @@ export function TablaDispositivos({
                 onClick={() => onRevocar(dispositivo)}
                 aria-label={esEsta ? "Desvincular esta computadora" : `Revocar ${dispositivo.label}`}
                 title={esEsta ? "Desvincular esta computadora" : "Revocar"}
-                className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-cancelado transition-colors hover:bg-cancelado-suave"
+                className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-cancelado transition-colors hover:bg-cancelado-suave max-md:col-span-2 max-md:justify-self-end"
               >
                 <ShieldOff className="size-4 shrink-0" aria-hidden />
                 {esEsta ? "Desvincular" : "Revocar"}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Ban, ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import type { ClienteResponse, OrdenCliente } from "@/lib/api/tipos/clientes";
+import { EtiquetaMovil } from "@/components/panel/etiqueta-movil";
 
 /**
  * Las tres columnas ordenables de la tabla. El backend acepta además `nombre`,
@@ -17,7 +18,7 @@ function fechaCorta(fechaHoraISO: string): string {
   return `${fechaHoraISO.slice(8, 10)}/${fechaHoraISO.slice(5, 7)}`;
 }
 
-const COLUMNAS = "grid-cols-[1.6fr_1.2fr_1fr_1fr_1fr]";
+const COLUMNAS = "md:grid-cols-[1.6fr_1.2fr_1fr_1fr_1fr]";
 
 function EncabezadoOrdenable({
   columna,
@@ -70,9 +71,12 @@ export function TablaClientes({
 }) {
   return (
     <div className="overflow-hidden rounded-card bg-white shadow-card">
-      <div className={`grid ${COLUMNAS} gap-3 bg-humo px-6 py-3 text-xs font-semibold uppercase tracking-wide text-grafito`}>
-        <span>Nombre</span>
-        <span>Contacto</span>
+      <div
+        className={`flex flex-wrap items-center gap-x-4 gap-y-1 bg-humo px-4 py-3 text-xs font-semibold uppercase tracking-wide text-grafito md:grid ${COLUMNAS} md:gap-3 md:px-6`}
+      >
+        <span className="md:hidden">Ordenar por</span>
+        <span className="max-md:hidden">Nombre</span>
+        <span className="max-md:hidden">Contacto</span>
         <EncabezadoOrdenable columna="reservasTotales" etiqueta="Reservas" orden={orden} onOrdenar={onOrdenar} />
         <EncabezadoOrdenable columna="ultimaReserva" etiqueta="Última reserva" orden={orden} onOrdenar={onOrdenar} />
         <EncabezadoOrdenable columna="ausencias" etiqueta="Ausencias" orden={orden} onOrdenar={onOrdenar} />
@@ -85,18 +89,26 @@ export function TablaClientes({
             <Link
               key={cliente.jugadorId}
               href={`/panel/clientes/${cliente.jugadorId}`}
-              className={`grid ${COLUMNAS} items-center gap-3 px-6 py-4 transition-colors hover:bg-humo/60`}
+              className={`grid grid-cols-2 ${COLUMNAS} gap-3 px-4 py-4 transition-colors hover:bg-humo/60 md:items-center md:px-6`}
             >
-              <span className="flex min-w-0 items-center gap-1.5 font-display text-sm font-bold text-tinta">
+              <span className="flex min-w-0 items-center gap-1.5 font-display text-sm font-bold text-tinta max-md:col-span-2">
                 <span className={`truncate ${cliente.bloqueado ? "text-grafito line-through" : ""}`}>{cliente.nombre}</span>
                 {cliente.bloqueado && <Ban className="size-3.5 shrink-0 text-cancelado" aria-label="Jugador bloqueado" />}
               </span>
-              <span className="truncate text-sm text-grafito">{cliente.telefono ?? cliente.email}</span>
-              <span className="text-sm text-tinta">{cliente.reservasTotales}</span>
+              <span className="truncate text-sm text-grafito max-md:col-span-2">
+                <EtiquetaMovil>Contacto</EtiquetaMovil>
+                {cliente.telefono ?? cliente.email}
+              </span>
               <span className="text-sm text-tinta">
+                <EtiquetaMovil>Reservas</EtiquetaMovil>
+                {cliente.reservasTotales}
+              </span>
+              <span className="text-sm text-tinta">
+                <EtiquetaMovil>Última reserva</EtiquetaMovil>
                 {cliente.ultimaReserva ? fechaCorta(cliente.ultimaReserva) : "—"}
               </span>
               <span>
+                <EtiquetaMovil>Ausencias</EtiquetaMovil>
                 {ausenciasAltas ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-pendiente-suave px-2 py-0.5 text-xs font-semibold text-pendiente">
                     {cliente.ausencias}
