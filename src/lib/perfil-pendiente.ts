@@ -4,10 +4,14 @@
  *
  * Tres estados distintos que no hay que confundir:
  * - no hidratado: en el primer commit de una carga dura (F5, URL directa)
- *   `useHaySesion()` rinde `false` aunque haya token (getServerSnapshot), así
- *   que "sin sesión" todavía no es un dato. Sin esta condición, el efecto de
- *   la guardia veía "sin perfil pendiente + rol empleado" y expulsaba al
- *   dueño a otra pantalla antes de que llegara GET /me.
+ *   todos los useSyncExternalStore (useHaySesion, useEmparejado,
+ *   useEmpleadoIdSesion) rinden su snapshot de servidor, así que `haySesion`
+ *   da `false` aunque haya token. Hoy este chequeo es REDUNDANTE: la carrera
+ *   del pendiente 96 (la guardia veía "sin perfil pendiente + rol empleado" y
+ *   expulsaba al dueño antes de que llegara GET /me) la cubre `!haySesion` en
+ *   guardiaDebeEsperar, y useCajaSinEmpleado da false en ese commit porque
+ *   `emparejado` vale false. Se mantiene como red de seguridad por si algún
+ *   snapshot de servidor cambia.
  * - hay sesión y GET /me en vuelo: pendiente.
  * - ya hidratado y sin sesión: no pendiente (sigue la redirección normal,
  *   ver destinoSinSesion).

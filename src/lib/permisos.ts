@@ -47,6 +47,8 @@ export function useCajaSinEmpleado(): boolean {
   const empleadoIdSesion = useEmpleadoIdSesion();
   const emparejado = useEmparejado();
   // Acá sí hace falta distinguir "sin sesión" (guardiaDebeEsperar lo oculta).
+  // La condición !hidratado de perfilPendiente hoy es redundante acá: en el
+  // primer commit emparejado vale false (snapshot de servidor).
   const sinResolver = perfilPendiente(useEstadoIdentidad());
   const { data: perfil } = usePerfil();
   if (searchParams.get("rol")) return false;
@@ -61,8 +63,8 @@ export function useCajaSinEmpleado(): boolean {
 /**
  * true si las guardias de pantalla tienen que esperar: hay una sesión guardada
  * (JWT en localStorage) pero GET /me todavía no resolvió, no hay sesión (la
- * redirige GuardSesionPanel), o todavía no se hidrató (ahí useHaySesion() miente con false;
- * ver perfil-pendiente.ts). Mientras está en vuelo, useRolPanel() cae a "empleado" y
+ * redirige GuardSesionPanel), o todavía no se hidrató (ahí useHaySesion() rinde false por su
+ * snapshot de servidor, y !haySesion ya hace esperar; ver perfil-pendiente.ts). Mientras está en vuelo, useRolPanel() cae a "empleado" y
  * usePermisos() a "sin permisos" — son valores por defecto, no un dato real.
  * Cualquier efecto que redirija por rol o por permiso tiene que esperar esto
  * antes de disparar: si no, un dueño real (o un empleado con el permiso real)
