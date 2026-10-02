@@ -5,7 +5,7 @@ import type { APIRequestContext } from "@playwright/test";
 export const API = "http://localhost:8081";
 
 /** JWT guardado por el global-setup para un rol (e2e/.auth/<rol>.json). */
-export async function tokenDe(rol: "dueno" | "admin" | "jugador"): Promise<string> {
+export async function tokenDe(rol: "dueno" | "duenoVacio" | "admin" | "jugador"): Promise<string> {
   const archivo = path.join(__dirname, "..", ".auth", `${rol}.json`);
   const estado = JSON.parse(await readFile(archivo, "utf8")) as {
     origins: { localStorage: { name: string; value: string }[] }[];

@@ -4,7 +4,7 @@ import { USUARIOS } from "./helpers/usuarios";
 
 const API = "http://localhost:8081";
 const ORIGEN_FRONT = "http://localhost:3001";
-const ROLES = ["dueno", "admin", "jugador"] as const;
+const ROLES = ["dueno", "duenoVacio", "admin", "jugador"] as const;
 
 /** Un login por rol → storageState con el token donde lo lee src/lib/api/sesion.ts. */
 export default async function globalSetup() {
