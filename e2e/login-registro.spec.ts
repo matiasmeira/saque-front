@@ -1,14 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 import { ultimoCodigo } from "./helpers/mails";
-import { CLAVE_E2E, USUARIOS, emailUnico } from "./helpers/usuarios";
+import { completarAlta, pasarEmail } from "./helpers/registro";
+import { USUARIOS, emailUnico } from "./helpers/usuarios";
 
 // Sin sesión previa: estos tests recorren /ingresar de punta a punta.
 test.use({ storageState: { cookies: [], origins: [] } });
-
-async function pasarEmail(page: Page, email: string) {
-  await page.getByLabel("Tu email").fill(email);
-  await page.getByRole("button", { name: "Continuar" }).click();
-}
 
 async function tokenGuardado(page: Page): Promise<string | null> {
   return page.evaluate(() => localStorage.getItem("saque:token"));
@@ -60,23 +56,6 @@ test("email sin cuenta arranca el alta: pide el código del mail", async ({ page
   expect(respuestas500).toEqual([]);
   expect(errores).toEqual([]);
 });
-
-async function completarAlta(page: Page, email: string, nombre: string) {
-  await pasarEmail(page, email);
-  await expect(page.getByRole("heading", { name: "Revisá tu email" })).toBeVisible();
-  await page.getByLabel("Código").fill(await ultimoCodigo(email));
-  await page.getByRole("button", { name: "Continuar" }).click();
-
-  await expect(page.getByRole("heading", { name: "Elegí una contraseña" })).toBeVisible();
-  await page.getByLabel("Contraseña", { exact: true }).fill(CLAVE_E2E);
-  await page.getByLabel("Repetila").fill(CLAVE_E2E);
-  await page.getByRole("button", { name: "Continuar" }).click();
-
-  await expect(page.getByRole("heading", { name: "Contanos quién sos" })).toBeVisible();
-  await page.getByLabel("Nombre y apellido").fill(nombre);
-  await page.getByLabel(/Teléfono/).fill("11 5555 1234");
-  await page.getByRole("button", { name: "Crear cuenta" }).click();
-}
 
 test("registro de jugador en pasos: código, contraseña y datos", async ({ page }) => {
   await page.goto("/ingresar");
